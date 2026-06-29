@@ -1,26 +1,252 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Direct hex in @theme so Tailwind v4 generates utilities (var() refs break this) */
+@theme {
+  --color-ink: #13171f;
+  --color-sky: #3d8bff;
+  --color-sky-soft: #eaf2ff;
+  --color-paper: #fafbfc;
+  --color-coral-warn: #e8604c;
+  --color-mist: #8a93a3;
+  --color-line: #e2e5eb;
+  --color-white: #ffffff;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-source-sans);
+  --font-display: var(--font-instrument-serif);
   --font-mono: var(--font-geist-mono);
+
+  --text-hero: clamp(2.5rem, 5vw + 1rem, 4.75rem);
+  --text-hero-leading: 1.08;
+  --text-numeral: clamp(2.75rem, 9vw + 0.5rem, 6.5rem);
+  --text-numeral-leading: 1;
+  --text-subhead: clamp(1rem, 0.5vw + 0.875rem, 1.125rem);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Mirror tokens for SVG / inline styles */
+:root {
+  --ink: #13171f;
+  --sky: #3d8bff;
+  --sky-soft: #eaf2ff;
+  --paper: #fafbfc;
+  --coral-warn: #e8604c;
+  --mist: #8a93a3;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: #fafbfc;
+    color: #13171f;
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-feature-settings: "kern" 1, "liga" 1;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-display {
+    font-family: var(--font-display), Georgia, serif;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Airy sky mesh — brand sky + sky-soft clouds on paper */
+  .hero-sky-mesh {
+    background-color: #fafbfc;
+    background-image:
+      radial-gradient(ellipse 120% 80% at 50% 110%, rgba(61, 139, 255, 0.28) 0%, transparent 58%),
+      radial-gradient(ellipse 70% 55% at 0% 30%, rgba(61, 139, 255, 0.18) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 55% at 100% 30%, rgba(61, 139, 255, 0.18) 0%, transparent 55%),
+      radial-gradient(ellipse 90% 65% at 50% -5%, rgba(61, 139, 255, 0.22) 0%, transparent 60%),
+      radial-gradient(ellipse 55% 40% at 50% 38%, rgba(255, 255, 255, 0.92) 0%, rgba(234, 242, 255, 0.45) 50%, transparent 75%);
+  }
+
+  /* Shared cloud puff — organic clusters in brand sky */
+  .hero-sky-mesh__cloud {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(48px);
+    will-change: transform;
+    animation: heroCloudDrift 28s ease-in-out infinite;
+  }
+
+  .hero-sky-mesh__cloud--a {
+    top: -2%;
+    left: 4%;
+    width: min(48vw, 520px);
+    height: min(22vw, 200px);
+    background: radial-gradient(
+      ellipse at 40% 50%,
+      rgba(61, 139, 255, 0.42) 0%,
+      rgba(234, 242, 255, 0.75) 45%,
+      transparent 72%
+    );
+    animation-delay: 0s;
+  }
+
+  .hero-sky-mesh__cloud--b {
+    top: 2%;
+    right: 2%;
+    width: min(44vw, 480px);
+    height: min(20vw, 180px);
+    background: radial-gradient(
+      ellipse at 60% 50%,
+      rgba(61, 139, 255, 0.35) 0%,
+      rgba(234, 242, 255, 0.8) 50%,
+      transparent 70%
+    );
+    animation-delay: -6s;
+  }
+
+  .hero-sky-mesh__cloud--c {
+    top: 28%;
+    left: 18%;
+    width: min(36vw, 400px);
+    height: min(16vw, 150px);
+    background: radial-gradient(
+      ellipse at 50% 50%,
+      rgba(234, 242, 255, 0.95) 0%,
+      rgba(61, 139, 255, 0.22) 55%,
+      transparent 75%
+    );
+    animation-delay: -12s;
+  }
+
+  .hero-sky-mesh__cloud--d {
+    top: 22%;
+    right: 16%;
+    width: min(32vw, 360px);
+    height: min(14vw, 130px);
+    background: radial-gradient(
+      ellipse at 50% 50%,
+      rgba(61, 139, 255, 0.3) 0%,
+      rgba(234, 242, 255, 0.7) 48%,
+      transparent 72%
+    );
+    animation-delay: -18s;
+  }
+
+  .hero-sky-mesh__cloud--e {
+    top: 42%;
+    left: 6%;
+    width: min(40vw, 440px);
+    height: min(18vw, 165px);
+    background: radial-gradient(
+      ellipse at 45% 50%,
+      rgba(234, 242, 255, 0.9) 0%,
+      rgba(61, 139, 255, 0.28) 50%,
+      transparent 70%
+    );
+    animation-delay: -9s;
+  }
+
+  .hero-sky-mesh__cloud--f {
+    top: 48%;
+    right: 8%;
+    width: min(38vw, 420px);
+    height: min(17vw, 155px);
+    background: radial-gradient(
+      ellipse at 55% 50%,
+      rgba(61, 139, 255, 0.32) 0%,
+      rgba(234, 242, 255, 0.85) 45%,
+      transparent 68%
+    );
+    animation-delay: -22s;
+  }
+
+  /* Centre readability wash */
+  .hero-sky-mesh__glow {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: min(70vw, 720px);
+    height: min(50vh, 480px);
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(
+      ellipse at 50% 40%,
+      rgba(255, 255, 255, 0.75) 0%,
+      rgba(250, 251, 252, 0.35) 55%,
+      transparent 75%
+    );
+    filter: blur(32px);
+  }
+
+  .hero-sky-mesh__spark {
+    position: absolute;
+    bottom: 16%;
+    right: 12%;
+    width: 28px;
+    height: 28px;
+    opacity: 0.7;
+    filter: drop-shadow(0 0 10px rgba(61, 139, 255, 0.35));
+    animation: heroSparkle 4s ease-in-out infinite;
+  }
+
+  @keyframes heroCloudDrift {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(12px, -8px) scale(1.03);
+    }
+    66% {
+      transform: translate(-10px, 6px) scale(0.98);
+    }
+  }
+
+  @keyframes heroSparkle {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.85;
+      transform: scale(1.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-sky-mesh__cloud,
+    .hero-sky-mesh__spark {
+      animation: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .hero-sky-mesh__cloud {
+      filter: blur(36px);
+    }
+
+    .hero-sky-mesh__spark {
+      bottom: 10%;
+      right: 8%;
+      width: 20px;
+      height: 20px;
+    }
+  }
 }
