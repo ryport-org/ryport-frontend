@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
+
 function GoogleIcon() {
   return (
     <svg className="size-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -30,6 +35,21 @@ function GitHubIcon() {
 }
 
 export function SocialLogins() {
+  const { startOAuth } = useAuth();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState<"google" | "github" | null>(null);
+
+  async function handleOAuth(provider: "google" | "github") {
+    setLoading(provider);
+    setError("");
+    try {
+      await startOAuth(provider);
+    } catch (err) {
+      setError(getAuthErrorMessage(err));
+      setLoading(null);
+    }
+  }
+
   return (
     <div>
       <div className="relative my-6">
@@ -41,20 +61,26 @@ export function SocialLogins() {
         </p>
       </div>
 
+      {error ? <p className="mb-3 text-center text-sm text-coral-warn">{error}</p> : null}
+
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-medium text-ink transition-colors hover:border-sky hover:bg-sky-soft"
+          disabled={loading !== null}
+          onClick={() => handleOAuth("google")}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-medium text-ink transition-colors hover:border-sky hover:bg-sky-soft disabled:opacity-60"
         >
           <GoogleIcon />
-          Google
+          {loading === "google" ? "Redirecting…" : "Google"}
         </button>
         <button
           type="button"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-medium text-ink transition-colors hover:border-sky hover:bg-sky-soft"
+          disabled={loading !== null}
+          onClick={() => handleOAuth("github")}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-medium text-ink transition-colors hover:border-sky hover:bg-sky-soft disabled:opacity-60"
         >
           <GitHubIcon />
-          GitHub
+          {loading === "github" ? "Redirecting…" : "GitHub"}
         </button>
       </div>
     </div>
