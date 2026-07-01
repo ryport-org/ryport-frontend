@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   description:
     "Understand, manage, and grow your finances with AI. Built for Nigeria — from personal budgeting to AI CFO. Free plan available.",
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/icon.jpeg",
+    apple: "/apple-icon.jpeg",
   },
 };
 
