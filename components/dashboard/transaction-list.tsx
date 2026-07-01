@@ -34,7 +34,7 @@ export function TransactionList({
         return (
           <li key={tx.id}>
             <Link
-              href={`/app/transactions?id=${tx.id}`}
+              href={`/app/transactions/${tx.id}`}
               className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-paper sm:px-6"
             >
               <div
@@ -50,7 +50,8 @@ export function TransactionList({
                   {tx.description || tx.merchant || tx.category || "Transaction"}
                 </p>
                 <p className="mt-0.5 text-xs text-mist">
-                  {tx.category ?? "Uncategorised"} · {formatRelativeDate(tx.date)}
+                  {tx.category ?? "Uncategorised"} ·{" "}
+                  {formatRelativeDate(tx.transaction_date ?? (tx as { date?: string }).date ?? "")}
                 </p>
               </div>
               <p

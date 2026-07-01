@@ -1,53 +1,124 @@
 import { apiRequest } from "@/lib/api/client";
-import type { AuthTokens, OAuthProvider, OAuthStart } from "@/lib/api/types";
+import type {
+  AuthResponse,
+  AuthTokens,
+  OAuthProvider,
+  OAuthStart,
+  TwoFactorSetup,
+} from "@/lib/api/types";
 
-export type LoginPayload = {
+export async function register(body: {
+  email: string;
+  password: string;
+  password_confirm: string;
+}) {
+  return apiRequest<AuthResponse>("/users/auth/register/", {
+    method: "POST",
+    body,
+    skipAuth: true,
+  });
+}
+
+export async function login(body: {
   email: string;
   password: string;
   totp_token?: string;
-};
+}) {
+  return apiRequest<AuthResponse>("/users/auth/login/", {
+    method: "POST",
+    body,
+    skipAuth: true,
+  });
+}
 
-export type RegisterPayload = {
-  email: string;
-  password: string;
-  full_name: string;
-};
+export async function requestOtp(email: string) {
+  return apiRequest<{ message: string }>("/users/auth/otp/request/", {
+    method: "POST",
+    body: { email },
+    skipAuth: true,
+  });
+}
 
-export type AuthResponse = AuthTokens & {
-  user?: { id: string; email: string; full_name?: string };
-};
+export async function verifyOtp(email: string, otp: string) {
+  return apiRequest<AuthResponse>("/users/auth/otp/verify/", {
+    method: "POST",
+    body: { email, otp },
+    skipAuth: true,
+  });
+}
 
-export const authApi = {
-  register: (body: RegisterPayload) =>
-    apiRequest<AuthResponse>("/users/auth/register/", { method: "POST", body }),
+export async function refreshToken(refresh: string) {
+  return apiRequest<AuthTokens>("/users/auth/refresh/", {
+    method: "POST",
+    body: { refresh },
+    skipAuth: true,
+    skipRefresh: true,
+  });
+}
 
-  login: (body: LoginPayload) =>
-    apiRequest<AuthResponse>("/users/auth/login/", { method: "POST", body }),
+export async function logout(refresh: string, token: string) {
+  return apiRequest<null>("/users/auth/logout/", {
+    method: "POST",
+    body: { refresh },
+    token,
+  });
+}
 
-  logout: (refresh: string, token: string) =>
-    apiRequest<void>("/users/auth/logout/", {
-      method: "POST",
-      token,
-      body: { refresh },
-    }),
+export async function listOAuthProviders() {
+  return apiRequest<OAuthProvider[]>("/users/auth/oauth/", { skipAuth: true });
+}
 
-  refresh: (refresh: string) =>
-    apiRequest<AuthTokens>("/users/auth/refresh/", {
-      method: "POST",
-      body: { refresh },
-    }),
+export async function startOAuth(provider: string, redirectTo: string) {
+  return apiRequest<OAuthStart>(
+    `/users/auth/oauth/${provider}/?redirect_to=${encodeURIComponent(redirectTo)}`,
+    { skipAuth: true },
+  );
+}
 
-  listOAuthProviders: () =>
-    apiRequest<OAuthProvider[]>("/users/auth/oauth/"),
+export async function oauthCallback(body: {
+  code: string;
+  state?: string;
+  totp_token?: string;
+}) {
+  return apiRequest<AuthResponse>("/users/auth/oauth/callback/", {
+    method: "POST",
+    body,
+    skipAuth: true,
+  });
+}
 
-  startOAuth: (provider: "google" | "github", redirectTo: string) =>
-    apiRequest<OAuthStart>(
-      `/users/auth/oauth/${provider}/?redirect_to=${encodeURIComponent(redirectTo)}`,
-    ),
+export async function enable2fa(token: string) {
+  return apiRequest<TwoFactorSetup>("/users/auth/2fa/enable/", {
+    method: "POST",
+    token,
+  });
+}
 
-  oauthCallback: (code: string, state: string) =>
-    apiRequest<AuthResponse>("/users/auth/oauth/callback/", {
-      method: "POST",
-      body: { code, state },
-    }),
-};
+export async function confirm2fa(token: string, totpToken: string) {
+  return apiRequest<{ message: string }>("/users/auth/2fa/confirm/", {
+    method: "POST",
+    body: { token: totpToken },
+    token,
+  });
+}
+
+export async function disable2fa(token: string, totpToken: string) {
+  return apiRequest<{ message: string }>("/users/auth/2fa/disable/", {
+    method: "POST",
+    body: { token: totpToken },
+    token,
+  });
+}
+
+export async function getBackupCodes(token: string) {
+  return apiRequest<{ codes: string[] }>("/users/auth/2fa/backup-codes/", {
+    token,
+  });
+}
+
+export async function regenerateBackupCodes(token: string, totpToken: string) {
+  return apiRequest<{ codes: string[] }>(
+    "/users/auth/2fa/backup-codes/regenerate/",
+    { method: "POST", body: { token: totpToken }, token },
+  );
+}

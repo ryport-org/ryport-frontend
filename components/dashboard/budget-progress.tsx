@@ -25,7 +25,7 @@ export function BudgetProgressList({ budgets }: { budgets: BudgetWithUsage[] }) 
           <li key={budget.id} className="rounded-xl border border-line bg-white p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-ink">{budget.name}</p>
+                <p className="text-sm font-medium text-ink">{budget.name ?? budget.category}</p>
                 <p className="text-xs capitalize text-mist">
                   {budget.category} · {budget.period}
                 </p>

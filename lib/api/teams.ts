@@ -1,35 +1,35 @@
 import { apiRequest } from "@/lib/api/client";
+import type { TeamInvite } from "@/lib/api/types";
 
-export const teamsApi = {
-  previewInvite: (token: string, inviteToken: string) =>
-    apiRequest<Record<string, unknown>>(`/teams/invites/${inviteToken}/`, {
-      token,
-    }),
+export async function previewInvite(token: string | null, inviteToken: string) {
+  return apiRequest<Record<string, unknown>>(`/teams/invites/${inviteToken}/`, {
+    token: token ?? undefined,
+    skipAuth: !token,
+  });
+}
 
-  acceptInvite: (token: string, inviteToken: string) =>
-    apiRequest<void>("/teams/invites/accept/", {
-      method: "POST",
-      token,
-      body: { token: inviteToken },
-    }),
+export async function acceptInvite(token: string, inviteToken: string) {
+  return apiRequest<Record<string, unknown>>("/teams/invites/accept/", {
+    method: "POST",
+    body: { token: inviteToken },
+    token,
+  });
+}
 
-  listInvites: (token: string, businessId: string) =>
-    apiRequest<unknown[]>(`/teams/businesses/${businessId}/invites/`, { token }),
+export async function listInvites(token: string, businessId: string) {
+  return apiRequest<TeamInvite[]>(
+    `/teams/businesses/${businessId}/invites/`,
+    { token },
+  );
+}
 
-  sendInvite: (
-    token: string,
-    businessId: string,
-    body: { email: string; role: string },
-  ) =>
-    apiRequest<void>(`/teams/businesses/${businessId}/invites/`, {
-      method: "POST",
-      token,
-      body,
-    }),
-
-  revokeInvite: (token: string, businessId: string, inviteId: string) =>
-    apiRequest<void>(
-      `/teams/businesses/${businessId}/invites/${inviteId}/`,
-      { method: "DELETE", token },
-    ),
-};
+export async function revokeInvite(
+  token: string,
+  businessId: string,
+  inviteId: string,
+) {
+  return apiRequest<null>(
+    `/teams/businesses/${businessId}/invites/${inviteId}/`,
+    { method: "DELETE", token },
+  );
+}

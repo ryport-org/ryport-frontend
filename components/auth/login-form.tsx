@@ -9,21 +9,34 @@ import { SocialLogins } from "@/components/auth/social-logins";
 import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
 
 export function LoginForm() {
-  const { login } = useAuth();
+  const { login, loginWithOtp, requestOtp } = useAuth();
+  const [mode, setMode] = useState<"password" | "otp">("password");
+  const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const email = String(fd.get("email"));
     setLoading(true);
     setError("");
     try {
-      await login(
-        String(fd.get("email")),
-        String(fd.get("password")),
-        String(fd.get("totp") || undefined) || undefined,
-      );
+      if (mode === "otp") {
+        const otp = String(fd.get("otp") || "");
+        if (!otpSent) {
+          await requestOtp(email);
+          setOtpSent(true);
+        } else {
+          await loginWithOtp(email, otp);
+        }
+      } else {
+        await login(
+          email,
+          String(fd.get("password")),
+          String(fd.get("totp") || undefined) || undefined,
+        );
+      }
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
@@ -38,7 +51,24 @@ export function LoginForm() {
         Enter your email and password to access your account.
       </p>
 
-      <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+      <div className="mt-6 flex gap-2 rounded-lg border border-line bg-paper p-1">
+        <button
+          type="button"
+          onClick={() => { setMode("password"); setOtpSent(false); }}
+          className={`flex-1 rounded-md py-2 text-sm font-medium ${mode === "password" ? "bg-white text-ink shadow-sm" : "text-mist"}`}
+        >
+          Password
+        </button>
+        <button
+          type="button"
+          onClick={() => { setMode("otp"); setOtpSent(false); }}
+          className={`flex-1 rounded-md py-2 text-sm font-medium ${mode === "otp" ? "bg-white text-ink shadow-sm" : "text-mist"}`}
+        >
+          Email code
+        </button>
+      </div>
+
+      <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-ink">
             Email
@@ -54,41 +84,61 @@ export function LoginForm() {
           />
         </div>
 
-        <PasswordField id="password" />
-
-        <div>
-          <label htmlFor="totp" className="block text-sm font-medium text-ink">
-            2FA code <span className="font-normal text-mist">(if enabled)</span>
-          </label>
-          <Input
-            id="totp"
-            name="totp"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            className="mt-1.5"
-            placeholder="000000"
-          />
-        </div>
+        {mode === "password" ? (
+          <>
+            <PasswordField id="password" />
+            <div>
+              <label htmlFor="totp" className="block text-sm font-medium text-ink">
+                2FA code <span className="font-normal text-mist">(if enabled)</span>
+              </label>
+              <Input
+                id="totp"
+                name="totp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className="mt-1.5"
+                placeholder="000000"
+              />
+            </div>
+          </>
+        ) : otpSent ? (
+          <div>
+            <label htmlFor="otp" className="block text-sm font-medium text-ink">
+              Verification code
+            </label>
+            <Input
+              id="otp"
+              name="otp"
+              type="text"
+              inputMode="numeric"
+              required
+              className="mt-1.5"
+              placeholder="123456"
+            />
+          </div>
+        ) : null}
 
         <div className="flex items-center justify-between gap-4">
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-mist">
-            <input
-              type="checkbox"
-              name="remember"
-              className="size-4 rounded border-line text-sky focus:ring-sky/20"
-            />
-            Remember me
-          </label>
-          <Link href="#" className="text-sm font-medium text-sky hover:underline">
-            Forgot your password?
-          </Link>
+          {mode === "password" ? (
+            <Link href="/reset-password" className="text-sm font-medium text-sky hover:underline">
+              Forgot your password?
+            </Link>
+          ) : (
+            <span />
+          )}
         </div>
 
         {error ? <p className="text-sm text-coral-warn">{error}</p> : null}
 
         <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-          {loading ? "Signing in…" : "Log in"}
+          {loading
+            ? "Please wait…"
+            : mode === "otp"
+              ? otpSent
+                ? "Verify code"
+                : "Send code"
+              : "Log in"}
         </Button>
       </form>
 

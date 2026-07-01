@@ -51,10 +51,9 @@ export default function BudgetsPage() {
     setError("");
     try {
       await budgetsApi.create(token, {
-        name: String(fd.get("name")),
         category: String(fd.get("category")),
         limit_kobo: Math.round(Number(fd.get("limit")) * 100),
-        period: String(fd.get("period")),
+        period: String(fd.get("period")) as "weekly" | "monthly",
       });
       setShowForm(false);
       await load();
@@ -80,10 +79,6 @@ export default function BudgetsPage() {
           <Card className="p-6">
             <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="text-sm font-medium text-ink">Name</label>
-                <Input name="name" required placeholder="Food budget" className="mt-1.5" />
-              </div>
-              <div>
                 <label className="text-sm font-medium text-ink">Category</label>
                 <Input name="category" required placeholder="Food" className="mt-1.5" />
               </div>
@@ -96,7 +91,6 @@ export default function BudgetsPage() {
                 <select name="period" className={`${inputClassName} mt-1.5`}>
                   <option value="monthly">Monthly</option>
                   <option value="weekly">Weekly</option>
-                  <option value="yearly">Yearly</option>
                 </select>
               </div>
               {error ? <p className="text-sm text-coral-warn sm:col-span-2">{error}</p> : null}

@@ -17,16 +17,17 @@ type AppHeaderProps = {
 export function AppHeader({
   title,
   description,
-  unreadCount = 0,
+  unreadCount,
   action,
 }: AppHeaderProps) {
-  const { user } = useAuth();
+  const { user, unreadNotifications } = useAuth();
+  const count = unreadCount ?? unreadNotifications;
 
   return (
     <header className="border-b border-line bg-white px-6 py-5 sm:px-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-mist">{greeting(user?.full_name)}</p>
+          <p className="text-sm text-mist">{greeting(user?.email?.split("@")[0])}</p>
           <h1 className="mt-1 font-display text-2xl text-ink sm:text-3xl">{title}</h1>
           {description ? (
             <p className="mt-1 text-sm text-mist">{description}</p>
@@ -41,9 +42,9 @@ export function AppHeader({
             aria-label="Notifications"
           >
             <Bell className="size-4" />
-            {unreadCount > 0 ? (
+            {count > 0 ? (
               <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-sky text-[10px] font-bold text-white">
-                {unreadCount > 9 ? "9+" : unreadCount}
+                {count > 9 ? "9+" : count}
               </span>
             ) : null}
           </Link>
@@ -61,8 +62,8 @@ export function PlanBadge() {
   const { plan } = useAuth();
   if (!plan) return null;
   return (
-    <Badge variant={plan.tier === "advanced" ? "ink" : "sky"} className="capitalize">
-      {plan.tier}
+    <Badge variant={plan.plan === "advanced" ? "ink" : "sky"} className="capitalize">
+      {plan.display_name ?? plan.plan}
     </Badge>
   );
 }

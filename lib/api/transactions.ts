@@ -1,68 +1,72 @@
 import { apiRequest } from "@/lib/api/client";
-import type { CursorPage, Transaction } from "@/lib/api/types";
+import type {
+  CursorPage,
+  Transaction,
+  TransactionCategory,
+  TransactionType,
+} from "@/lib/api/types";
 
 export type TransactionFilters = {
+  cursor?: string;
+  page_size?: number;
   date_from?: string;
   date_to?: string;
   category?: string;
-  type?: string;
+  type?: TransactionType;
   account_id?: string;
-  cursor?: string;
 };
 
-export const transactionsApi = {
-  list: (token: string, filters?: TransactionFilters) => {
-    const params = new URLSearchParams();
-    if (filters?.date_from) params.set("date_from", filters.date_from);
-    if (filters?.date_to) params.set("date_to", filters.date_to);
-    if (filters?.category) params.set("category", filters.category);
-    if (filters?.type) params.set("type", filters.type);
-    if (filters?.account_id) params.set("account_id", filters.account_id);
-    if (filters?.cursor) params.set("cursor", filters.cursor);
-    const qs = params.toString();
-    const path = qs ? `/transactions/?${qs}` : "/transactions/";
-    return apiRequest<CursorPage<Transaction> | Transaction[]>(path, { token });
-  },
-
-  get: (token: string, id: string) =>
-    apiRequest<Transaction>(`/transactions/${id}/`, { token }),
-
-  create: (
-    token: string,
-    body: {
-      amount_kobo: number;
-      type: string;
-      category?: string;
-      description?: string;
-      account_id?: string;
-      date: string;
-      idempotency_key: string;
-    },
-  ) =>
-    apiRequest<Transaction>("/transactions/", { method: "POST", token, body }),
-
-  remove: (token: string, id: string) =>
-    apiRequest<void>(`/transactions/${id}/`, { method: "DELETE", token }),
-
-  categorise: (token: string, id: string) =>
-    apiRequest<Transaction>(`/transactions/${id}/categorise/`, {
-      method: "POST",
-      token,
-    }),
-
-  uploadReceipt: (token: string, id: string, file: File) => {
-    const form = new FormData();
-    form.append("receipt", file);
-    return apiRequest<Transaction>(`/transactions/${id}/receipt/`, {
-      method: "POST",
-      token,
-      body: form,
+export async function listTransactions(token: string, filters?: TransactionFilters) {
+  const params = new URLSearchParams();
+  if (filters) {
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== "") params.set(k, String(v));
     });
-  },
-};
+  }
+  const qs = params.toString();
+  return apiRequest<CursorPage<Transaction>>(
+    `/transactions/${qs ? `?${qs}` : ""}`,
+    { token },
+  );
+}
 
-export function normalizeTransactions(
-  data: CursorPage<Transaction> | Transaction[],
-): Transaction[] {
-  return Array.isArray(data) ? data : data.results ?? [];
+export async function getTransaction(token: string, id: string) {
+  return apiRequest<Transaction>(`/transactions/${id}/`, { token });
+}
+
+export async function createTransaction(
+  token: string,
+  body: {
+    amount_kobo: number;
+    type: TransactionType;
+    category: TransactionCategory | string;
+    description: string;
+    merchant: string;
+    account_id?: string | null;
+    transaction_date: string;
+    idempotency_key: string;
+  },
+) {
+  return apiRequest<Transaction>("/transactions/", { method: "POST", body, token });
+}
+
+export async function deleteTransaction(token: string, id: string) {
+  return apiRequest<null>(`/transactions/${id}/`, { method: "DELETE", token });
+}
+
+export async function categoriseTransaction(token: string, id: string) {
+  return apiRequest<Transaction>(`/transactions/${id}/categorise/`, {
+    method: "POST",
+    token,
+  });
+}
+
+export async function uploadReceipt(token: string, id: string, file: File) {
+  const form = new FormData();
+  form.append("receipt", file);
+  return apiRequest<Transaction>(`/transactions/${id}/receipt/`, {
+    method: "POST",
+    body: form,
+    token,
+  });
 }

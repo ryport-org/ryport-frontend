@@ -1,84 +1,110 @@
-export type PlanTier = "free" | "pro" | "advanced";
+export type Plan = "free" | "pro" | "advanced";
+
+export type TransactionType = "income" | "expense";
+
+export type TransactionCategory =
+  | "Food"
+  | "Transport"
+  | "Shopping"
+  | "Utilities"
+  | "Healthcare"
+  | "Entertainment"
+  | "Business"
+  | "Education"
+  | "Uncategorised";
 
 export type ApiSuccess<T> = { success: true; data: T };
+
 export type ApiErrorBody = {
   success: false;
-  error: { code: string; message: string };
+  error: { code: string; message: string; details?: Record<string, unknown> };
   request_id?: string;
 };
 
-export type AuthTokens = {
-  access: string;
-  refresh: string;
-};
+export type AuthTokens = { access: string; refresh: string };
 
-export type User = {
+export type Profile = {
   id: string;
   email: string;
-  full_name?: string;
-  first_name?: string;
-  last_name?: string;
-  plan_tier?: PlanTier;
-  created_at?: string;
+  plan: Plan;
+  is_2fa_enabled: boolean;
+  last_login_ip: string | null;
+  created_at: string;
 };
 
-export type PlanFeatures = Record<string, boolean>;
-export type PlanLimits = Record<string, number | null>;
-export type PlanUsage = Record<string, number>;
+export type PlanFeature = {
+  name: string;
+  enabled: boolean;
+  limit: number | null;
+};
 
-export type UserPlan = {
-  tier: PlanTier;
-  features: PlanFeatures;
-  limits: PlanLimits;
-  usage: PlanUsage;
+export type PlanResponse = {
+  plan: Plan;
+  display_name: string;
+  features: PlanFeature[];
+};
+
+export type AuthResponse = AuthTokens & {
+  id: string;
+  email: string;
+  plan: Plan;
+  is_2fa_enabled?: boolean;
 };
 
 export type BankAccount = {
   id: string;
   bank_name: string;
   account_name: string;
-  account_number_masked?: string;
-  balance_kobo: number;
-  currency?: string;
-  is_active?: boolean;
-  last_synced_at?: string | null;
+  masked_account_number: string;
+  mono_account_id?: string;
+  is_active: boolean;
+  connected_at: string;
+  balance_kobo?: number;
 };
-
-export type TransactionType = "income" | "expense" | "transfer";
 
 export type Transaction = {
   id: string;
+  account_id: string | null;
   amount_kobo: number;
   type: TransactionType;
-  category?: string;
-  description?: string;
-  merchant?: string;
-  account_id?: string;
-  date: string;
-  created_at?: string;
+  category: TransactionCategory | string;
+  description: string;
+  merchant: string;
+  is_manual?: boolean;
+  transaction_date: string;
+  created_at: string;
+  metadata?: Record<string, unknown>;
 };
 
 export type CursorPage<T> = {
+  next: string | null;
+  previous: string | null;
+  page_size: number;
   results: T[];
-  next?: string | null;
-  previous?: string | null;
 };
 
 export type Budget = {
   id: string;
-  name: string;
+  name?: string;
   category: string;
   limit_kobo: number;
-  period: "weekly" | "monthly" | "yearly";
+  period: "weekly" | "monthly";
   is_active?: boolean;
+  is_ai_recommended?: boolean;
 };
 
 export type BudgetUsage = {
   budget_id: string;
-  spent_kobo: number;
+  category: string;
+  period: string;
   limit_kobo: number;
-  percentage: number;
+  spent_kobo: number;
   remaining_kobo: number;
+  usage_percent: number;
+  period_start: string;
+  period_end: string;
+  is_over_budget: boolean;
+  is_warning: boolean;
 };
 
 export type Report = {
@@ -87,12 +113,19 @@ export type Report = {
   period?: string;
   title?: string;
   created_at: string;
+  data?: Record<string, unknown>;
   summary?: Record<string, unknown>;
 };
 
+export type NotificationType =
+  | "budget_alert"
+  | "bill_reminder"
+  | "weekly_summary"
+  | "cash_flow_warning";
+
 export type Notification = {
   id: string;
-  type: "budget_alert" | "bill_reminder" | "weekly_summary" | "cash_flow_warning";
+  type: NotificationType;
   title: string;
   message: string;
   is_read: boolean;
@@ -114,38 +147,91 @@ export type Conversation = {
   updated_at?: string;
 };
 
-export type ChatQuota = {
-  remaining: number;
-  limit: number;
-  resets_at?: string;
+export type ChatResponse = {
+  response: string;
+  reply: string;
+  conversation_id: string;
+  message_id: string;
+  remaining_quota: number | null;
 };
 
-export type ChatResponse = {
-  conversation_id: string;
-  message: ChatMessage;
-  reply: ChatMessage;
+export type AIQuota = {
+  used: number;
+  limit: number;
+  remaining: number;
+  resets_at: string;
+  is_unlimited: boolean;
 };
 
 export type CashFlowPrediction = {
+  current_balance?: number;
+  projections?: { date: string; balance_kobo: number }[];
+  days_until_low?: number;
+  low_balance_date?: string;
+  ai_insight?: string;
+  burn_rate_daily?: number;
+  burn_rate_monthly?: number;
   runway_weeks?: number;
-  burn_rate_kobo?: number;
-  balance_kobo?: number;
-  forecast?: { date: string; balance_kobo: number }[];
+};
+
+export type SubscriptionItem = {
+  merchant: string;
+  amount_monthly_kobo: number;
+  amount_monthly_naira?: number;
+  frequency: string;
+  last_charged?: string;
+  is_duplicate?: boolean;
+};
+
+export type BudgetRecommendation = {
+  category: string;
+  db_category: string;
+  avg_spend: number;
+  recommended_limit: number;
+  reasoning: string;
+  confidence: number;
+};
+
+export type CfoAnalysis = {
+  health_score?: number;
+  executive_summary?: string;
+  runway?: { months?: number; zero_date?: string; risk_level?: string };
+  burn_rate?: { monthly?: number; trend?: string };
+  risks?: { severity: string; description: string }[];
+  cost_savings?: Record<string, unknown>[];
+  wasteful_expenses?: Record<string, unknown>[];
+  cached?: boolean;
 };
 
 export type Business = {
   id: string;
   name: string;
+  type?: string;
+  currency?: string;
   industry?: string;
   is_active?: boolean;
 };
 
-export type OAuthProvider = {
-  provider: "google" | "github";
-  name: string;
+export type TeamMember = {
+  id: string;
+  email: string;
+  role: string;
+  name?: string;
 };
 
-export type OAuthStart = {
-  url: string;
-  state: string;
+export type TeamInvite = {
+  id: string;
+  email: string;
+  role: string;
+  expires_at?: string;
+};
+
+export type OAuthProvider = { provider: "google" | "github"; name: string };
+
+export type OAuthStart = { provider: string; url: string; state: string };
+
+export type TwoFactorSetup = {
+  qr_code_url: string;
+  provisioning_uri: string;
+  secret: string;
 };

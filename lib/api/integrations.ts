@@ -2,28 +2,27 @@ import { apiRequest } from "@/lib/api/client";
 
 export type ApiKey = {
   id: string;
-  name?: string;
+  name: string;
   prefix: string;
   created_at: string;
+  key?: string;
 };
 
-export const integrationsApi = {
-  listApiKeys: (token: string) =>
-    apiRequest<ApiKey[]>("/integrations/api-keys/", { token }),
+export async function listApiKeys(token: string) {
+  return apiRequest<ApiKey[]>("/integrations/api-keys/", { token });
+}
 
-  createApiKey: (token: string, name?: string) =>
-    apiRequest<ApiKey & { key: string }>("/integrations/api-keys/", {
-      method: "POST",
-      token,
-      body: { name },
-    }),
+export async function createApiKey(token: string, name: string) {
+  return apiRequest<ApiKey>("/integrations/api-keys/", {
+    method: "POST",
+    body: { name },
+    token,
+  });
+}
 
-  revokeApiKey: (token: string, keyId: string) =>
-    apiRequest<void>(`/integrations/api-keys/${keyId}/`, {
-      method: "DELETE",
-      token,
-    }),
-
-  externalMe: (apiKey: string) =>
-    apiRequest<Record<string, unknown>>("/integrations/external/me/", { apiKey }),
-};
+export async function revokeApiKey(token: string, id: string) {
+  return apiRequest<null>(`/integrations/api-keys/${id}/`, {
+    method: "DELETE",
+    token,
+  });
+}

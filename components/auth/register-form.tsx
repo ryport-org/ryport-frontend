@@ -16,14 +16,16 @@ export function RegisterForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const password = String(fd.get("password"));
+    const confirm = String(fd.get("password_confirm"));
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      await register(
-        String(fd.get("name")),
-        String(fd.get("email")),
-        String(fd.get("password")),
-      );
+      await register(String(fd.get("email")), password, confirm);
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
@@ -40,21 +42,6 @@ export function RegisterForm() {
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-ink">
-            Full name
-          </label>
-          <Input
-            id="name"
-            name="name"
-            type="text"
-            autoComplete="name"
-            required
-            className="mt-1.5"
-            placeholder="Ada Nwosu"
-          />
-        </div>
-
-        <div>
           <label htmlFor="email" className="block text-sm font-medium text-ink">
             Email
           </label>
@@ -69,10 +56,13 @@ export function RegisterForm() {
           />
         </div>
 
+        <PasswordField id="password" autoComplete="new-password" label="Password" />
+
         <PasswordField
-          id="password"
+          id="password_confirm"
+          name="password_confirm"
           autoComplete="new-password"
-          label="Password"
+          label="Confirm password"
         />
 
         {error ? <p className="text-sm text-coral-warn">{error}</p> : null}

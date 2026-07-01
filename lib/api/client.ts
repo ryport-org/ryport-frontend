@@ -1,17 +1,26 @@
 import { API_V1 } from "@/lib/config";
-import type { ApiErrorBody, ApiSuccess } from "@/lib/api/types";
+import type { ApiErrorBody, ApiSuccess, AuthTokens } from "@/lib/api/types";
+import { getAccessToken, getRefreshToken, setTokens } from "@/lib/auth/tokens";
 
 export class ApiError extends Error {
   code: string;
   status: number;
   requestId?: string;
+  details?: Record<string, unknown>;
 
-  constructor(code: string, message: string, status: number, requestId?: string) {
+  constructor(
+    code: string,
+    message: string,
+    status: number,
+    requestId?: string,
+    details?: Record<string, unknown>,
+  ) {
     super(message);
     this.name = "ApiError";
     this.code = code;
     this.status = status;
     this.requestId = requestId;
+    this.details = details;
   }
 }
 
@@ -19,38 +28,16 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   token?: string | null;
   body?: unknown;
   apiKey?: string;
+  skipAuth?: boolean;
+  skipRefresh?: boolean;
 };
 
-export async function apiRequest<T>(
-  path: string,
-  options: RequestOptions = {},
-): Promise<T> {
-  const { token, body, apiKey, headers: initHeaders, ...fetchOptions } = options;
+function requestId(): string {
+  return crypto.randomUUID();
+}
 
-  const headers = new Headers(initHeaders);
-
-  if (body !== undefined && !(body instanceof FormData)) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  if (apiKey) {
-    headers.set("Authorization", `ApiKey ${apiKey}`);
-  }
-
-  const res = await fetch(`${API_V1}${path}`, {
-    ...fetchOptions,
-    headers,
-    body:
-      body instanceof FormData
-        ? body
-        : body !== undefined
-          ? JSON.stringify(body)
-          : undefined,
-  });
+async function parseResponse<T>(res: Response): Promise<T> {
+  if (res.status === 204) return null as T;
 
   let json: ApiSuccess<T> | ApiErrorBody;
   try {
@@ -65,23 +52,27 @@ export async function apiRequest<T>(
       json.error.message,
       res.status,
       json.request_id,
+      json.error.details,
     );
   }
 
   return json.data;
 }
 
-export async function apiRequestRaw(
+async function fetchWithAuth(
   path: string,
-  options: RequestOptions = {},
+  options: RequestOptions,
 ): Promise<Response> {
-  const { token, body, apiKey, headers: initHeaders, ...fetchOptions } = options;
+  const { token, body, apiKey, headers: initHeaders, skipAuth, ...fetchOptions } = options;
   const headers = new Headers(initHeaders);
+  headers.set("X-Request-ID", requestId());
 
   if (body !== undefined && !(body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+
+  const accessToken = skipAuth ? null : (token ?? getAccessToken());
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
   if (apiKey) headers.set("Authorization", `ApiKey ${apiKey}`);
 
   return fetch(`${API_V1}${path}`, {
@@ -94,4 +85,50 @@ export async function apiRequestRaw(
           ? JSON.stringify(body)
           : undefined,
   });
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  let res = await fetchWithAuth(path, options);
+
+  if (
+    res.status === 401 &&
+    !options.skipAuth &&
+    !options.skipRefresh &&
+    getRefreshToken()
+  ) {
+    try {
+      const refresh = getRefreshToken()!;
+      const tokens = await apiRequest<AuthTokens>(
+        "/users/auth/refresh/",
+        { method: "POST", body: { refresh }, skipAuth: true, skipRefresh: true },
+      );
+      setTokens(tokens.access, tokens.refresh);
+      res = await fetchWithAuth(path, { ...options, token: tokens.access });
+    } catch {
+      throw new ApiError("not_authenticated", "Session expired", 401);
+    }
+  }
+
+  return parseResponse<T>(res);
+}
+
+export async function apiRequestRaw(
+  path: string,
+  options: RequestOptions = {},
+): Promise<Response> {
+  return fetchWithAuth(path, options);
+}
+
+export async function healthCheck(): Promise<{ status: string }> {
+  try {
+    const res = await fetch(`${API_V1.replace("/api/v1", "")}/api/health/live/`);
+    if (!res.ok) return { status: "error" };
+    const json = await res.json();
+    return json as { status: string };
+  } catch {
+    return { status: "error" };
+  }
 }

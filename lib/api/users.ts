@@ -1,8 +1,10 @@
 import { apiRequest } from "@/lib/api/client";
-import type { User, UserPlan } from "@/lib/api/types";
+import type { PlanResponse, Profile } from "@/lib/api/types";
 
-export const usersApi = {
-  me: (token: string) => apiRequest<User>("/users/me/", { token }),
+export async function getMe(token: string) {
+  return apiRequest<Profile>("/users/me/", { token });
+}
 
-  plan: (token: string) => apiRequest<UserPlan>("/users/me/plan/", { token }),
-};
+export async function getPlan(token: string) {
+  return apiRequest<PlanResponse>("/users/me/plan/", { token });
+}

@@ -15,14 +15,12 @@ import { formatDate } from "@/lib/format";
 import { getAuthErrorMessage } from "@/lib/auth/auth-context";
 
 export default function ReportsPage() {
-  const { plan } = useAuth();
+  const { canUse } = useAuth();
+  const canPl = canUse("pl_reports");
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
-
-  const canExport = plan?.features?.report_export ?? plan?.tier !== "free";
-  const canPl = plan?.tier === "advanced";
 
   const load = async () => {
     const token = getAccessToken();
@@ -45,7 +43,7 @@ export default function ReportsPage() {
     setGenerating(true);
     setError("");
     try {
-      await reportsApi.generate(token, { type });
+      await reportsApi.generate(token, { type: type as "weekly" | "monthly" | "pl" });
       await load();
     } catch (err) {
       setError(getAuthErrorMessage(err));
@@ -57,12 +55,11 @@ export default function ReportsPage() {
   async function exportReport(id: string, format: "pdf" | "csv" | "xlsx") {
     const token = getAccessToken();
     if (!token) return;
-    const res = await reportsApi.export(token, id, format);
-    const blob = await res.blob();
+    const { blob, filename } = await reportsApi.export(token, id, format);
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `report-${id}.${format}`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -118,21 +115,9 @@ export default function ReportsPage() {
                       {report.period ? ` · ${report.period}` : ""}
                     </p>
                   </div>
-                  {canExport ? (
-                    <div className="flex gap-2">
-                      {(["pdf", "csv", "xlsx"] as const).map((fmt) => (
-                        <Button
-                          key={fmt}
-                          variant="ghost"
-                          className="gap-1 text-xs uppercase"
-                          onClick={() => exportReport(report.id, fmt)}
-                        >
-                          <Download className="size-3.5" />
-                          {fmt}
-                        </Button>
-                      ))}
-                    </div>
-                  ) : null}
+                    <Button variant="ghost" href={`/app/reports/${report.id}`} className="text-xs">
+                      View
+                    </Button>
                 </CardBody>
               </Card>
             ))}

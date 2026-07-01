@@ -1,25 +1,29 @@
 import { apiRequest } from "@/lib/api/client";
 import type { BankAccount } from "@/lib/api/types";
 
-export const accountsApi = {
-  list: (token: string) => apiRequest<BankAccount[]>("/accounts/", { token }),
+export async function listAccounts(token: string) {
+  return apiRequest<BankAccount[]>("/accounts/", { token });
+}
 
-  get: (token: string, accountId: string) =>
-    apiRequest<BankAccount>(`/accounts/${accountId}/`, { token }),
+export async function linkAccount(token: string, code: string) {
+  return apiRequest<BankAccount>("/accounts/", {
+    method: "POST",
+    body: { code },
+    token,
+  });
+}
 
-  connect: (token: string, linkCode: string) =>
-    apiRequest<BankAccount>("/accounts/", {
-      method: "POST",
-      token,
-      body: { link_code: linkCode },
-    }),
+export async function getAccount(token: string, id: string) {
+  return apiRequest<BankAccount>(`/accounts/${id}/`, { token });
+}
 
-  remove: (token: string, accountId: string) =>
-    apiRequest<void>(`/accounts/${accountId}/`, { method: "DELETE", token }),
+export async function disconnectAccount(token: string, id: string) {
+  return apiRequest<null>(`/accounts/${id}/`, { method: "DELETE", token });
+}
 
-  sync: (token: string, accountId: string) =>
-    apiRequest<{ status: string }>(`/accounts/${accountId}/sync/`, {
-      method: "POST",
-      token,
-    }),
-};
+export async function syncAccount(token: string, id: string) {
+  return apiRequest<{ synced_count: number }>(`/accounts/${id}/sync/`, {
+    method: "POST",
+    token,
+  });
+}
