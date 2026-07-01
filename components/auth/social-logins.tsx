@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { authApi } from "@/lib/api";
+import { useState } from "react";
 import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
-import type { OAuthProvider } from "@/lib/api/types";
 
 function GoogleIcon() {
   return (
@@ -36,31 +34,15 @@ function GitHubIcon() {
   );
 }
 
-const PROVIDER_META: Record<
-  string,
-  { label: string; Icon: typeof GoogleIcon }
-> = {
-  google: { label: "Google", Icon: GoogleIcon },
-  github: { label: "GitHub", Icon: GitHubIcon },
-};
+const PROVIDERS = [
+  { id: "google" as const, label: "Google", Icon: GoogleIcon },
+  { id: "github" as const, label: "GitHub", Icon: GitHubIcon },
+];
 
 export function SocialLogins() {
   const { startOAuth } = useAuth();
-  const [providers, setProviders] = useState<OAuthProvider[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState<"google" | "github" | null>(null);
-
-  useEffect(() => {
-    authApi
-      .listOAuthProviders()
-      .then(setProviders)
-      .catch(() => {
-        setProviders([
-          { provider: "google" },
-          { provider: "github" },
-        ]);
-      });
-  }, []);
 
   async function handleOAuth(provider: "google" | "github") {
     setLoading(provider);
@@ -72,10 +54,6 @@ export function SocialLogins() {
       setLoading(null);
     }
   }
-
-  const available = providers.filter((p) => p.provider in PROVIDER_META);
-
-  if (available.length === 0) return null;
 
   return (
     <div>
@@ -90,31 +68,19 @@ export function SocialLogins() {
 
       {error ? <p className="mb-3 text-center text-sm text-coral-warn">{error}</p> : null}
 
-      <div
-        className={
-          available.length === 1
-            ? "grid grid-cols-1 gap-3"
-            : "grid grid-cols-2 gap-3"
-        }
-      >
-        {available.map((p) => {
-          const id = p.provider as "google" | "github";
-          const meta = PROVIDER_META[id];
-          if (!meta) return null;
-          const Icon = meta.Icon;
-          return (
-            <button
-              key={id}
-              type="button"
-              disabled={loading !== null}
-              onClick={() => handleOAuth(id)}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-medium text-ink transition-colors hover:border-sky hover:bg-sky-soft disabled:opacity-60"
-            >
-              <Icon />
-              {loading === id ? "Redirecting…" : meta.label}
-            </button>
-          );
-        })}
+      <div className="grid grid-cols-2 gap-3">
+        {PROVIDERS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            type="button"
+            disabled={loading !== null}
+            onClick={() => handleOAuth(id)}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-white text-sm font-medium text-ink transition-colors hover:border-sky hover:bg-sky-soft disabled:opacity-60"
+          >
+            <Icon />
+            {loading === id ? "Redirecting…" : label}
+          </button>
+        ))}
       </div>
     </div>
   );

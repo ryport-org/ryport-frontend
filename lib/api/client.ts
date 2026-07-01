@@ -1,6 +1,8 @@
 import { API_V1 } from "@/lib/config";
-import type { ApiErrorBody, ApiSuccess, AuthTokens } from "@/lib/api/types";
-import { getAccessToken, getRefreshToken, setTokens } from "@/lib/auth/tokens";
+import type { ApiErrorBody, ApiSuccess } from "@/lib/api/types";
+import { getAccessToken } from "@/lib/auth/tokens";
+import { createClient } from "@/lib/supabase/client";
+import { syncSessionTokens } from "@/lib/auth/tokens";
 
 export class ApiError extends Error {
   code: string;
@@ -61,7 +63,6 @@ async function fetchWithAuth(
 ): Promise<Response> {
   const { token, body, apiKey, headers: initHeaders, skipAuth, ...fetchOptions } = options;
   const headers = new Headers(initHeaders);
-  // X-Request-ID omitted: backend CORS must allow it in Access-Control-Allow-Headers first.
 
   if (body !== undefined && !(body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
@@ -83,29 +84,26 @@ async function fetchWithAuth(
   });
 }
 
+async function refreshSupabaseSession(): Promise<string | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.refreshSession();
+  if (error || !data.session) return null;
+  syncSessionTokens(data.session);
+  return data.session.access_token;
+}
+
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
   let res = await fetchWithAuth(path, options);
 
-  if (
-    res.status === 401 &&
-    !options.skipAuth &&
-    !options.skipRefresh &&
-    getRefreshToken()
-  ) {
-    try {
-      const refresh = getRefreshToken()!;
-      const tokens = await apiRequest<AuthTokens>(
-        "/users/auth/refresh/",
-        { method: "POST", body: { refresh }, skipAuth: true, skipRefresh: true },
-      );
-      setTokens(tokens.access, tokens.refresh);
-      res = await fetchWithAuth(path, { ...options, token: tokens.access });
-    } catch {
+  if (res.status === 401 && !options.skipAuth && !options.skipRefresh) {
+    const refreshed = await refreshSupabaseSession();
+    if (!refreshed) {
       throw new ApiError("not_authenticated", "Session expired", 401);
     }
+    res = await fetchWithAuth(path, { ...options, token: refreshed });
   }
 
   return parseResponse<T>(res);

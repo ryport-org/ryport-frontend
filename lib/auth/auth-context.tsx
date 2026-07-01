@@ -9,21 +9,17 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import type { Provider } from "@supabase/supabase-js";
 import { OAUTH_CALLBACK_URL } from "@/lib/config";
-import { authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
+import { businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
-import {
-  clearOAuthSession,
-  storeOAuthSession,
-  validateOAuthState,
-} from "@/lib/auth/oauth-session";
 import type { Business, PlanFeature, PlanResponse, Profile } from "@/lib/api/types";
 import {
-  clearTokens,
-  getAccessToken,
-  getRefreshToken,
-  setTokens,
-} from "@/lib/auth/tokens";
+  getSupabaseAuthErrorMessage,
+  isAuthError,
+} from "@/lib/auth/supabase-errors";
+import { clearTokens, syncSessionTokens } from "@/lib/auth/tokens";
+import { createClient } from "@/lib/supabase/client";
 
 type AuthContextValue = {
   user: Profile | null;
@@ -34,14 +30,14 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   canUse: (feature: string) => boolean;
   getLimit: (key: string) => number | null;
-  login: (email: string, password: string, totp?: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   loginWithOtp: (email: string, otp: string) => Promise<void>;
   requestOtp: (email: string) => Promise<void>;
   register: (email: string, password: string, passwordConfirm: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   startOAuth: (provider: "google" | "github") => Promise<void>;
-  completeOAuth: (code: string, state: string, totp?: string) => Promise<void>;
+  finishOAuthCallback: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -60,6 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [activeBusiness, setActiveBusiness] = useState<Business | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const supabase = useMemo(() => createClient(), []);
+
   const features = useMemo(() => featureMap(plan?.features), [plan?.features]);
 
   const canUse = useCallback(
@@ -71,6 +69,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (key: string) => features.get(key)?.limit ?? null,
     [features],
   );
+
+  const clearAppState = useCallback(() => {
+    setUser(null);
+    setPlan(null);
+    setUnreadNotifications(0);
+    setActiveBusiness(null);
+  }, []);
 
   const bootstrap = useCallback(async (token: string) => {
     const [profile, userPlan, unread, active] = await Promise.all([
@@ -85,120 +90,168 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setActiveBusiness(active);
   }, []);
 
-  const refreshSession = useCallback(async () => {
-    const access = getAccessToken();
-    const refresh = getRefreshToken();
+  const hydrateFromSupabase = useCallback(
+    async (showLoading = false) => {
+      if (showLoading) setIsLoading(true);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-    if (!access && !refresh) {
-      setUser(null);
-      setPlan(null);
-      setUnreadNotifications(0);
-      setActiveBusiness(null);
-      setIsLoading(false);
-      return;
-    }
+        if (!session) {
+          clearTokens();
+          clearAppState();
+          return;
+        }
 
-    try {
-      let token = access;
-      if (!token && refresh) {
-        const tokens = await authApi.refresh(refresh);
-        setTokens(tokens.access, tokens.refresh);
-        token = tokens.access;
+        syncSessionTokens(session);
+        await bootstrap(session.access_token);
+      } catch {
+        clearTokens();
+        clearAppState();
+      } finally {
+        if (showLoading) setIsLoading(false);
       }
-      if (token) await bootstrap(token);
-    } catch {
-      clearTokens();
-      setUser(null);
-      setPlan(null);
-      setUnreadNotifications(0);
-      setActiveBusiness(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [bootstrap]);
+    },
+    [bootstrap, clearAppState, supabase.auth],
+  );
 
   useEffect(() => {
-    refreshSession();
-  }, [refreshSession]);
+    void hydrateFromSupabase(true);
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        syncSessionTokens(session);
+        try {
+          await bootstrap(session.access_token);
+        } catch {
+          if (event !== "INITIAL_SESSION") clearAppState();
+        }
+      } else if (event === "SIGNED_OUT") {
+        clearTokens();
+        clearAppState();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [bootstrap, clearAppState, hydrateFromSupabase, supabase.auth]);
+
+  const refreshSession = useCallback(async () => {
+    await hydrateFromSupabase(true);
+  }, [hydrateFromSupabase]);
 
   const login = useCallback(
-    async (email: string, password: string, totp?: string) => {
-      const data = await authApi.login({ email, password, totp_token: totp });
-      setTokens(data.access, data.refresh);
-      await bootstrap(data.access);
+    async (email: string, password: string) => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error) throw error;
+      if (!data.session) {
+        throw new Error("Sign in succeeded but no session was returned.");
+      }
+      syncSessionTokens(data.session);
+      await bootstrap(data.session.access_token);
       router.push("/app/dashboard");
     },
-    [bootstrap, router],
+    [bootstrap, router, supabase.auth],
+  );
+
+  const requestOtp = useCallback(
+    async (email: string) => {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: { shouldCreateUser: false },
+      });
+      if (error) throw error;
+    },
+    [supabase.auth],
   );
 
   const loginWithOtp = useCallback(
     async (email: string, otp: string) => {
-      const data = await authApi.verifyOtp(email, otp);
-      setTokens(data.access, data.refresh);
-      await bootstrap(data.access);
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: otp.trim(),
+        type: "email",
+      });
+      if (error) throw error;
+      if (!data.session) {
+        throw new Error("Verification succeeded but no session was returned.");
+      }
+      syncSessionTokens(data.session);
+      await bootstrap(data.session.access_token);
       router.push("/app/dashboard");
     },
-    [bootstrap, router],
+    [bootstrap, router, supabase.auth],
   );
-
-  const requestOtp = useCallback(async (email: string) => {
-    await authApi.requestOtp(email);
-  }, []);
 
   const register = useCallback(
     async (email: string, password: string, passwordConfirm: string) => {
-      const data = await authApi.register({
-        email,
+      if (password !== passwordConfirm) {
+        throw new Error("Passwords do not match.");
+      }
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
         password,
-        password_confirm: passwordConfirm,
       });
-      setTokens(data.access, data.refresh);
-      await bootstrap(data.access);
+      if (error) throw error;
+      if (!data.session) {
+        throw new Error(
+          "Account created. Check your email to confirm your address, then log in.",
+        );
+      }
+      syncSessionTokens(data.session);
+      await bootstrap(data.session.access_token);
       router.push("/app/dashboard");
     },
-    [bootstrap, router],
+    [bootstrap, router, supabase.auth],
   );
 
   const logout = useCallback(async () => {
-    const access = getAccessToken();
-    const refresh = getRefreshToken();
     try {
-      if (access && refresh) await authApi.logout(refresh, access);
+      await supabase.auth.signOut();
     } catch {
       /* still clear locally */
     }
     clearTokens();
-    setUser(null);
-    setPlan(null);
-    setUnreadNotifications(0);
-    setActiveBusiness(null);
+    clearAppState();
     router.push("/login");
-  }, [router]);
+  }, [clearAppState, router, supabase.auth]);
 
-  const startOAuth = useCallback(async (provider: "google" | "github") => {
-    const { url, state } = await authApi.startOAuth(provider, OAUTH_CALLBACK_URL);
-    storeOAuthSession(state, provider);
-    window.location.href = url;
-  }, []);
-
-  const completeOAuth = useCallback(
-    async (code: string, state: string, totp?: string) => {
-      try {
-        const data = await authApi.oauthCallback(code, state, totp);
-        clearOAuthSession();
-        setTokens(data.access, data.refresh);
-        await bootstrap(data.access);
-        router.push("/app/dashboard");
-      } catch (err) {
-        if (err instanceof ApiError && err.code === "two_factor_required") {
-          throw err;
-        }
-        clearOAuthSession();
-        throw err;
-      }
+  const startOAuth = useCallback(
+    async (provider: "google" | "github") => {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider as Provider,
+        options: { redirectTo: OAUTH_CALLBACK_URL },
+      });
+      if (error) throw error;
     },
-    [bootstrap, router],
+    [supabase.auth],
   );
+
+  const finishOAuthCallback = useCallback(async () => {
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+    }
+
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+    if (error) throw error;
+    if (!session) {
+      throw new Error("No session after OAuth. Please try signing in again.");
+    }
+
+    syncSessionTokens(session);
+    await bootstrap(session.access_token);
+    router.push("/app/dashboard");
+  }, [bootstrap, router, supabase.auth]);
 
   const value = useMemo(
     () => ({
@@ -217,7 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
-      completeOAuth,
+      finishOAuthCallback,
     }),
     [
       user,
@@ -234,7 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
-      completeOAuth,
+      finishOAuthCallback,
     ],
   );
 
@@ -248,6 +301,9 @@ export function useAuth() {
 }
 
 export function getAuthErrorMessage(error: unknown): string {
+  if (isAuthError(error)) {
+    return getSupabaseAuthErrorMessage(error);
+  }
   if (error instanceof ApiError) {
     if (error.details && typeof error.details === "object") {
       const fieldMessages = Object.entries(error.details)

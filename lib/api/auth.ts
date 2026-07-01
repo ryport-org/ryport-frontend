@@ -1,42 +1,5 @@
 import { apiRequest } from "@/lib/api/client";
-import type {
-  AuthResponse,
-  AuthTokens,
-  OAuthProvider,
-  OAuthStart,
-  TwoFactorSetup,
-} from "@/lib/api/types";
-
-export async function register(body: {
-  email: string;
-  password: string;
-  password_confirm: string;
-}) {
-  return apiRequest<AuthResponse>("/users/auth/register/", {
-    method: "POST",
-    body,
-    skipAuth: true,
-  });
-}
-
-export async function login(body: {
-  email: string;
-  password: string;
-  totp_token?: string;
-}) {
-  const payload: { email: string; password: string; totp_token?: string } = {
-    email: body.email.trim(),
-    password: body.password,
-  };
-  const totp = body.totp_token?.trim();
-  if (totp) payload.totp_token = totp;
-
-  return apiRequest<AuthResponse>("/users/auth/login/", {
-    method: "POST",
-    body: payload,
-    skipAuth: true,
-  });
-}
+import type { TwoFactorSetup } from "@/lib/api/types";
 
 export async function requestOtp(email: string) {
   return apiRequest<{ message: string }>("/users/auth/otp/request/", {
@@ -47,57 +10,9 @@ export async function requestOtp(email: string) {
 }
 
 export async function verifyOtp(email: string, otp: string) {
-  return apiRequest<AuthResponse>("/users/auth/otp/verify/", {
+  return apiRequest<{ message: string }>("/users/auth/otp/verify/", {
     method: "POST",
     body: { email, otp },
-    skipAuth: true,
-  });
-}
-
-export async function refreshToken(refresh: string) {
-  return apiRequest<AuthTokens>("/users/auth/refresh/", {
-    method: "POST",
-    body: { refresh },
-    skipAuth: true,
-    skipRefresh: true,
-  });
-}
-
-export async function logout(refresh: string, token: string) {
-  return apiRequest<null>("/users/auth/logout/", {
-    method: "POST",
-    body: { refresh },
-    token,
-  });
-}
-
-export async function listOAuthProviders() {
-  return apiRequest<OAuthProvider[]>("/users/auth/oauth/", { skipAuth: true });
-}
-
-export async function startOAuth(provider: string, redirectTo: string) {
-  const qs = new URLSearchParams({ redirect_to: redirectTo });
-  return apiRequest<OAuthStart>(`/users/auth/oauth/${provider}/?${qs}`, {
-    method: "GET",
-    skipAuth: true,
-  });
-}
-
-export async function oauthCallback(body: {
-  code: string;
-  state: string;
-  totp_token?: string;
-}) {
-  const payload: { code: string; state: string; totp_token?: string } = {
-    code: body.code,
-    state: body.state,
-  };
-  const totp = body.totp_token?.trim();
-  if (totp) payload.totp_token = totp;
-
-  return apiRequest<AuthResponse>("/users/auth/oauth/callback/", {
-    method: "POST",
-    body: payload,
     skipAuth: true,
   });
 }
