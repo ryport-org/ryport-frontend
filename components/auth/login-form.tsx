@@ -31,11 +31,12 @@ export function LoginForm() {
           await loginWithOtp(email, otp);
         }
       } else {
-        await login(
-          email,
-          String(fd.get("password")),
-          String(fd.get("totp") || undefined) || undefined,
-        );
+        const totpRaw = fd.get("totp");
+        const totp =
+          typeof totpRaw === "string" && totpRaw.trim().length > 0
+            ? totpRaw.trim()
+            : undefined;
+        await login(email.trim(), String(fd.get("password")), totp);
       }
     } catch (err) {
       setError(getAuthErrorMessage(err));

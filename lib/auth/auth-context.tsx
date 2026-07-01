@@ -233,7 +233,21 @@ export function useAuth() {
 }
 
 export function getAuthErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) return error.message;
+  if (error instanceof ApiError) {
+    if (error.details && typeof error.details === "object") {
+      const fieldMessages = Object.entries(error.details)
+        .flatMap(([field, msgs]) => {
+          if (Array.isArray(msgs)) return msgs.map((m) => `${field}: ${m}`);
+          if (typeof msgs === "string") return [`${field}: ${msgs}`];
+          return [];
+        })
+        .filter(Boolean);
+      if (fieldMessages.length > 0) {
+        return fieldMessages.join(" ");
+      }
+    }
+    return error.message;
+  }
   if (error instanceof Error) return error.message;
   return "Something went wrong. Please try again.";
 }

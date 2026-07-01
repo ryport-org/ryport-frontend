@@ -24,9 +24,16 @@ export async function login(body: {
   password: string;
   totp_token?: string;
 }) {
+  const payload: { email: string; password: string; totp_token?: string } = {
+    email: body.email.trim(),
+    password: body.password,
+  };
+  const totp = body.totp_token?.trim();
+  if (totp) payload.totp_token = totp;
+
   return apiRequest<AuthResponse>("/users/auth/login/", {
     method: "POST",
-    body,
+    body: payload,
     skipAuth: true,
   });
 }
