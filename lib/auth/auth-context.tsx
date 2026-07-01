@@ -225,7 +225,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (provider: "google" | "github") => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider as Provider,
-        options: { redirectTo: OAUTH_CALLBACK_URL },
+        options: {
+          redirectTo: OAUTH_CALLBACK_URL,
+          skipBrowserRedirect: false,
+        },
       });
       if (error) throw error;
     },

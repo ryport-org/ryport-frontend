@@ -4,6 +4,9 @@ function normalizeSiteUrl(url: string): string {
   return `https://${trimmed}`;
 }
 
+/** Production marketing + auth origin (always use www). */
+export const SITE_URL = "https://www.ryport.com.ng";
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "https://ryport.onrender.com";
 
@@ -17,15 +20,17 @@ export const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key";
 
 export const APP_URL = normalizeSiteUrl(
-  process.env.NEXT_PUBLIC_APP_URL ??
-    (typeof window !== "undefined"
-      ? window.location.origin
-      : "https://www.ryport.com.ng"),
+  process.env.NEXT_PUBLIC_APP_URL ?? SITE_URL,
 );
 
-/** Where Supabase/oauth provider redirects after sign-in. Must match Supabase redirect allowlist. */
+/**
+ * Supabase OAuth redirect — must match Authentication → URL Configuration exactly.
+ * Default: https://www.ryport.com.ng/auth/callback
+ * Local dev: set NEXT_PUBLIC_OAUTH_CALLBACK_URL=http://localhost:3000/auth/callback
+ */
 export const OAUTH_CALLBACK_URL = normalizeSiteUrl(
-  process.env.NEXT_PUBLIC_OAUTH_CALLBACK_URL ?? `${APP_URL}/auth/callback`,
+  process.env.NEXT_PUBLIC_OAUTH_CALLBACK_URL ??
+    `${SITE_URL}/auth/callback`,
 );
 
 export const MONO_PUBLIC_KEY = process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY ?? "";
