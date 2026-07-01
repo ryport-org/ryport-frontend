@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 const variants = {
   default: "bg-paper text-ink",
   sky: "bg-sky-soft text-sky",
-  ink: "bg-ink text-white",
+  ink: "bg-brand text-white",
   warn: "bg-coral-warn/10 text-coral-warn",
   success: "bg-sky-soft text-sky",
 };

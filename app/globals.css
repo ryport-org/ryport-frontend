@@ -3,6 +3,7 @@
 /* Direct hex in @theme so Tailwind v4 generates utilities (var() refs break this) */
 @theme {
   --color-ink: #13171f;
+  --color-brand: #0533ce;
   --color-sky: #3d8bff;
   --color-sky-soft: #eaf2ff;
   --color-paper: #fafbfc;
@@ -25,6 +26,7 @@
 /* Mirror tokens for SVG / inline styles */
 :root {
   --ink: #13171f;
+  --brand: #0533ce;
   --sky: #3d8bff;
   --sky-soft: #eaf2ff;
   --paper: #fafbfc;

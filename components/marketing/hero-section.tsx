@@ -23,7 +23,7 @@ export function HeroSection() {
         <div className="relative z-10 mx-auto max-w-5xl px-6 pt-24 text-center sm:px-8 sm:pt-28 lg:px-10 lg:pt-32">
           {/* Badge */}
           <div className="flex justify-center">
-            <span className="inline-flex items-center rounded-full bg-ink p-1 text-xs font-medium text-white shadow-sm">
+            <span className="inline-flex items-center rounded-full bg-brand p-1 text-xs font-medium text-white shadow-sm">
               <span className="px-3 py-1.5">Built for Nigeria</span>
               <span className="rounded-full bg-white px-3 py-1.5 text-ink">
                 Paystack · Flutterwave · local banks
@@ -54,7 +54,7 @@ export function HeroSection() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
               href="/register"
-              className="min-w-[200px] rounded-full px-8 shadow-[0_4px_20px_rgba(19,23,31,0.15)]"
+              className="min-w-[200px] rounded-full px-8 shadow-[0_4px_20px_rgba(5,51,206,0.25)]"
             >
               Start free — ₦0/mo
             </Button>

@@ -5,7 +5,7 @@ type ButtonVariant = "primary" | "secondary" | "ghost" | "sky";
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-ink text-paper hover:opacity-90 active:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
+    "bg-brand text-white hover:brightness-110 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
   sky:
     "bg-sky text-white hover:opacity-90 active:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
   secondary:

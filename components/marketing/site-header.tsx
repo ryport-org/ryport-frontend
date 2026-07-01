@@ -66,7 +66,7 @@ export function SiteHeader() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-transparent px-4 pt-3 sm:px-6 sm:pt-4">
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between gap-4 rounded-full bg-ink px-2 py-2 pl-2 pr-2 shadow-[0_8px_32px_rgba(19,23,31,0.28)] sm:px-3 lg:gap-6">
+        <div className="flex items-center justify-between gap-4 rounded-full bg-brand px-2 py-2 pl-2 pr-2 shadow-[0_8px_32px_rgba(5,51,206,0.28)] sm:px-3 lg:gap-6">
           <NavBrand />
 
           <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Main">
@@ -109,7 +109,7 @@ export function SiteHeader() {
 
         {open ? (
           <nav
-            className="mt-2 max-h-[70vh] overflow-y-auto rounded-2xl border border-line bg-ink p-2 shadow-[0_8px_32px_rgba(19,23,31,0.28)] lg:hidden"
+            className="mt-2 max-h-[70vh] overflow-y-auto rounded-2xl border border-line bg-brand p-2 shadow-[0_8px_32px_rgba(5,51,206,0.28)] lg:hidden"
             aria-label="Mobile"
           >
             {navMenus.map((menu) => {

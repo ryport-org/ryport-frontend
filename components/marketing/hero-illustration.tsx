@@ -56,7 +56,7 @@ export function HeroIllustration() {
             <span className="truncate text-sm text-mist">
               How much did I spend on food this month?
             </span>
-            <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-xs font-medium text-white">
+            <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-xs font-medium text-white">
               <Sparkles className="size-3.5" aria-hidden="true" />
               Ask AI
             </span>
@@ -123,7 +123,7 @@ export function HeroIllustration() {
           {/* Bottom-left floating bar */}
           <div className="absolute bottom-6 left-6 z-20 max-w-[calc(100%-3rem)] rounded-full border border-line bg-white px-4 py-2.5 shadow-[0_8px_28px_rgba(19,23,31,0.08)] sm:bottom-14 sm:left-12 sm:max-w-none sm:px-6 sm:py-3.5 md:bottom-16 md:left-16">
             <span className="text-sm font-medium text-ink">Transactions</span>
-            <span className="ml-3 inline-flex items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-white">
+            <span className="ml-3 inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1.5 text-xs font-medium text-white">
               <Sparkles className="size-3.5" aria-hidden="true" />
               Ask AI
             </span>
