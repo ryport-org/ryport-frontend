@@ -226,7 +226,11 @@ export type TeamInvite = {
   expires_at?: string;
 };
 
-export type OAuthProvider = { provider: "google" | "github"; name: string };
+export type OAuthProvider = {
+  provider: "google" | "github" | string;
+  name?: string;
+  scopes?: string;
+};
 
 export type OAuthStart = { provider: string; url: string; state: string };
 

@@ -12,6 +12,11 @@ import { useRouter } from "next/navigation";
 import { OAUTH_CALLBACK_URL } from "@/lib/config";
 import { authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
+import {
+  clearOAuthSession,
+  storeOAuthSession,
+  validateOAuthState,
+} from "@/lib/auth/oauth-session";
 import type { Business, PlanFeature, PlanResponse, Profile } from "@/lib/api/types";
 import {
   clearTokens,
@@ -36,7 +41,7 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   startOAuth: (provider: "google" | "github") => Promise<void>;
-  completeOAuth: (code: string, state?: string, totp?: string) => Promise<void>;
+  completeOAuth: (code: string, state: string, totp?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -171,16 +176,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const startOAuth = useCallback(async (provider: "google" | "github") => {
-    const { url } = await authApi.startOAuth(provider, OAUTH_CALLBACK_URL);
+    const { url, state } = await authApi.startOAuth(provider, OAUTH_CALLBACK_URL);
+    storeOAuthSession(state, provider);
     window.location.href = url;
   }, []);
 
   const completeOAuth = useCallback(
-    async (code: string, state?: string, totp?: string) => {
-      const data = await authApi.oauthCallback(code, state, totp);
-      setTokens(data.access, data.refresh);
-      await bootstrap(data.access);
-      router.push("/app/dashboard");
+    async (code: string, state: string, totp?: string) => {
+      try {
+        const data = await authApi.oauthCallback(code, state, totp);
+        clearOAuthSession();
+        setTokens(data.access, data.refresh);
+        await bootstrap(data.access);
+        router.push("/app/dashboard");
+      } catch (err) {
+        if (err instanceof ApiError && err.code === "two_factor_required") {
+          throw err;
+        }
+        clearOAuthSession();
+        throw err;
+      }
     },
     [bootstrap, router],
   );

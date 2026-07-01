@@ -38,7 +38,7 @@ export const authApi = {
   logout: auth.logout,
   listOAuthProviders: auth.listOAuthProviders,
   startOAuth: auth.startOAuth,
-  oauthCallback: (code: string, state?: string, totp_token?: string) =>
+  oauthCallback: (code: string, state: string, totp_token?: string) =>
     auth.oauthCallback({ code, state, totp_token }),
   enable2fa: auth.enable2fa,
   confirm2fa: auth.confirm2fa,

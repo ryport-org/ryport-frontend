@@ -76,20 +76,28 @@ export async function listOAuthProviders() {
 }
 
 export async function startOAuth(provider: string, redirectTo: string) {
-  return apiRequest<OAuthStart>(
-    `/users/auth/oauth/${provider}/?redirect_to=${encodeURIComponent(redirectTo)}`,
-    { skipAuth: true },
-  );
+  const qs = new URLSearchParams({ redirect_to: redirectTo });
+  return apiRequest<OAuthStart>(`/users/auth/oauth/${provider}/?${qs}`, {
+    method: "GET",
+    skipAuth: true,
+  });
 }
 
 export async function oauthCallback(body: {
   code: string;
-  state?: string;
+  state: string;
   totp_token?: string;
 }) {
+  const payload: { code: string; state: string; totp_token?: string } = {
+    code: body.code,
+    state: body.state,
+  };
+  const totp = body.totp_token?.trim();
+  if (totp) payload.totp_token = totp;
+
   return apiRequest<AuthResponse>("/users/auth/oauth/callback/", {
     method: "POST",
-    body,
+    body: payload,
     skipAuth: true,
   });
 }
