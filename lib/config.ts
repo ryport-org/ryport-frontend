@@ -4,7 +4,8 @@ export const API_BASE_URL =
 export const API_V1 = `${API_BASE_URL}/api/v1`;
 
 export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??
+  "https://capsykyrncpdtjudkxeb.supabase.co";
 
 export const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key";
