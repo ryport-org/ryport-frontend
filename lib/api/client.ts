@@ -32,10 +32,6 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   skipRefresh?: boolean;
 };
 
-function requestId(): string {
-  return crypto.randomUUID();
-}
-
 async function parseResponse<T>(res: Response): Promise<T> {
   if (res.status === 204) return null as T;
 
@@ -65,7 +61,7 @@ async function fetchWithAuth(
 ): Promise<Response> {
   const { token, body, apiKey, headers: initHeaders, skipAuth, ...fetchOptions } = options;
   const headers = new Headers(initHeaders);
-  headers.set("X-Request-ID", requestId());
+  // X-Request-ID omitted: backend CORS must allow it in Access-Control-Allow-Headers first.
 
   if (body !== undefined && !(body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
