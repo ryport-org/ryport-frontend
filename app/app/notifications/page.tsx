@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export default function NotificationsPage() {
       />
 
       <AppPageBody>
-      <div className="p-6 sm:p-8">
+      <AppPageContent>
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -104,7 +105,7 @@ export default function NotificationsPage() {
             ))}
           </ul>
         )}
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

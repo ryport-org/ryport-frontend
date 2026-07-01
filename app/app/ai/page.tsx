@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Sparkles, TrendingUp, Wallet, BarChart3 } from "lucide-react";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { Card, CardBody } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useEffect, useState } from "react";
@@ -65,7 +66,7 @@ export default function AiHubPage() {
       <AppHeader title="AI Hub" description="Intelligent tools for your money" />
 
       <AppPageBody>
-        <div className="mx-auto w-full max-w-5xl space-y-6 p-6 sm:p-8">
+        <AppPageContent className="max-w-5xl">
           {quota && !quota.is_unlimited ? (
             <Card className="border-sky/20 bg-sky-soft/30">
               <CardBody className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -117,7 +118,7 @@ export default function AiHubPage() {
               );
             })}
           </div>
-        </div>
+        </AppPageContent>
       </AppPageBody>
     </AppPage>
   );

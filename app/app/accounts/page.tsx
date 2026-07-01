@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, Trash2 } from "lucide-react";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { MonoConnectButton } from "@/components/accounts/mono-connect-button";
 import { Card, CardBody } from "@/components/ui/card";
@@ -88,7 +89,7 @@ export default function AccountsPage() {
       />
 
       <AppPageBody>
-      <div className="space-y-6 p-6 sm:p-8">
+      <AppPageContent>
         <Card className="p-6">
           <h2 className="text-sm font-semibold text-ink">Connect via Mono</h2>
           <p className="mt-1 text-sm text-mist">
@@ -179,7 +180,7 @@ export default function AccountsPage() {
             ))}
           </div>
         )}
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

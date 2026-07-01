@@ -9,7 +9,7 @@ export function AppPage({
   className?: string;
 }) {
   return (
-    <div className={cn("flex h-full min-h-0 flex-col overflow-hidden", className)}>
+    <div className={cn("flex h-full min-h-0 w-full flex-col overflow-hidden", className)}>
       {children}
     </div>
   );
@@ -29,8 +29,8 @@ export function AppPageBody({
   return (
     <div
       className={cn(
-        "flex min-h-0 flex-1 flex-col",
-        scroll && "overflow-y-auto",
+        "flex min-h-0 w-full flex-1 flex-col",
+        scroll && "overflow-y-auto overflow-x-hidden overscroll-contain",
         className,
       )}
     >

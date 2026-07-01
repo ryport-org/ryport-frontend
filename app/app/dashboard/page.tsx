@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Sparkline } from "@/components/marketing/sparkline";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { AiInsightCard, TransactionList } from "@/components/dashboard/transaction-list";
 import { BudgetProgressList } from "@/components/dashboard/budget-progress";
@@ -97,7 +98,7 @@ export default function DashboardPage() {
       <AppHeader title="Dashboard" description="Your financial overview at a glance" />
 
       <AppPageBody>
-      <div className="space-y-6 p-6 sm:p-8">
+      <AppPageContent>
         {plan?.plan === "free" ? (
           <Card className="border-brand/20 bg-sky-soft/30">
             <CardBody className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -170,7 +171,7 @@ export default function DashboardPage() {
             </div>
           </>
         )}
-      </div>
+      </AppPageContent>
       </AppPageBody>
     </AppPage>
   );

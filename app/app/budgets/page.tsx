@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { BudgetProgressList } from "@/components/dashboard/budget-progress";
 import { Card } from "@/components/ui/card";
@@ -76,7 +77,7 @@ export default function BudgetsPage() {
       />
 
       <AppPageBody>
-      <div className="space-y-6 p-6 sm:p-8">
+      <AppPageContent>
         {showForm ? (
           <Card className="p-6">
             <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
@@ -108,7 +109,7 @@ export default function BudgetsPage() {
         ) : (
           <BudgetProgressList budgets={budgets} />
         )}
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

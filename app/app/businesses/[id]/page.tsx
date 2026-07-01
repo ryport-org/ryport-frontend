@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Card, CardBody } from "@/components/ui/card";
@@ -37,7 +38,7 @@ export default function BusinessDetailPage() {
       <AppHeader title={business?.name ?? "Business"} description={business?.type} />
 
       <AppPageBody>
-      <div className="space-y-6 p-6 sm:p-8">
+      <AppPageContent>
         <PlanGate feature="multi_business">
           {loading ? (
             <Skeleton className="h-32" />
@@ -63,7 +64,7 @@ export default function BusinessDetailPage() {
             </>
           ) : null}
         </PlanGate>
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

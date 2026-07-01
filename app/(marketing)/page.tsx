@@ -10,10 +10,25 @@ import { PricingSection } from "@/components/marketing/pricing-section";
 import { ProductShowcaseSection } from "@/components/marketing/product-showcase-section";
 import { TestimonialSection } from "@/components/marketing/testimonial-section";
 import { UpgradeScenarios } from "@/components/marketing/upgrade-scenarios";
+import {
+  JsonLd,
+  organizationJsonLd,
+  softwareApplicationJsonLd,
+  websiteJsonLd,
+} from "@/components/seo/json-ld";
+import { createMetadata } from "@/lib/seo/site";
+
+export const metadata = createMetadata({
+  title: undefined,
+  path: "/",
+});
 
 export default function HomePage() {
   return (
     <>
+      <JsonLd
+        data={[organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd()]}
+      />
       <HeroSection />
       <IntegrationsStrip />
       <HowItWorksSection />

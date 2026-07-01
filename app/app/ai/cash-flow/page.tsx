@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Card, CardBody } from "@/components/ui/card";
@@ -29,7 +30,7 @@ export default function CashFlowPage() {
       <AppHeader title="Cash flow forecast" description="30-day balance projection" />
 
       <AppPageBody>
-      <div className="p-6 sm:p-8">
+      <AppPageContent>
         <PlanGate feature="cash_flow_prediction">
           {loading ? (
             <Skeleton className="h-64" />
@@ -73,7 +74,7 @@ export default function CashFlowPage() {
             </Card>
           )}
         </PlanGate>
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

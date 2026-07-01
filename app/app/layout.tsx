@@ -1,17 +1,19 @@
-"use client";
-
+import type { Metadata } from "next";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { AppShell } from "@/components/dashboard/app-shell";
+import { createMetadata } from "@/lib/seo/site";
+
+export const metadata: Metadata = createMetadata({
+  title: "Dashboard",
+  description: "Your Ryport financial dashboard.",
+  path: "/app",
+  noIndex: true,
+});
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
-      <div className="flex h-dvh overflow-hidden bg-paper">
-        <AppSidebar />
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          {children}
-        </main>
-      </div>
+      <AppShell>{children}</AppShell>
     </AuthGuard>
   );
 }

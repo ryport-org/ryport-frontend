@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Card, CardBody } from "@/components/ui/card";
@@ -57,7 +58,7 @@ export default function BusinessesPage() {
       <AppHeader title="Businesses" description="Manage multiple businesses and switch context" />
 
       <AppPageBody>
-      <div className="space-y-6 p-6 sm:p-8">
+      <AppPageContent>
         <PlanGate feature="multi_business">
           {activeBusiness ? (
             <Card className="border-sky/30 bg-sky-soft/30 p-5">
@@ -116,7 +117,7 @@ export default function BusinessesPage() {
             ))}
           </ul>
         </PlanGate>
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

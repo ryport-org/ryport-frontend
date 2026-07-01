@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,9 +73,9 @@ export default function TransactionDetailPage() {
       <AppPage>
         <AppHeader title="Transaction" />
         <AppPageBody>
-          <div className="p-6">
+          <AppPageContent>
             <Skeleton className="h-48" />
-          </div>
+          </AppPageContent>
         </AppPageBody>
       </AppPage>
     );
@@ -105,7 +106,7 @@ export default function TransactionDetailPage() {
         }
       />
       <AppPageBody>
-        <div className="space-y-6 p-6 sm:p-8">
+        <AppPageContent>
           <Card>
             <CardBody className="space-y-4">
               <div className="flex justify-between gap-4">
@@ -142,7 +143,7 @@ export default function TransactionDetailPage() {
             ) : null}
           </div>
           {error ? <p className="text-sm text-coral-warn">{error}</p> : null}
-        </div>
+        </AppPageContent>
       </AppPageBody>
     </AppPage>
   );

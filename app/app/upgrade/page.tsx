@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Check } from "lucide-react";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -84,7 +85,7 @@ export default function UpgradePage() {
       />
 
       <AppPageBody>
-        <div className="mx-auto w-full max-w-4xl space-y-8 p-6 sm:p-8">
+        <AppPageContent className="max-w-4xl space-y-8">
           {currentPlan !== "free" ? (
             <div className="rounded-xl border border-line bg-white px-4 py-3 text-sm text-mist sm:px-5">
               Current plan:{" "}
@@ -146,7 +147,7 @@ export default function UpgradePage() {
           <p className="text-center text-xs text-mist">
             Payments are processed securely via Paystack. Your plan updates automatically after payment.
           </p>
-        </div>
+        </AppPageContent>
       </AppPageBody>
     </AppPage>
   );

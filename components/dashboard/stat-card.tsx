@@ -26,7 +26,7 @@ export function StatCard({
     >
       <p className="text-xs font-medium uppercase tracking-wide text-mist">{label}</p>
       <div className="mt-2 flex items-end justify-between gap-3">
-        <p className="font-display text-2xl tabular-nums text-ink sm:text-3xl">{value}</p>
+        <p className="mt-2 font-display text-xl tabular-nums text-ink sm:text-2xl lg:text-3xl break-words">{value}</p>
         {change ? (
           <span
             className={cn(

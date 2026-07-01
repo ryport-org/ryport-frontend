@@ -4,12 +4,14 @@ import { CtaSection } from "@/components/marketing/cta-section";
 import { PageHero } from "@/components/marketing/page-hero";
 import { PricingSection } from "@/components/marketing/pricing-section";
 import { UpgradeScenarios } from "@/components/marketing/upgrade-scenarios";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Pricing — Ryport",
+export const metadata: Metadata = createMetadata({
+  title: "Pricing",
   description:
     "Free ₦0, Pro ₦5,000/mo, Advanced ₦15,000/mo. AI-powered financial operating system for Nigeria.",
-};
+  path: "/pricing",
+});
 
 export default function PricingPage() {
   return (

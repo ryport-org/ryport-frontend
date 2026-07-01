@@ -15,8 +15,10 @@ import {
   Settings,
   Sparkles,
   Wallet,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useAppShell } from "@/components/dashboard/app-shell-context";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -40,6 +42,7 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, plan, logout, canUse, unreadNotifications } = useAuth();
+  const { mobileNavOpen, closeMobileNav } = useAppShell();
 
   const visibleNav = navItems.filter((item) => {
     if ("feature" in item && item.feature && !canUse(item.feature)) return false;
@@ -47,9 +50,19 @@ export function AppSidebar() {
   });
 
   return (
-    <aside className="flex h-dvh w-64 shrink-0 flex-col overflow-hidden border-r border-line bg-white">
-      <div className="flex shrink-0 items-center gap-2.5 border-b border-line px-5 py-4">
-        <Link href="/app/dashboard" className="flex min-w-0 flex-1 items-center gap-2.5">
+    <aside
+      className={cn(
+        "fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(18rem,88vw)] flex-col overflow-hidden border-r border-line bg-white transition-transform duration-200 ease-out lg:static lg:z-auto lg:w-64 lg:shrink-0 lg:translate-x-0",
+        mobileNavOpen ? "translate-x-0" : "-translate-x-full",
+      )}
+      aria-label="Main navigation"
+    >
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-4 py-4 sm:px-5">
+        <Link
+          href="/app/dashboard"
+          className="flex min-w-0 flex-1 items-center gap-2.5"
+          onClick={closeMobileNav}
+        >
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-paper">
             <Image src="/logo.png" alt="" width={20} height={20} className="object-contain" />
           </span>
@@ -60,9 +73,20 @@ export function AppSidebar() {
             </p>
           </div>
         </Link>
+        <button
+          type="button"
+          className="inline-flex size-9 items-center justify-center rounded-lg text-mist hover:bg-paper hover:text-ink lg:hidden"
+          aria-label="Close menu"
+          onClick={closeMobileNav}
+        >
+          <X className="size-5" />
+        </button>
       </div>
 
-      <nav className="flex min-h-0 flex-1 flex-col justify-center gap-0.5 overflow-hidden px-3 py-2" aria-label="App">
+      <nav
+        className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain px-3 py-3"
+        aria-label="App"
+      >
         {visibleNav.map((item) => {
           const active =
             pathname === item.href ||
@@ -73,8 +97,9 @@ export function AppSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={closeMobileNav}
               className={cn(
-                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex min-h-10 items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 active
                   ? "bg-sky-soft text-sky"
                   : "text-mist hover:bg-paper hover:text-ink",
@@ -97,7 +122,8 @@ export function AppSidebar() {
         {plan?.plan === "free" || plan?.plan === "pro" ? (
           <Link
             href="/app/upgrade"
-            className="mb-3 block rounded-lg border border-line bg-paper px-3 py-2 text-center text-xs font-semibold text-brand transition-colors hover:bg-sky-soft"
+            onClick={closeMobileNav}
+            className="mb-3 block rounded-lg border border-line bg-paper px-3 py-2.5 text-center text-xs font-semibold text-brand transition-colors hover:bg-sky-soft"
           >
             Upgrade plan
           </Link>
@@ -106,7 +132,7 @@ export function AppSidebar() {
         <button
           type="button"
           onClick={() => logout()}
-          className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-mist transition-colors hover:bg-paper hover:text-ink"
+          className="mt-2 flex w-full min-h-10 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-mist transition-colors hover:bg-paper hover:text-ink"
         >
           <LogOut className="size-4" />
           Sign out

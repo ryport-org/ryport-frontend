@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader, PlanBadge } from "@/components/dashboard/app-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,7 @@ export default function SettingsPage() {
       <AppHeader title="Settings" description="Profile, security, and integrations" />
 
       <AppPageBody>
-      <div className="space-y-6 p-6 sm:p-8">
+      <AppPageContent>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {settingsLinks.map((link) => (
             <Link key={link.href} href={link.href}>
@@ -76,7 +77,7 @@ export default function SettingsPage() {
         <Button variant="ghost" className="text-coral-warn" onClick={() => logout()}>
           Sign out
         </Button>
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

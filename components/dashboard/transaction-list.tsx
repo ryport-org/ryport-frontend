@@ -15,7 +15,7 @@ export function TransactionList({
 }: TransactionListProps) {
   if (transactions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
         <p className="text-sm text-mist">{emptyMessage}</p>
         <Link
           href="/app/accounts"
@@ -35,20 +35,30 @@ export function TransactionList({
           <li key={tx.id}>
             <Link
               href={`/app/transactions/${tx.id}`}
-              className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-paper sm:px-6"
+              className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-paper sm:items-center sm:gap-4 sm:px-6 sm:py-4"
             >
               <div
                 className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                  "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold sm:size-10",
                   isIncome ? "bg-sky-soft text-sky" : "bg-paper text-ink",
                 )}
               >
                 {isIncome ? "+" : "−"}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-ink">
-                  {tx.description || tx.merchant || tx.category || "Transaction"}
-                </p>
+                <div className="flex items-start justify-between gap-2 sm:block">
+                  <p className="line-clamp-2 text-sm font-medium text-ink sm:truncate">
+                    {tx.description || tx.merchant || tx.category || "Transaction"}
+                  </p>
+                  <p
+                    className={cn(
+                      "shrink-0 text-sm font-semibold tabular-nums sm:hidden",
+                      isIncome ? "text-sky" : "text-ink",
+                    )}
+                  >
+                    {formatNaira(tx.amount_kobo, { showSign: isIncome })}
+                  </p>
+                </div>
                 <p className="mt-0.5 text-xs text-mist">
                   {tx.category ?? "Uncategorised"} ·{" "}
                   {formatRelativeDate(tx.transaction_date ?? (tx as { date?: string }).date ?? "")}
@@ -56,7 +66,7 @@ export function TransactionList({
               </div>
               <p
                 className={cn(
-                  "shrink-0 text-sm font-semibold tabular-nums",
+                  "hidden shrink-0 text-sm font-semibold tabular-nums sm:block",
                   isIncome ? "text-sky" : "text-ink",
                 )}
               >
@@ -72,7 +82,7 @@ export function TransactionList({
 
 export function AiInsightCard({ insight }: { insight: string }) {
   return (
-    <div className="rounded-xl border border-sky/20 bg-sky-soft/50 p-5">
+    <div className="rounded-xl border border-sky/20 bg-sky-soft/50 p-4 sm:p-5">
       <div className="flex items-center gap-2">
         <Sparkles className="size-4 text-sky" />
         <p className="text-xs font-semibold uppercase tracking-wide text-sky">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { Card, CardBody } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,9 +48,9 @@ export default function BudgetDetailPage() {
       <AppPage>
         <AppHeader title="Budget" />
         <AppPageBody>
-          <div className="p-6">
+          <AppPageContent>
             <Skeleton className="h-48" />
-          </div>
+          </AppPageContent>
         </AppPageBody>
       </AppPage>
     );
@@ -62,7 +63,7 @@ export default function BudgetDetailPage() {
         description={`${budget?.period ?? "monthly"} budget`}
       />
       <AppPageBody>
-        <div className="space-y-6 p-6 sm:p-8">
+        <AppPageContent>
           {usage ? (
             <Card>
               <CardBody>
@@ -106,7 +107,7 @@ export default function BudgetDetailPage() {
               </CardBody>
             </Card>
           ) : null}
-        </div>
+        </AppPageContent>
       </AppPageBody>
     </AppPage>
   );

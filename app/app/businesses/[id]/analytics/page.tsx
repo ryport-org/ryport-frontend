@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Card, CardBody } from "@/components/ui/card";
@@ -30,7 +31,7 @@ export default function BusinessAnalyticsPage() {
       <AppHeader title="Business analytics" description="Revenue and expense trends" />
 
       <AppPageBody>
-      <div className="p-6 sm:p-8">
+      <AppPageContent>
         <PlanGate feature="business_dashboard">
           {loading ? (
             <Skeleton className="h-64" />
@@ -47,7 +48,7 @@ export default function BusinessAnalyticsPage() {
             Back
           </Button>
         </PlanGate>
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

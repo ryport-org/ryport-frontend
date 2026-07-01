@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ export default function SmartBudgetsPage() {
       />
 
       <AppPageBody>
-      <div className="p-6 sm:p-8">
+      <AppPageContent>
         <PlanGate feature="cash_flow_prediction">
           {loading ? (
             <Skeleton className="h-48" />
@@ -78,7 +79,7 @@ export default function SmartBudgetsPage() {
             </div>
           )}
         </PlanGate>
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

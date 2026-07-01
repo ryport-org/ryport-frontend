@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Instrument_Serif, Source_Sans_3 } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/auth-context";
+import { createMetadata } from "@/lib/seo/site";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -21,13 +22,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ryport — AI-Powered Financial Operating System",
-  description:
-    "Understand, manage, and grow your finances with AI. Built for Nigeria — from personal budgeting to AI CFO. Free plan available.",
+  ...createMetadata(),
   icons: {
     icon: "/icon.jpeg",
     apple: "/apple-icon.jpeg",
   },
+  category: "finance",
+  applicationName: "Ryport",
+  authors: [{ name: "Ryport", url: "https://www.ryport.com.ng" }],
+  creator: "Ryport",
+  publisher: "Ryport",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FAFBFC" },
+    { media: "(prefers-color-scheme: dark)", color: "#13171F" },
+  ],
 };
 
 export default function RootLayout({
@@ -37,10 +56,10 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="en-NG"
       className={`${sourceSans.variable} ${instrumentSerif.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col overflow-x-hidden">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

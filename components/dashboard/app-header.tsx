@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Plus } from "lucide-react";
+import { Bell, Menu, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useAppShell } from "@/components/dashboard/app-shell-context";
 import { useAuth } from "@/lib/auth/auth-context";
 import { greeting } from "@/lib/format";
 
@@ -21,20 +22,35 @@ export function AppHeader({
   action,
 }: AppHeaderProps) {
   const { user, unreadNotifications } = useAuth();
+  const { setMobileNavOpen } = useAppShell();
   const count = unreadCount ?? unreadNotifications;
 
   return (
-    <header className="shrink-0 border-b border-line bg-white px-4 py-4 sm:px-6 sm:py-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div className="min-w-0">
-          <p className="text-sm text-mist">{greeting(user?.email?.split("@")[0])}</p>
-          <h1 className="mt-0.5 font-display text-xl text-ink sm:text-2xl lg:text-3xl">{title}</h1>
-          {description ? (
-            <p className="mt-1 text-sm text-mist">{description}</p>
-          ) : null}
+    <header className="shrink-0 border-b border-line bg-white px-4 py-3 sm:px-6 sm:py-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <button
+            type="button"
+            className="mt-0.5 inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-mist transition-colors hover:border-sky hover:text-sky lg:hidden"
+            aria-label="Open menu"
+            onClick={() => setMobileNavOpen(true)}
+          >
+            <Menu className="size-5" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-mist sm:text-sm">
+              {greeting(user?.email?.split("@")[0])}
+            </p>
+            <h1 className="mt-0.5 font-display text-xl leading-tight text-ink sm:text-2xl lg:text-3xl">
+              {title}
+            </h1>
+            {description ? (
+              <p className="mt-1 text-sm leading-relaxed text-mist">{description}</p>
+            ) : null}
+          </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
           {action}
           <Link
             href="/app/notifications"
@@ -48,10 +64,14 @@ export function AppHeader({
               </span>
             ) : null}
           </Link>
-          <Button href="/app/transactions?new=1" variant="primary" className="hidden gap-1.5 sm:inline-flex">
+          <Button
+            href="/app/transactions?new=1"
+            variant="primary"
+            className="inline-flex gap-1.5"
+          >
             <Plus className="size-4" />
-            <span className="hidden md:inline">Add transaction</span>
-            <span className="md:hidden">Add</span>
+            <span className="hidden sm:inline">Add transaction</span>
+            <span className="sm:hidden">Add</span>
           </Button>
         </div>
       </div>

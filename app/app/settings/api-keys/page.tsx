@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -51,7 +52,7 @@ export default function ApiKeysSettingsPage() {
       <AppHeader title="API keys" description="Programmatic access to Ryport" />
 
       <AppPageBody>
-      <div className="p-6 sm:p-8">
+      <AppPageContent>
         <PlanGate feature="api_access">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -85,7 +86,7 @@ export default function ApiKeysSettingsPage() {
             </CardBody>
           </Card>
         </PlanGate>
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }

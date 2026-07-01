@@ -1,10 +1,6 @@
 import { LoginForm } from "@/components/auth/login-form";
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
 
-export const metadata = {
-  title: "Sign in — Ryport",
-};
-
 export default function LoginPage() {
   return (
     <AuthSplitLayout

@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { TransactionList } from "@/components/dashboard/transaction-list";
 import { Card } from "@/components/ui/card";
@@ -129,7 +130,7 @@ function TransactionsPageInner() {
       />
 
       <AppPageBody>
-      <div className="space-y-6 p-6 sm:p-8">
+      <AppPageContent>
         <Card className="p-4 sm:p-5">
           <form onSubmit={applyFilters} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div>
@@ -265,7 +266,7 @@ function TransactionsPageInner() {
             </>
           )}
         </Card>
-      </div>
+      </AppPageContent>
       </AppPageBody>
     </AppPage>
   );

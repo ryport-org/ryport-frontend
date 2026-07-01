@@ -1,6 +1,7 @@
 "use client";
 
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
+import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader, PlanBadge } from "@/components/dashboard/app-header";
 import { Card, CardBody } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -14,7 +15,7 @@ export default function ProfileSettingsPage() {
       <AppHeader title="Profile" description="Your account details" />
 
       <AppPageBody>
-      <div className="p-6 sm:p-8">
+      <AppPageContent>
         <Card>
           <CardBody className="space-y-4">
             <div>
@@ -39,7 +40,7 @@ export default function ProfileSettingsPage() {
             ) : null}
           </CardBody>
         </Card>
-      </div>
+      </AppPageContent>
           </AppPageBody>
     </AppPage>  );
 }
