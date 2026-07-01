@@ -4,6 +4,12 @@ function normalizeSiteUrl(url: string): string {
   return `https://${trimmed}`;
 }
 
+/** Fix common misconfig: auth.callback (dot) → auth/callback (slash). */
+function normalizeOAuthCallbackUrl(url: string): string {
+  const withProtocol = normalizeSiteUrl(url);
+  return withProtocol.replace(/auth\.callback/gi, "auth/callback");
+}
+
 /** Production marketing + auth origin (always use www). */
 export const SITE_URL = "https://www.ryport.com.ng";
 
@@ -28,7 +34,7 @@ export const APP_URL = normalizeSiteUrl(
  * Default: https://www.ryport.com.ng/auth/callback
  * Local dev: set NEXT_PUBLIC_OAUTH_CALLBACK_URL=http://localhost:3000/auth/callback
  */
-export const OAUTH_CALLBACK_URL = normalizeSiteUrl(
+export const OAUTH_CALLBACK_URL = normalizeOAuthCallbackUrl(
   process.env.NEXT_PUBLIC_OAUTH_CALLBACK_URL ??
     `${SITE_URL}/auth/callback`,
 );

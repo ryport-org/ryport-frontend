@@ -4,6 +4,13 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Supabase/Vercel typo: auth.callback → auth/callback (preserve ?code=...)
+  if (pathname === "/auth.callback" || pathname.startsWith("/auth.callback/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/auth\.callback/, "/auth/callback");
+    return NextResponse.redirect(url);
+  }
+
   if (pathname.startsWith("/app")) {
     const hasAuth =
       request.cookies.get("ryport_auth")?.value === "1" ||
@@ -20,5 +27,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*"],
+  matcher: ["/app/:path*", "/auth.callback", "/auth.callback/:path*"],
 };
