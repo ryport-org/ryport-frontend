@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { Download } from "lucide-react";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { Card, CardBody } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,21 +46,25 @@ export default function ReportDetailPage() {
 
   if (loading) {
     return (
-      <>
+      <AppPage>
         <AppHeader title="Report" />
-        <div className="p-6"><Skeleton className="h-48" /></div>
-      </>
+        <AppPageBody>
+          <div className="p-6">
+            <Skeleton className="h-48" />
+          </div>
+        </AppPageBody>
+      </AppPage>
     );
   }
 
   return (
-    <>
+    <AppPage>
       <AppHeader
         title={report?.title ?? `${report?.type ?? "Report"}`}
         description={report?.created_at ? formatDate(report.created_at) : ""}
         action={
           canUse("export_reports") ? (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {(["pdf", "csv", "xlsx"] as const).map((f) => (
                 <Button
                   key={f}
@@ -77,16 +81,18 @@ export default function ReportDetailPage() {
           ) : undefined
         }
       />
-      <div className="space-y-6 p-6 sm:p-8">
-        <Card>
-          <CardBody>
-            <pre className="overflow-auto text-xs text-mist">
-              {JSON.stringify(report?.data ?? report?.summary ?? report, null, 2)}
-            </pre>
-          </CardBody>
-        </Card>
-        <Button variant="ghost" href="/app/reports">Back to reports</Button>
-      </div>
-    </>
+      <AppPageBody>
+        <div className="space-y-6 p-6 sm:p-8">
+          <Card>
+            <CardBody>
+              <pre className="overflow-auto text-xs text-mist">
+                {JSON.stringify(report?.data ?? report?.summary ?? report, null, 2)}
+              </pre>
+            </CardBody>
+          </Card>
+          <Button variant="ghost" href="/app/reports">Back to reports</Button>
+        </div>
+      </AppPageBody>
+    </AppPage>
   );
 }

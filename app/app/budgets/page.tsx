@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { BudgetProgressList } from "@/components/dashboard/budget-progress";
 import { Card } from "@/components/ui/card";
@@ -63,7 +64,7 @@ export default function BudgetsPage() {
   }
 
   return (
-    <>
+    <AppPage>
       <AppHeader
         title="Budgets"
         description="Set limits and get alerts before you overspend"
@@ -74,6 +75,7 @@ export default function BudgetsPage() {
         }
       />
 
+      <AppPageBody>
       <div className="space-y-6 p-6 sm:p-8">
         {showForm ? (
           <Card className="p-6">
@@ -107,6 +109,6 @@ export default function BudgetsPage() {
           <BudgetProgressList budgets={budgets} />
         )}
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }

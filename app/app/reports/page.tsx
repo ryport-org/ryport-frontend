@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, FileText } from "lucide-react";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <>
+    <AppPage>
       <AppHeader
         title="Reports"
         description="Monthly summaries, weekly insights, and P&L"
@@ -86,6 +87,7 @@ export default function ReportsPage() {
         }
       />
 
+      <AppPageBody>
       <div className="space-y-6 p-6 sm:p-8">
         {error ? <p className="text-sm text-coral-warn">{error}</p> : null}
 
@@ -124,6 +126,6 @@ export default function ReportsPage() {
           </ul>
         )}
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }

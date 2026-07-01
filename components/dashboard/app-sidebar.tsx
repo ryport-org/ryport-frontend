@@ -26,7 +26,7 @@ const navItems = [
   { href: "/app/budgets", label: "Budgets", icon: PieChart },
   { href: "/app/reports", label: "Reports", icon: FileText },
   { href: "/app/ai", label: "AI Hub", icon: MessageSquare },
-  { href: "/app/ai/chat", label: "AI Chat", icon: Sparkles, parent: "/app/ai" },
+  { href: "/app/ai/chat", label: "AI Chat", icon: Sparkles, nested: true },
   { href: "/app/notifications", label: "Notifications", icon: Bell },
   {
     href: "/app/businesses",
@@ -47,11 +47,11 @@ export function AppSidebar() {
   });
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-line bg-white">
-      <div className="flex items-center gap-2.5 border-b border-line px-5 py-5">
+    <aside className="flex h-dvh w-64 shrink-0 flex-col overflow-hidden border-r border-line bg-white">
+      <div className="flex shrink-0 items-center gap-2.5 border-b border-line px-5 py-4">
         <Link href="/app/dashboard" className="flex min-w-0 flex-1 items-center gap-2.5">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-paper">
-            <Image src="/logo.png" alt="" width={22} height={22} className="object-contain" />
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-paper">
+            <Image src="/logo.png" alt="" width={20} height={20} className="object-contain" />
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-ink">Ryport</p>
@@ -62,7 +62,7 @@ export function AppSidebar() {
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3" aria-label="App">
+      <nav className="flex min-h-0 flex-1 flex-col justify-center gap-0.5 overflow-hidden px-3 py-2" aria-label="App">
         {visibleNav.map((item) => {
           const active =
             pathname === item.href ||
@@ -74,15 +74,15 @@ export function AppSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
                   ? "bg-sky-soft text-sky"
                   : "text-mist hover:bg-paper hover:text-ink",
-                "parent" in item && item.parent ? "ml-3 text-[13px]" : "",
+                item.nested && "ml-2 text-[13px]",
               )}
             >
               <Icon className="size-4 shrink-0" />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1 truncate">{item.label}</span>
               {showBadge ? (
                 <span className="rounded-full bg-brand px-1.5 py-0.5 text-[10px] font-semibold text-white">
                   {unreadNotifications > 99 ? "99+" : unreadNotifications}
@@ -93,26 +93,20 @@ export function AppSidebar() {
         })}
       </nav>
 
-      {plan?.plan === "free" || plan?.plan === "pro" ? (
-        <div className="px-4 pb-2">
+      <div className="shrink-0 border-t border-line p-4">
+        {plan?.plan === "free" || plan?.plan === "pro" ? (
           <Link
             href="/app/upgrade"
-            className="block rounded-lg border border-line bg-paper px-3 py-2.5 text-center text-xs font-semibold text-brand hover:bg-sky-soft"
+            className="mb-3 block rounded-lg border border-line bg-paper px-3 py-2 text-center text-xs font-semibold text-brand transition-colors hover:bg-sky-soft"
           >
             Upgrade plan
           </Link>
-        </div>
-      ) : null}
-
-      <div className="border-t border-line p-4">
-        <div className="mb-3 truncate px-1">
-          <p className="truncate text-sm font-medium text-ink">{user?.email}</p>
-          <p className="truncate text-xs text-mist">{user?.email}</p>
-        </div>
+        ) : null}
+        <p className="truncate px-1 text-sm font-medium text-ink">{user?.email}</p>
         <button
           type="button"
           onClick={() => logout()}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-mist transition-colors hover:bg-paper hover:text-ink"
+          className="mt-2 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-mist transition-colors hover:bg-paper hover:text-ink"
         >
           <LogOut className="size-4" />
           Sign out

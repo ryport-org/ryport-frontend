@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Button } from "@/components/ui/button";
@@ -54,8 +55,10 @@ export default function BusinessTeamPage() {
   }
 
   return (
-    <>
+    <AppPage>
       <AppHeader title="Team" description="Members and pending invites" />
+
+      <AppPageBody>
       <div className="space-y-6 p-6 sm:p-8">
         <PlanGate feature="team_collaboration">
           <Card className="p-6">
@@ -116,6 +119,6 @@ export default function BusinessTeamPage() {
           <Button variant="ghost" href={`/app/businesses/${id}`}>Back</Button>
         </PlanGate>
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }

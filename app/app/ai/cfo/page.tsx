@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ export default function CfoPage() {
   }, []);
 
   return (
-    <>
+    <AppPage>
       <AppHeader
         title="AI CFO"
         description="Executive financial health analysis"
@@ -41,6 +42,8 @@ export default function CfoPage() {
           </Button>
         }
       />
+
+      <AppPageBody>
       <div className="space-y-6 p-6 sm:p-8">
         <PlanGate feature="ai_cfo">
           {loading && !data ? (
@@ -114,6 +117,6 @@ export default function CfoPage() {
           )}
         </PlanGate>
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }

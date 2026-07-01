@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <>
+    <AppPage>
       <AppHeader
         title="Notifications"
         description="Budget alerts, bill reminders, and weekly summaries"
@@ -57,6 +58,7 @@ export default function NotificationsPage() {
         }
       />
 
+      <AppPageBody>
       <div className="p-6 sm:p-8">
         {loading ? (
           <div className="space-y-3">
@@ -103,6 +105,6 @@ export default function NotificationsPage() {
           </ul>
         )}
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }

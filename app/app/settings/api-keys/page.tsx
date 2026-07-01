@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -46,8 +47,10 @@ export default function ApiKeysSettingsPage() {
   }
 
   return (
-    <>
+    <AppPage>
       <AppHeader title="API keys" description="Programmatic access to Ryport" />
+
+      <AppPageBody>
       <div className="p-6 sm:p-8">
         <PlanGate feature="api_access">
           <Card>
@@ -83,6 +86,6 @@ export default function ApiKeysSettingsPage() {
           </Card>
         </PlanGate>
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }

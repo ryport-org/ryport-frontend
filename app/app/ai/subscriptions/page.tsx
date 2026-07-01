@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Card, CardBody } from "@/components/ui/card";
@@ -23,8 +24,10 @@ export default function SubscriptionsPage() {
   }, []);
 
   return (
-    <>
+    <AppPage>
       <AppHeader title="Subscriptions" description="Recurring charges detected by AI" />
+
+      <AppPageBody>
       <div className="p-6 sm:p-8">
         <PlanGate feature="cash_flow_prediction">
           {loading ? (
@@ -50,6 +53,6 @@ export default function SubscriptionsPage() {
           )}
         </PlanGate>
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }

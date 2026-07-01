@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { PlanGate } from "@/components/plan/plan-gate";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ export default function SmartBudgetsPage() {
   }
 
   return (
-    <>
+    <AppPage>
       <AppHeader
         title="Smart budgets"
         description="AI-recommended limits based on your spending"
@@ -48,6 +49,8 @@ export default function SmartBudgetsPage() {
           ) : undefined
         }
       />
+
+      <AppPageBody>
       <div className="p-6 sm:p-8">
         <PlanGate feature="cash_flow_prediction">
           {loading ? (
@@ -76,6 +79,6 @@ export default function SmartBudgetsPage() {
           )}
         </PlanGate>
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }

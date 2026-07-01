@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Sparkline } from "@/components/marketing/sparkline";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { AiInsightCard, TransactionList } from "@/components/dashboard/transaction-list";
 import { BudgetProgressList } from "@/components/dashboard/budget-progress";
@@ -92,9 +93,10 @@ export default function DashboardPage() {
   const netPosition = income - expenses;
 
   return (
-    <>
+    <AppPage>
       <AppHeader title="Dashboard" description="Your financial overview at a glance" />
 
+      <AppPageBody>
       <div className="space-y-6 p-6 sm:p-8">
         {plan?.plan === "free" ? (
           <Card className="border-brand/20 bg-sky-soft/30">
@@ -169,6 +171,7 @@ export default function DashboardPage() {
           </>
         )}
       </div>
-    </>
+      </AppPageBody>
+    </AppPage>
   );
 }

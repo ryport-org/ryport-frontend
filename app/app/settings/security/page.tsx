@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { Card, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,8 +79,10 @@ export default function SecuritySettingsPage() {
   }
 
   return (
-    <>
+    <AppPage>
       <AppHeader title="Security" description="Two-factor authentication" />
+
+      <AppPageBody>
       <div className="space-y-6 p-6 sm:p-8">
         <Card>
           <CardBody className="space-y-4">
@@ -136,6 +139,6 @@ export default function SecuritySettingsPage() {
           </CardBody>
         </Card>
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }

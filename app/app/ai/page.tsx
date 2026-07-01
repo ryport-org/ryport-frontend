@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles, TrendingUp, Wallet, BarChart3 } from "lucide-react";
 import { AppHeader } from "@/components/dashboard/app-header";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { Card, CardBody } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useEffect, useState } from "react";
 import { getAccessToken } from "@/lib/auth/tokens";
 import { aiApi } from "@/lib/api";
 import type { AIQuota } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 const features = [
   {
@@ -59,63 +61,64 @@ export default function AiHubPage() {
   }, []);
 
   return (
-    <>
-      <AppHeader
-        title="AI Hub"
-        description="Intelligent tools for your money"
-      />
+    <AppPage>
+      <AppHeader title="AI Hub" description="Intelligent tools for your money" />
 
-      <div className="space-y-6 p-6 sm:p-8">
-        {quota && !quota.is_unlimited ? (
-          <Card className="border-sky/20 bg-sky-soft/30">
-            <CardBody className="flex items-center justify-between gap-4 py-4">
-              <p className="text-sm text-ink">
-                <span className="font-semibold">{quota.remaining}</span> AI messages left today
-              </p>
-              <Link href="/app/upgrade" className="text-sm font-semibold text-sky hover:underline">
-                Upgrade for unlimited
-              </Link>
-            </CardBody>
-          </Card>
-        ) : null}
+      <AppPageBody>
+        <div className="mx-auto w-full max-w-5xl space-y-6 p-6 sm:p-8">
+          {quota && !quota.is_unlimited ? (
+            <Card className="border-sky/20 bg-sky-soft/30">
+              <CardBody className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-ink">
+                  <span className="font-semibold">{quota.remaining}</span> AI messages left today
+                </p>
+                <Link href="/app/upgrade" className="text-sm font-semibold text-sky hover:underline">
+                  Upgrade for unlimited
+                </Link>
+              </CardBody>
+            </Card>
+          ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {features.map((f) => {
-            const enabled = canUse(f.feature);
-            const Icon = f.icon;
-            return (
-              <Card key={f.href} className={!enabled ? "opacity-60" : ""}>
-                <CardBody>
-                  <div className="flex items-start gap-4">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sky-soft">
-                      <Icon className="size-5 text-sky" />
+          <div className="grid items-stretch gap-4 sm:grid-cols-2">
+            {features.map((f) => {
+              const enabled = canUse(f.feature);
+              const Icon = f.icon;
+              return (
+                <Card key={f.href} className={cn("flex h-full flex-col", !enabled && "opacity-70")}>
+                  <CardBody className="flex h-full flex-col">
+                    <div className="flex items-start gap-4">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sky-soft">
+                        <Icon className="size-5 text-sky" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-sm font-semibold text-ink">{f.title}</h2>
+                        <p className="mt-1 text-sm leading-relaxed text-mist">{f.description}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-sm font-semibold text-ink">{f.title}</h2>
-                      <p className="mt-1 text-sm text-mist">{f.description}</p>
+                    <div className="mt-4 pt-2">
                       {enabled ? (
                         <Link
                           href={f.href}
-                          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-sky hover:underline"
+                          className="inline-flex items-center gap-1 text-sm font-semibold text-sky hover:underline"
                         >
                           Open <ArrowRight className="size-3.5" />
                         </Link>
                       ) : (
                         <Link
                           href="/app/upgrade"
-                          className="mt-3 inline-flex text-sm font-semibold text-brand hover:underline"
+                          className="inline-flex text-sm font-semibold text-brand hover:underline"
                         >
                           Upgrade to unlock
                         </Link>
                       )}
                     </div>
-                  </div>
-                </CardBody>
-              </Card>
-            );
-          })}
+                  </CardBody>
+                </Card>
+              );
+            })}
+          </div>
         </div>
-      </div>
-    </>
+      </AppPageBody>
+    </AppPage>
   );
 }

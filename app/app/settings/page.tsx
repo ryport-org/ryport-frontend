@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppHeader, PlanBadge } from "@/components/dashboard/app-header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,9 +18,10 @@ export default function SettingsPage() {
   const { user, plan, logout } = useAuth();
 
   return (
-    <>
+    <AppPage>
       <AppHeader title="Settings" description="Profile, security, and integrations" />
 
+      <AppPageBody>
       <div className="space-y-6 p-6 sm:p-8">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {settingsLinks.map((link) => (
@@ -75,6 +77,6 @@ export default function SettingsPage() {
           Sign out
         </Button>
       </div>
-    </>
-  );
+          </AppPageBody>
+    </AppPage>  );
 }
