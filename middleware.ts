@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Supabase/Vercel typo: auth.callback → auth/callback (preserve ?code=...)
@@ -11,21 +12,22 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (pathname.startsWith("/app")) {
-    const hasAuth =
-      request.cookies.get("ryport_auth")?.value === "1" ||
-      request.cookies.has("ryport_access_token");
+  const { supabaseResponse, user } = await updateSession(request);
 
-    if (!hasAuth) {
-      const login = new URL("/login", request.url);
-      login.searchParams.set("next", pathname);
-      return NextResponse.redirect(login);
-    }
+  if (pathname.startsWith("/app") && !user) {
+    const login = new URL("/login", request.url);
+    login.searchParams.set("next", pathname);
+    return NextResponse.redirect(login);
   }
 
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/auth.callback", "/auth.callback/:path*"],
+  matcher: [
+    "/app/:path*",
+    "/auth.callback",
+    "/auth.callback/:path*",
+    "/auth/callback",
+  ],
 };

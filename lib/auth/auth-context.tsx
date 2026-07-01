@@ -37,7 +37,6 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   startOAuth: (provider: "google" | "github") => Promise<void>;
-  finishOAuthCallback: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -227,34 +226,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         provider: provider as Provider,
         options: {
           redirectTo: OAUTH_CALLBACK_URL,
-          skipBrowserRedirect: false,
         },
       });
       if (error) throw error;
     },
     [supabase.auth],
   );
-
-  const finishOAuthCallback = useCallback(async () => {
-    const code = new URLSearchParams(window.location.search).get("code");
-    if (code) {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error) throw error;
-    }
-
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-    if (error) throw error;
-    if (!session) {
-      throw new Error("No session after OAuth. Please try signing in again.");
-    }
-
-    syncSessionTokens(session);
-    await bootstrap(session.access_token);
-    router.push("/app/dashboard");
-  }, [bootstrap, router, supabase.auth]);
 
   const value = useMemo(
     () => ({
@@ -273,7 +250,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
-      finishOAuthCallback,
     }),
     [
       user,
@@ -290,7 +266,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
-      finishOAuthCallback,
     ],
   );
 
