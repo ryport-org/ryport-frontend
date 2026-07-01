@@ -23,7 +23,17 @@ export const SUPABASE_URL =
   "https://capsykyrncpdtjudkxeb.supabase.co";
 
 export const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-anon-key";
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "";
+
+const PLACEHOLDER_KEYS = new Set(["", "placeholder-anon-key", "your-anon-key"]);
+
+export function isSupabaseConfigured(): boolean {
+  return (
+    Boolean(SUPABASE_URL) &&
+    Boolean(SUPABASE_ANON_KEY) &&
+    !PLACEHOLDER_KEYS.has(SUPABASE_ANON_KEY)
+  );
+}
 
 export const APP_URL = normalizeSiteUrl(
   process.env.NEXT_PUBLIC_APP_URL ?? SITE_URL,

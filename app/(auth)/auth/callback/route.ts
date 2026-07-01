@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isSupabaseConfigured } from "@/lib/config";
 import { createClient } from "@/lib/supabase/server";
-import { updateSession } from "@/lib/supabase/middleware";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
@@ -15,20 +15,42 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
+  if (!isSupabaseConfigured()) {
+    const login = new URL("/login", origin);
+    login.searchParams.set(
+      "error",
+      "Supabase anon key missing. Add NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel, then redeploy.",
+    );
+    return NextResponse.redirect(login);
+  }
+
   if (!code) {
     const login = new URL("/login", origin);
     login.searchParams.set("error", "missing_oauth_code");
     return NextResponse.redirect(login);
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (error) {
+    if (error) {
+      const login = new URL("/login", origin);
+      const message =
+        error.message === "Invalid API key"
+          ? "Invalid Supabase API key. Use the anon public key from Supabase → Project Settings → API, add it as NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel, and redeploy."
+          : error.message;
+      login.searchParams.set("error", message);
+      return NextResponse.redirect(login);
+    }
+
+    return NextResponse.redirect(new URL("/app/dashboard", origin));
+  } catch (err) {
     const login = new URL("/login", origin);
-    login.searchParams.set("error", error.message);
+    login.searchParams.set(
+      "error",
+      err instanceof Error ? err.message : "OAuth sign-in failed",
+    );
     return NextResponse.redirect(login);
   }
-
-  return NextResponse.redirect(new URL("/app/dashboard", origin));
 }

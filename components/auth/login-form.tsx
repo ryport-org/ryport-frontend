@@ -1,19 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordField } from "@/components/auth/password-field";
 import { SocialLogins } from "@/components/auth/social-logins";
 import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
 
-export function LoginForm() {
+function LoginFormInner() {
+  const searchParams = useSearchParams();
   const { login, loginWithOtp, requestOtp } = useAuth();
   const [mode, setMode] = useState<"password" | "otp">("password");
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const oauthError = searchParams.get("error");
+    if (oauthError) {
+      setError(oauthError);
+    }
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -131,5 +140,13 @@ export function LoginForm() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export function LoginForm() {
+  return (
+    <Suspense fallback={null}>
+      <LoginFormInner />
+    </Suspense>
   );
 }
