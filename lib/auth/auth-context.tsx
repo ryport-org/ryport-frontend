@@ -303,6 +303,12 @@ export function getAuthErrorMessage(error: unknown): string {
     return getSupabaseAuthErrorMessage(error);
   }
   if (error instanceof ApiError) {
+    if (error.code === "invalid_credentials") {
+      return "Invalid email or password. If you signed up with Google or GitHub, use those buttons below.";
+    }
+    if (error.code === "supabase_auth_error") {
+      return error.message;
+    }
     if (error.details && typeof error.details === "object") {
       const fieldMessages = Object.entries(error.details)
         .flatMap(([field, msgs]) => {

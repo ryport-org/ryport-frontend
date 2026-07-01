@@ -20,7 +20,7 @@ function LoginFormInner() {
   useEffect(() => {
     const oauthError = searchParams.get("error");
     if (oauthError) {
-      setError(oauthError);
+      setError(decodeURIComponent(oauthError.replace(/\+/g, " ")));
     }
   }, [searchParams]);
 
@@ -153,6 +153,10 @@ function LoginFormInner() {
       </form>
 
       <SocialLogins />
+
+      <p className="mt-4 text-center text-xs text-mist">
+        Signed up with Google or GitHub? Use social login — email/password won&apos;t work for those accounts unless you set a password.
+      </p>
 
       <p className="mt-6 text-center text-sm text-mist">
         Don&apos;t have an account?{" "}
