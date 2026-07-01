@@ -30,8 +30,12 @@ export function extractCursor(next: string | null | undefined): string | undefin
 }
 
 export const authApi = {
+  register: auth.register,
+  login: auth.login,
   requestOtp: auth.requestOtp,
   verifyOtp: auth.verifyOtp,
+  refresh: auth.refreshToken,
+  logout: auth.logout,
   enable2fa: auth.enable2fa,
   confirm2fa: auth.confirm2fa,
   disable2fa: auth.disable2fa,

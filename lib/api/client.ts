@@ -1,8 +1,14 @@
 import { API_V1 } from "@/lib/config";
-import type { ApiErrorBody, ApiSuccess } from "@/lib/api/types";
-import { getAccessToken } from "@/lib/auth/tokens";
+import type { ApiErrorBody, ApiSuccess, AuthTokens } from "@/lib/api/types";
+import {
+  getAccessToken,
+  getAuthSource,
+  getRefreshToken,
+  setRyportTokens,
+  setSupabaseTokens,
+} from "@/lib/auth/tokens";
 import { createClient } from "@/lib/supabase/client";
-import { syncSessionTokens } from "@/lib/auth/tokens";
+import { isSupabaseConfigured } from "@/lib/config";
 
 export class ApiError extends Error {
   code: string;
@@ -84,12 +90,26 @@ async function fetchWithAuth(
   });
 }
 
-async function refreshSupabaseSession(): Promise<string | null> {
-  const supabase = createClient();
-  const { data, error } = await supabase.auth.refreshSession();
-  if (error || !data.session) return null;
-  syncSessionTokens(data.session);
-  return data.session.access_token;
+async function refreshAccessToken(): Promise<string | null> {
+  const source = getAuthSource();
+
+  if (source === "supabase" && isSupabaseConfigured()) {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session) return null;
+    setSupabaseTokens(data.session.access_token, data.session.refresh_token);
+    return data.session.access_token;
+  }
+
+  const refresh = getRefreshToken();
+  if (!refresh) return null;
+
+  const tokens = await apiRequest<AuthTokens>(
+    "/users/auth/refresh/",
+    { method: "POST", body: { refresh }, skipAuth: true, skipRefresh: true },
+  );
+  setRyportTokens(tokens.access, tokens.refresh);
+  return tokens.access;
 }
 
 export async function apiRequest<T>(
@@ -98,12 +118,16 @@ export async function apiRequest<T>(
 ): Promise<T> {
   let res = await fetchWithAuth(path, options);
 
-  if (res.status === 401 && !options.skipAuth && !options.skipRefresh) {
-    const refreshed = await refreshSupabaseSession();
-    if (!refreshed) {
+  if (res.status === 401 && !options.skipAuth && !options.skipRefresh && getRefreshToken()) {
+    try {
+      const refreshed = await refreshAccessToken();
+      if (!refreshed) {
+        throw new ApiError("not_authenticated", "Session expired", 401);
+      }
+      res = await fetchWithAuth(path, { ...options, token: refreshed });
+    } catch {
       throw new ApiError("not_authenticated", "Session expired", 401);
     }
-    res = await fetchWithAuth(path, { ...options, token: refreshed });
   }
 
   return parseResponse<T>(res);

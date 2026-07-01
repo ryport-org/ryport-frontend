@@ -10,15 +10,22 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import type { Provider } from "@supabase/supabase-js";
-import { OAUTH_CALLBACK_URL } from "@/lib/config";
-import { businessesApi, notificationsApi, usersApi } from "@/lib/api";
+import { isSupabaseConfigured, OAUTH_CALLBACK_URL } from "@/lib/config";
+import { authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import type { Business, PlanFeature, PlanResponse, Profile } from "@/lib/api/types";
 import {
   getSupabaseAuthErrorMessage,
   isAuthError,
 } from "@/lib/auth/supabase-errors";
-import { clearTokens, syncSessionTokens } from "@/lib/auth/tokens";
+import {
+  clearTokens,
+  getAccessToken,
+  getAuthSource,
+  getRefreshToken,
+  setRyportTokens,
+  setSupabaseTokens,
+} from "@/lib/auth/tokens";
 import { createClient } from "@/lib/supabase/client";
 
 type AuthContextValue = {
@@ -30,7 +37,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   canUse: (feature: string) => boolean;
   getLimit: (key: string) => number | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, totp?: string) => Promise<void>;
   loginWithOtp: (email: string, otp: string) => Promise<void>;
   requestOtp: (email: string) => Promise<void>;
   register: (email: string, password: string, passwordConfirm: string) => Promise<void>;
@@ -55,7 +62,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [activeBusiness, setActiveBusiness] = useState<Business | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const supabase = useMemo(() => createClient(), []);
+  const supabase = useMemo(
+    () => (isSupabaseConfigured() ? createClient() : null),
+    [],
+  );
 
   const features = useMemo(() => featureMap(plan?.features), [plan?.features]);
 
@@ -89,40 +99,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setActiveBusiness(active);
   }, []);
 
-  const hydrateFromSupabase = useCallback(
-    async (showLoading = false) => {
-      if (showLoading) setIsLoading(true);
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+  const hydrateSupabaseSession = useCallback(async (): Promise<boolean> => {
+    if (!supabase) return false;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return false;
+    setSupabaseTokens(session.access_token, session.refresh_token);
+    await bootstrap(session.access_token);
+    return true;
+  }, [bootstrap, supabase]);
 
-        if (!session) {
+  const refreshSession = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const source = getAuthSource();
+
+      if (source === "supabase") {
+        const ok = await hydrateSupabaseSession();
+        if (!ok) {
           clearTokens();
           clearAppState();
+        }
+        return;
+      }
+
+      const access = getAccessToken();
+      const refresh = getRefreshToken();
+
+      if (source === "ryport" && (access || refresh)) {
+        let token = access;
+        if (!token && refresh) {
+          const tokens = await authApi.refresh(refresh);
+          setRyportTokens(tokens.access, tokens.refresh);
+          token = tokens.access;
+        }
+        if (token) {
+          await bootstrap(token);
           return;
         }
-
-        syncSessionTokens(session);
-        await bootstrap(session.access_token);
-      } catch {
-        clearTokens();
-        clearAppState();
-      } finally {
-        if (showLoading) setIsLoading(false);
       }
-    },
-    [bootstrap, clearAppState, supabase.auth],
-  );
+
+      // OAuth callback may set Supabase cookies before localStorage is synced
+      if (await hydrateSupabaseSession()) return;
+
+      clearTokens();
+      clearAppState();
+    } catch {
+      clearTokens();
+      clearAppState();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [bootstrap, clearAppState, hydrateSupabaseSession]);
 
   useEffect(() => {
-    void hydrateFromSupabase(true);
+    void refreshSession();
+
+    if (!supabase) return;
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (getAuthSource() !== "supabase") return;
       if (session) {
-        syncSessionTokens(session);
+        setSupabaseTokens(session.access_token, session.refresh_token);
         try {
           await bootstrap(session.access_token);
         } catch {
@@ -135,102 +176,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [bootstrap, clearAppState, hydrateFromSupabase, supabase.auth]);
-
-  const refreshSession = useCallback(async () => {
-    await hydrateFromSupabase(true);
-  }, [hydrateFromSupabase]);
+  }, [bootstrap, clearAppState, refreshSession, supabase]);
 
   const login = useCallback(
-    async (email: string, password: string) => {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      if (error) throw error;
-      if (!data.session) {
-        throw new Error("Sign in succeeded but no session was returned.");
-      }
-      syncSessionTokens(data.session);
-      await bootstrap(data.session.access_token);
+    async (email: string, password: string, totp?: string) => {
+      const data = await authApi.login({ email, password, totp_token: totp });
+      setRyportTokens(data.access, data.refresh);
+      await bootstrap(data.access);
       router.push("/app/dashboard");
     },
-    [bootstrap, router, supabase.auth],
+    [bootstrap, router],
   );
 
-  const requestOtp = useCallback(
-    async (email: string) => {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: { shouldCreateUser: false },
-      });
-      if (error) throw error;
-    },
-    [supabase.auth],
-  );
+  const requestOtp = useCallback(async (email: string) => {
+    await authApi.requestOtp(email);
+  }, []);
 
   const loginWithOtp = useCallback(
     async (email: string, otp: string) => {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: otp.trim(),
-        type: "email",
-      });
-      if (error) throw error;
-      if (!data.session) {
-        throw new Error("Verification succeeded but no session was returned.");
-      }
-      syncSessionTokens(data.session);
-      await bootstrap(data.session.access_token);
+      const data = await authApi.verifyOtp(email, otp);
+      setRyportTokens(data.access, data.refresh);
+      await bootstrap(data.access);
       router.push("/app/dashboard");
     },
-    [bootstrap, router, supabase.auth],
+    [bootstrap, router],
   );
 
   const register = useCallback(
     async (email: string, password: string, passwordConfirm: string) => {
-      if (password !== passwordConfirm) {
-        throw new Error("Passwords do not match.");
-      }
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+      const data = await authApi.register({
+        email,
         password,
+        password_confirm: passwordConfirm,
       });
-      if (error) throw error;
-      if (!data.session) {
-        throw new Error(
-          "Account created. Check your email to confirm your address, then log in.",
-        );
-      }
-      syncSessionTokens(data.session);
-      await bootstrap(data.session.access_token);
+      setRyportTokens(data.access, data.refresh);
+      await bootstrap(data.access);
       router.push("/app/dashboard");
     },
-    [bootstrap, router, supabase.auth],
+    [bootstrap, router],
   );
 
   const logout = useCallback(async () => {
+    const source = getAuthSource();
+    const access = getAccessToken();
+    const refresh = getRefreshToken();
+
     try {
-      await supabase.auth.signOut();
+      if (source === "ryport" && access && refresh) {
+        await authApi.logout(refresh, access);
+      }
+      if (source === "supabase" && supabase) {
+        await supabase.auth.signOut();
+      }
     } catch {
       /* still clear locally */
     }
+
     clearTokens();
     clearAppState();
     router.push("/login");
-  }, [clearAppState, router, supabase.auth]);
+  }, [clearAppState, router, supabase]);
 
   const startOAuth = useCallback(
     async (provider: "google" | "github") => {
+      if (!supabase) {
+        throw new Error(
+          "OAuth is not configured. Set NEXT_PUBLIC_SUPABASE_ANON_KEY and redeploy.",
+        );
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider as Provider,
-        options: {
-          redirectTo: OAUTH_CALLBACK_URL,
-        },
+        options: { redirectTo: OAUTH_CALLBACK_URL },
       });
       if (error) throw error;
     },
-    [supabase.auth],
+    [supabase],
   );
 
   const value = useMemo(

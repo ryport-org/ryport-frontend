@@ -40,7 +40,12 @@ function LoginFormInner() {
           await loginWithOtp(email, otp);
         }
       } else {
-        await login(email.trim(), String(fd.get("password")));
+        const totpRaw = fd.get("totp");
+        const totp =
+          typeof totpRaw === "string" && totpRaw.trim().length > 0
+            ? totpRaw.trim()
+            : undefined;
+        await login(email.trim(), String(fd.get("password")), totp);
       }
     } catch (err) {
       setError(getAuthErrorMessage(err));
@@ -90,7 +95,23 @@ function LoginFormInner() {
         </div>
 
         {mode === "password" ? (
-          <PasswordField id="password" />
+          <>
+            <PasswordField id="password" />
+            <div>
+              <label htmlFor="totp" className="block text-sm font-medium text-ink">
+                2FA code <span className="font-normal text-mist">(if enabled)</span>
+              </label>
+              <Input
+                id="totp"
+                name="totp"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                className="mt-1.5"
+                placeholder="000000"
+              />
+            </div>
+          </>
         ) : otpSent ? (
           <div>
             <label htmlFor="otp" className="block text-sm font-medium text-ink">

@@ -1,5 +1,40 @@
 import { apiRequest } from "@/lib/api/client";
-import type { TwoFactorSetup } from "@/lib/api/types";
+import type {
+  AuthResponse,
+  AuthTokens,
+  TwoFactorSetup,
+} from "@/lib/api/types";
+
+export async function register(body: {
+  email: string;
+  password: string;
+  password_confirm: string;
+}) {
+  return apiRequest<AuthResponse>("/users/auth/register/", {
+    method: "POST",
+    body,
+    skipAuth: true,
+  });
+}
+
+export async function login(body: {
+  email: string;
+  password: string;
+  totp_token?: string;
+}) {
+  const payload: { email: string; password: string; totp_token?: string } = {
+    email: body.email.trim(),
+    password: body.password,
+  };
+  const totp = body.totp_token?.trim();
+  if (totp) payload.totp_token = totp;
+
+  return apiRequest<AuthResponse>("/users/auth/login/", {
+    method: "POST",
+    body: payload,
+    skipAuth: true,
+  });
+}
 
 export async function requestOtp(email: string) {
   return apiRequest<{ message: string }>("/users/auth/otp/request/", {
@@ -10,10 +45,27 @@ export async function requestOtp(email: string) {
 }
 
 export async function verifyOtp(email: string, otp: string) {
-  return apiRequest<{ message: string }>("/users/auth/otp/verify/", {
+  return apiRequest<AuthResponse>("/users/auth/otp/verify/", {
     method: "POST",
     body: { email, otp },
     skipAuth: true,
+  });
+}
+
+export async function refreshToken(refresh: string) {
+  return apiRequest<AuthTokens>("/users/auth/refresh/", {
+    method: "POST",
+    body: { refresh },
+    skipAuth: true,
+    skipRefresh: true,
+  });
+}
+
+export async function logout(refresh: string, token: string) {
+  return apiRequest<null>("/users/auth/logout/", {
+    method: "POST",
+    body: { refresh },
+    token,
   });
 }
 
