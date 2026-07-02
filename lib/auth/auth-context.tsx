@@ -17,7 +17,6 @@ import { storeOAuthSession, clearOAuthSession } from "@/lib/auth/oauth-session";
 import {
   clearTokens,
   getAccessToken,
-  getAuthSource,
   getRefreshToken,
   setRyportTokens,
 } from "@/lib/auth/tokens";
@@ -39,6 +38,7 @@ type AuthContextValue = {
   refreshSession: () => Promise<void>;
   startOAuth: (provider: "google" | "github") => Promise<void>;
   completeOAuth: (code: string, state: string, totp?: string) => Promise<void>;
+  completeOAuthFromRedirect: (access: string, refresh?: string | null) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -199,6 +199,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [bootstrap, router],
   );
 
+  const completeOAuthFromRedirect = useCallback(
+    async (access: string, refresh?: string | null) => {
+      clearOAuthSession();
+
+      if (refresh) {
+        setRyportTokens(access, refresh);
+        try {
+          await authApi.syncSession(access);
+        } catch {
+          /* tokens from redirect are sufficient */
+        }
+        await bootstrap(access);
+        router.push("/app/dashboard");
+        return;
+      }
+
+      const data = await authApi.syncSession(access);
+      setRyportTokens(data.access, data.refresh);
+      await bootstrap(data.access);
+      router.push("/app/dashboard");
+    },
+    [bootstrap, router],
+  );
+
   const value = useMemo(
     () => ({
       user,
@@ -217,6 +241,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshSession,
       startOAuth,
       completeOAuth,
+      completeOAuthFromRedirect,
     }),
     [
       user,
@@ -234,6 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshSession,
       startOAuth,
       completeOAuth,
+      completeOAuthFromRedirect,
     ],
   );
 

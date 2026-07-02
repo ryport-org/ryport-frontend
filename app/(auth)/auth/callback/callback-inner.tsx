@@ -9,9 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ApiError } from "@/lib/api/client";
 
+function decodeParam(value: string): string {
+  return decodeURIComponent(value.replace(/\+/g, " "));
+}
+
+function stripSensitiveQueryParams() {
+  window.history.replaceState({}, "", "/auth/callback");
+}
+
 export default function AuthCallbackInner() {
   const searchParams = useSearchParams();
-  const { completeOAuth } = useAuth();
+  const { completeOAuth, completeOAuthFromRedirect } = useAuth();
   const [error, setError] = useState("");
   const [needs2fa, setNeeds2fa] = useState(false);
   const [totp, setTotp] = useState("");
@@ -23,22 +31,71 @@ export default function AuthCallbackInner() {
 
   useEffect(() => {
     if (handled.current) return;
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
+
+    const oauthStatus = searchParams.get("oauth");
+    const access = searchParams.get("access");
+    const refresh = searchParams.get("refresh");
     const oauthError =
       searchParams.get("error_description") ?? searchParams.get("error");
+    const code = searchParams.get("code");
+    const state = searchParams.get("state");
 
-    if (oauthError) {
-      setError(decodeURIComponent(oauthError.replace(/\+/g, " ")));
+    if (oauthError && oauthStatus !== "success") {
+      handled.current = true;
+      setError(decodeParam(oauthError));
+      stripSensitiveQueryParams();
+      return;
+    }
+
+    if (oauthStatus === "success") {
+      if (!access) {
+        handled.current = true;
+        setError("OAuth succeeded but no access token was returned. Please try again.");
+        stripSensitiveQueryParams();
+        return;
+      }
+
+      handled.current = true;
+      void (async () => {
+        setSubmitting(true);
+        try {
+          await completeOAuthFromRedirect(access, refresh);
+          stripSensitiveQueryParams();
+        } catch (err) {
+          setError(getAuthErrorMessage(err));
+          stripSensitiveQueryParams();
+        } finally {
+          setSubmitting(false);
+        }
+      })();
+      return;
+    }
+
+    if (access && !code) {
+      handled.current = true;
+      void (async () => {
+        setSubmitting(true);
+        try {
+          await completeOAuthFromRedirect(access, refresh);
+          stripSensitiveQueryParams();
+        } catch (err) {
+          setError(getAuthErrorMessage(err));
+          stripSensitiveQueryParams();
+        } finally {
+          setSubmitting(false);
+        }
+      })();
       return;
     }
 
     if (!code || !state) {
-      setError("Missing OAuth code or state. Please try signing in again.");
+      handled.current = true;
+      setError("Missing OAuth parameters. Please try signing in again.");
       return;
     }
 
     if (!validateOAuthState(state)) {
+      handled.current = true;
       clearOAuthSession();
       setError("OAuth session expired or invalid. Please try signing in again.");
       return;
@@ -51,6 +108,7 @@ export default function AuthCallbackInner() {
       setSubmitting(true);
       try {
         await completeOAuth(code, state);
+        stripSensitiveQueryParams();
       } catch (err) {
         if (err instanceof ApiError && err.code === "2fa_required") {
           setNeeds2fa(true);
@@ -62,7 +120,7 @@ export default function AuthCallbackInner() {
         setSubmitting(false);
       }
     })();
-  }, [completeOAuth, searchParams]);
+  }, [completeOAuth, completeOAuthFromRedirect, searchParams]);
 
   async function handle2faSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,6 +129,7 @@ export default function AuthCallbackInner() {
     setError("");
     try {
       await completeOAuth(oauthParams.code, oauthParams.state, totp.trim());
+      stripSensitiveQueryParams();
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {

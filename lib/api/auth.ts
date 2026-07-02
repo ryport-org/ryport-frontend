@@ -129,3 +129,13 @@ export async function completeOAuth(body: {
     skipAuth: true,
   });
 }
+
+/** Validate OAuth tokens from redirect URL and return canonical Ryport JWTs. */
+export async function syncSession(access: string) {
+  return apiRequest<AuthResponse>("/users/auth/session/sync/", {
+    method: "POST",
+    body: { access },
+    token: access,
+    skipAuth: true,
+  });
+}

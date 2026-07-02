@@ -70,7 +70,7 @@ async function fetchWithAuth(
     headers.set("Content-Type", "application/json");
   }
 
-  const accessToken = skipAuth ? null : (token ?? getAccessToken());
+  const accessToken = token ?? (skipAuth ? null : getAccessToken());
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
   if (apiKey) headers.set("Authorization", `ApiKey ${apiKey}`);
 

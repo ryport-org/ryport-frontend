@@ -44,6 +44,7 @@ export const authApi = {
   listOAuthProviders: auth.listOAuthProviders,
   startOAuth: auth.startOAuth,
   completeOAuth: auth.completeOAuth,
+  syncSession: auth.syncSession,
 };
 
 export const usersApi = {
