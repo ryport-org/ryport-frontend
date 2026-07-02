@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordField } from "@/components/auth/password-field";
-import { SocialLogins } from "@/components/auth/social-logins";
+// OAuth temporarily disabled — re-enable: import { SocialLogins } from "@/components/auth/social-logins";
 import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
 
 function LoginFormInner() {
@@ -152,11 +152,12 @@ function LoginFormInner() {
         </Button>
       </form>
 
+      {/* OAuth temporarily disabled
       <SocialLogins />
-
       <p className="mt-4 text-center text-xs text-mist">
         Signed up with Google or GitHub? Use social login — email/password won&apos;t work for those accounts unless you set a password.
       </p>
+      */}
 
       <p className="mt-6 text-center text-sm text-mist">
         Don&apos;t have an account?{" "}

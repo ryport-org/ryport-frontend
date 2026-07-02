@@ -9,16 +9,16 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { OAUTH_NEXT_PATH } from "@/lib/config";
+// OAuth temporarily disabled — re-enable with SocialLogins + OAuthHandler
+// import { OAUTH_NEXT_PATH } from "@/lib/config";
 import { authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import type { Business, PlanFeature, PlanResponse, Profile } from "@/lib/api/types";
-import { storeOAuthSession, clearOAuthSession } from "@/lib/auth/oauth-session";
+import { clearOAuthSession } from "@/lib/auth/oauth-session";
 import {
   clearTokens,
   getAccessToken,
   getRefreshToken,
-  hasOAuthRedirectParams,
   setRyportTokens,
 } from "@/lib/auth/tokens";
 
@@ -37,9 +37,10 @@ type AuthContextValue = {
   register: (email: string, password: string, passwordConfirm: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
-  startOAuth: (provider: "google" | "github") => Promise<void>;
-  loadSessionAfterOAuth: (access: string) => Promise<void>;
-  exchangeOAuthCode: (code: string, state: string, totp?: string) => Promise<void>;
+  // OAuth temporarily disabled
+  // startOAuth: (provider: "google" | "github") => Promise<void>;
+  // loadSessionAfterOAuth: (access: string) => Promise<void>;
+  // exchangeOAuthCode: (code: string, state: string, totp?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -120,10 +121,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [bootstrap, clearAppState]);
 
   useEffect(() => {
-    if (hasOAuthRedirectParams()) {
-      setIsLoading(true);
-      return;
-    }
     void refreshSession();
   }, [refreshSession]);
 
@@ -183,6 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   }, [clearAppState, router]);
 
+  /*
   const startOAuth = useCallback(async (provider: "google" | "github") => {
     const { url, state } = await authApi.startOAuth(provider, OAUTH_NEXT_PATH);
     storeOAuthSession(state, provider);
@@ -196,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await authApi.syncSession(token);
       } catch {
-        /* tokens already saved from redirect URL */
+        // tokens already saved from redirect URL
       }
       await bootstrap(token);
       setIsLoading(false);
@@ -218,6 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [bootstrap],
   );
+  */
 
   const value = useMemo(
     () => ({
@@ -235,9 +234,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       refreshSession,
-      startOAuth,
-      loadSessionAfterOAuth,
-      exchangeOAuthCode,
+      // startOAuth,
+      // loadSessionAfterOAuth,
+      // exchangeOAuthCode,
     }),
     [
       user,
@@ -253,9 +252,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       refreshSession,
-      startOAuth,
-      loadSessionAfterOAuth,
-      exchangeOAuthCode,
+      // startOAuth,
+      // loadSessionAfterOAuth,
+      // exchangeOAuthCode,
     ],
   );
 
@@ -271,11 +270,13 @@ export function useAuth() {
 export function getAuthErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.code === "invalid_credentials") {
-      return "Invalid email or password. If you signed up with Google or GitHub, use those buttons below.";
+      return "Invalid email or password.";
     }
+    /*
     if (error.code === "oauth_state_mismatch" || error.code === "missing_oauth_state") {
       return "OAuth session expired. Please try signing in again.";
     }
+    */
     if (error.details && typeof error.details === "object") {
       const fieldMessages = Object.entries(error.details)
         .flatMap(([field, msgs]) => {

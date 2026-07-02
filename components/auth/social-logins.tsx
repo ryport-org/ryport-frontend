@@ -1,5 +1,13 @@
 "use client";
 
+/** OAuth temporarily disabled. Re-enable SocialLogins in login/register forms. */
+export function SocialLogins() {
+  return null;
+}
+
+/*
+"use client";
+
 import { useState } from "react";
 import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
 
@@ -85,3 +93,4 @@ export function SocialLogins() {
     </div>
   );
 }
+*/

@@ -1,5 +1,13 @@
 "use client";
 
+/** OAuth temporarily disabled. Re-enable <OAuthHandler /> in app/layout.tsx. */
+export function OAuthHandler() {
+  return null;
+}
+
+/*
+"use client";
+
 import { Suspense, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -78,3 +86,4 @@ export function OAuthHandler() {
     </Suspense>
   );
 }
+*/

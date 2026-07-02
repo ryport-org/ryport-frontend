@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordField } from "@/components/auth/password-field";
-import { SocialLogins } from "@/components/auth/social-logins";
+// OAuth temporarily disabled — re-enable: import { SocialLogins } from "@/components/auth/social-logins";
 import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
 
 export function RegisterForm() {
@@ -72,7 +72,7 @@ export function RegisterForm() {
         </Button>
       </form>
 
-      <SocialLogins />
+      {/* OAuth temporarily disabled — <SocialLogins /> */}
 
       <p className="mt-6 text-center text-sm text-mist">
         Already have an account?{" "}
