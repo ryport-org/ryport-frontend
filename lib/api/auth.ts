@@ -111,8 +111,8 @@ export async function listOAuthProviders() {
   return apiRequest<OAuthProvider[]>("/users/auth/oauth/", { skipAuth: true });
 }
 
-export async function startOAuth(provider: "google" | "github", redirectTo: string) {
-  const params = new URLSearchParams({ redirect_to: redirectTo });
+export async function startOAuth(provider: "google" | "github", next = "/dashboard") {
+  const params = new URLSearchParams({ next });
   return apiRequest<OAuthStart>(`/users/auth/oauth/${provider}/?${params}`, {
     skipAuth: true,
   });

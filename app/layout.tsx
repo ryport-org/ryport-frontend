@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Instrument_Serif, Source_Sans_3 } from "next/font/google";
+import { OAuthHandler } from "@/components/auth/oauth-handler";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { createMetadata } from "@/lib/seo/site";
 import "./globals.css";
@@ -60,7 +61,10 @@ export default function RootLayout({
       className={`${sourceSans.variable} ${instrumentSerif.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col overflow-x-hidden">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <OAuthHandler />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

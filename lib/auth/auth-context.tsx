@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { OAUTH_CALLBACK_URL } from "@/lib/config";
+import { OAUTH_NEXT_PATH } from "@/lib/config";
 import { authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import type { Business, PlanFeature, PlanResponse, Profile } from "@/lib/api/types";
@@ -37,8 +37,8 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   startOAuth: (provider: "google" | "github") => Promise<void>;
-  completeOAuth: (code: string, state: string, totp?: string) => Promise<void>;
-  completeOAuthFromRedirect: (access: string, refresh?: string | null) => Promise<void>;
+  applyOAuthTokens: (access: string, refresh?: string | null) => Promise<void>;
+  exchangeOAuthCode: (code: string, state: string, totp?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -179,12 +179,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [clearAppState, router]);
 
   const startOAuth = useCallback(async (provider: "google" | "github") => {
-    const { url, state } = await authApi.startOAuth(provider, OAUTH_CALLBACK_URL);
+    const { url, state } = await authApi.startOAuth(provider, OAUTH_NEXT_PATH);
     storeOAuthSession(state, provider);
-    window.location.assign(url);
+    window.location.href = url;
   }, []);
 
-  const completeOAuth = useCallback(
+  const applyOAuthTokens = useCallback(
+    async (access: string, refresh?: string | null) => {
+      clearOAuthSession();
+
+      if (refresh) {
+        setRyportTokens(access, refresh);
+        try {
+          await authApi.syncSession(access);
+        } catch {
+          /* redirect tokens are sufficient */
+        }
+        await bootstrap(access);
+        return;
+      }
+
+      const data = await authApi.syncSession(access);
+      setRyportTokens(data.access, data.refresh);
+      await bootstrap(data.access);
+    },
+    [bootstrap],
+  );
+
+  const exchangeOAuthCode = useCallback(
     async (code: string, state: string, totp?: string) => {
       const data = await authApi.completeOAuth({
         code,
@@ -194,33 +216,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRyportTokens(data.access, data.refresh);
       clearOAuthSession();
       await bootstrap(data.access);
-      router.push("/app/dashboard");
     },
-    [bootstrap, router],
-  );
-
-  const completeOAuthFromRedirect = useCallback(
-    async (access: string, refresh?: string | null) => {
-      clearOAuthSession();
-
-      if (refresh) {
-        setRyportTokens(access, refresh);
-        try {
-          await authApi.syncSession(access);
-        } catch {
-          /* tokens from redirect are sufficient */
-        }
-        await bootstrap(access);
-        router.push("/app/dashboard");
-        return;
-      }
-
-      const data = await authApi.syncSession(access);
-      setRyportTokens(data.access, data.refresh);
-      await bootstrap(data.access);
-      router.push("/app/dashboard");
-    },
-    [bootstrap, router],
+    [bootstrap],
   );
 
   const value = useMemo(
@@ -240,8 +237,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
-      completeOAuth,
-      completeOAuthFromRedirect,
+      applyOAuthTokens,
+      exchangeOAuthCode,
     }),
     [
       user,
@@ -258,8 +255,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
-      completeOAuth,
-      completeOAuthFromRedirect,
+      applyOAuthTokens,
+      exchangeOAuthCode,
     ],
   );
 
@@ -277,10 +274,7 @@ export function getAuthErrorMessage(error: unknown): string {
     if (error.code === "invalid_credentials") {
       return "Invalid email or password. If you signed up with Google or GitHub, use those buttons below.";
     }
-    if (error.code === "supabase_auth_error") {
-      return error.message;
-    }
-    if (error.code === "oauth_state_mismatch") {
+    if (error.code === "oauth_state_mismatch" || error.code === "missing_oauth_state") {
       return "OAuth session expired. Please try signing in again.";
     }
     if (error.details && typeof error.details === "object") {

@@ -68,6 +68,10 @@ export const OAUTH_CALLBACK_URL = normalizeOAuthCallbackUrl(
   process.env.NEXT_PUBLIC_OAUTH_CALLBACK_URL ?? `${SITE_URL}/auth/callback`,
 );
 
+/** Post-login path passed to backend OAuth initiate (`?next=`). */
+export const OAUTH_NEXT_PATH =
+  process.env.NEXT_PUBLIC_OAUTH_NEXT_PATH ?? "/dashboard";
+
 export const MONO_PUBLIC_KEY = process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY ?? "";
 
 export const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "";
