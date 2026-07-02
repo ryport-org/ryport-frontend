@@ -4,13 +4,14 @@ import { Suspense, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { readOAuthSession } from "@/lib/auth/oauth-session";
+import { setRyportTokens, stripOAuthQueryParams } from "@/lib/auth/tokens";
 
 const APP_DASHBOARD = "/app/dashboard";
 
 function OAuthHandlerInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { applyOAuthTokens, exchangeOAuthCode } = useAuth();
+  const { loadSessionAfterOAuth, exchangeOAuthCode } = useAuth();
   const handling = useRef(false);
 
   useEffect(() => {
@@ -39,7 +40,13 @@ function OAuthHandlerInner() {
         }
 
         if (oauth === "success" && access) {
-          await applyOAuthTokens(access, refresh);
+          if (!refresh) {
+            router.replace("/login?error=missing_refresh_token");
+            return;
+          }
+          setRyportTokens(access, refresh);
+          stripOAuthQueryParams();
+          await loadSessionAfterOAuth(access);
           router.replace(APP_DASHBOARD);
           return;
         }
@@ -50,6 +57,7 @@ function OAuthHandlerInner() {
             router.replace("/login?error=missing_oauth_state");
             return;
           }
+          stripOAuthQueryParams();
           await exchangeOAuthCode(code, state);
           router.replace(APP_DASHBOARD);
           return;
@@ -58,7 +66,7 @@ function OAuthHandlerInner() {
         router.replace("/login?error=oauth_failed");
       }
     })();
-  }, [applyOAuthTokens, exchangeOAuthCode, router, searchParams]);
+  }, [exchangeOAuthCode, loadSessionAfterOAuth, router, searchParams]);
 
   return null;
 }

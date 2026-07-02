@@ -71,6 +71,9 @@ async function fetchWithAuth(
   }
 
   const accessToken = token ?? (skipAuth ? null : getAccessToken());
+  if (!skipAuth && !accessToken && !apiKey) {
+    throw new ApiError("not_authenticated", "Not logged in", 401);
+  }
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
   if (apiKey) headers.set("Authorization", `ApiKey ${apiKey}`);
 

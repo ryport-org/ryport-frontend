@@ -18,6 +18,7 @@ import {
   clearTokens,
   getAccessToken,
   getRefreshToken,
+  hasOAuthRedirectParams,
   setRyportTokens,
 } from "@/lib/auth/tokens";
 
@@ -37,7 +38,7 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   startOAuth: (provider: "google" | "github") => Promise<void>;
-  applyOAuthTokens: (access: string, refresh?: string | null) => Promise<void>;
+  loadSessionAfterOAuth: (access: string) => Promise<void>;
   exchangeOAuthCode: (code: string, state: string, totp?: string) => Promise<void>;
 };
 
@@ -119,6 +120,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [bootstrap, clearAppState]);
 
   useEffect(() => {
+    if (hasOAuthRedirectParams()) {
+      setIsLoading(true);
+      return;
+    }
     void refreshSession();
   }, [refreshSession]);
 
@@ -184,24 +189,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = url;
   }, []);
 
-  const applyOAuthTokens = useCallback(
-    async (access: string, refresh?: string | null) => {
+  const loadSessionAfterOAuth = useCallback(
+    async (access: string) => {
       clearOAuthSession();
-
-      if (refresh) {
-        setRyportTokens(access, refresh);
-        try {
-          await authApi.syncSession(access);
-        } catch {
-          /* redirect tokens are sufficient */
-        }
-        await bootstrap(access);
-        return;
+      const token = getAccessToken() ?? access;
+      try {
+        await authApi.syncSession(token);
+      } catch {
+        /* tokens already saved from redirect URL */
       }
-
-      const data = await authApi.syncSession(access);
-      setRyportTokens(data.access, data.refresh);
-      await bootstrap(data.access);
+      await bootstrap(token);
+      setIsLoading(false);
     },
     [bootstrap],
   );
@@ -216,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRyportTokens(data.access, data.refresh);
       clearOAuthSession();
       await bootstrap(data.access);
+      setIsLoading(false);
     },
     [bootstrap],
   );
@@ -237,7 +236,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
-      applyOAuthTokens,
+      loadSessionAfterOAuth,
       exchangeOAuthCode,
     }),
     [
@@ -255,7 +254,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
-      applyOAuthTokens,
+      loadSessionAfterOAuth,
       exchangeOAuthCode,
     ],
   );
