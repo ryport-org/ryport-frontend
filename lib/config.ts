@@ -1,10 +1,20 @@
+function readEnv(...keys: string[]): string {
+  for (const key of keys) {
+    const raw = process.env[key];
+    if (!raw) continue;
+    const trimmed = raw.trim();
+    if (!trimmed) continue;
+    return trimmed.replace(/^['"]|['"]$/g, "");
+  }
+  return "";
+}
+
 function normalizeSiteUrl(url: string): string {
   const trimmed = url.trim().replace(/\/+$/, "");
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
 }
 
-/** Fix common misconfig: auth.callback (dot) → auth/callback (slash). */
 function normalizeOAuthCallbackUrl(url: string): string {
   const withProtocol = normalizeSiteUrl(url);
   return withProtocol.replace(/auth\.callback/gi, "auth/callback");
@@ -18,35 +28,44 @@ export const API_BASE_URL =
 
 export const API_V1 = `${API_BASE_URL}/api/v1`;
 
-export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ??
-  "https://capsykyrncpdtjudkxeb.supabase.co";
-
-export const SUPABASE_ANON_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() ?? "";
-
-const PLACEHOLDER_KEYS = new Set(["", "placeholder-anon-key", "your-anon-key"]);
-
-export function isSupabaseConfigured(): boolean {
+/** Read at runtime — works on server after Vercel env changes without rebuild. */
+export function getSupabaseUrl(): string {
   return (
-    Boolean(SUPABASE_URL) &&
-    Boolean(SUPABASE_ANON_KEY) &&
-    !PLACEHOLDER_KEYS.has(SUPABASE_ANON_KEY)
+    readEnv("NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL") ||
+    "https://capsykyrncpdtjudkxeb.supabase.co"
   );
 }
+
+/** Read at runtime — works on server after Vercel env changes without rebuild. */
+export function getSupabaseAnonKey(): string {
+  return readEnv(
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "SUPABASE_ANON_KEY",
+  );
+}
+
+const PLACEHOLDER_KEYS = new Set(["", "placeholder-anon-key", "your-anon-key", "missing-anon-key"]);
+
+export function isSupabaseConfigured(
+  url = getSupabaseUrl(),
+  anonKey = getSupabaseAnonKey(),
+): boolean {
+  return Boolean(url) && Boolean(anonKey) && !PLACEHOLDER_KEYS.has(anonKey);
+}
+
+/** @deprecated use getSupabaseUrl() */
+export const SUPABASE_URL = getSupabaseUrl();
+
+/** @deprecated use getSupabaseAnonKey() — may be empty in client bundle if not set at build */
+export const SUPABASE_ANON_KEY = getSupabaseAnonKey();
 
 export const APP_URL = normalizeSiteUrl(
   process.env.NEXT_PUBLIC_APP_URL ?? SITE_URL,
 );
 
-/**
- * Supabase OAuth redirect — must match Authentication → URL Configuration exactly.
- * Default: https://www.ryport.com.ng/auth/callback
- * Local dev: set NEXT_PUBLIC_OAUTH_CALLBACK_URL=http://localhost:3000/auth/callback
- */
 export const OAUTH_CALLBACK_URL = normalizeOAuthCallbackUrl(
-  process.env.NEXT_PUBLIC_OAUTH_CALLBACK_URL ??
-    `${SITE_URL}/auth/callback`,
+  process.env.NEXT_PUBLIC_OAUTH_CALLBACK_URL ?? `${SITE_URL}/auth/callback`,
 );
 
 export const MONO_PUBLIC_KEY = process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY ?? "";

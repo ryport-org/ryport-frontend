@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
 
 function GoogleIcon() {
@@ -50,6 +51,7 @@ export function SocialLogins() {
     try {
       await startOAuth(provider);
     } catch (err) {
+      if (isRedirectError(err)) throw err;
       setError(getAuthErrorMessage(err));
       setLoading(null);
     }

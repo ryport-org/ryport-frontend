@@ -7,8 +7,7 @@ import {
   setRyportTokens,
   setSupabaseTokens,
 } from "@/lib/auth/tokens";
-import { createClient } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/config";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export class ApiError extends Error {
   code: string;
@@ -93,12 +92,16 @@ async function fetchWithAuth(
 async function refreshAccessToken(): Promise<string | null> {
   const source = getAuthSource();
 
-  if (source === "supabase" && isSupabaseConfigured()) {
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.refreshSession();
-    if (error || !data.session) return null;
-    setSupabaseTokens(data.session.access_token, data.session.refresh_token);
-    return data.session.access_token;
+  if (source === "supabase") {
+    try {
+      const supabase = await getSupabaseBrowserClient();
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error || !data.session) return null;
+      setSupabaseTokens(data.session.access_token, data.session.refresh_token);
+      return data.session.access_token;
+    } catch {
+      return null;
+    }
   }
 
   const refresh = getRefreshToken();

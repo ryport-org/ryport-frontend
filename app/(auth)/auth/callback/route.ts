@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const login = new URL("/login", origin);
     login.searchParams.set(
       "error",
-      "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel and redeploy.",
+      "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local or Vercel environment variables.",
     );
     return NextResponse.redirect(login);
   }
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       const login = new URL("/login", origin);
       const message =
         error.message === "Invalid API key"
-          ? "Invalid Supabase API key. Check NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel and redeploy."
+          ? "Invalid Supabase API key. Check NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local or Vercel."
           : error.message;
       login.searchParams.set("error", message);
       return NextResponse.redirect(login);

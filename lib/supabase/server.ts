@@ -1,17 +1,24 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { isSupabaseConfigured, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
+import {
+  getSupabaseAnonKey,
+  getSupabaseUrl,
+  isSupabaseConfigured,
+} from "@/lib/config";
 
 export async function createClient() {
-  if (!isSupabaseConfigured()) {
+  const url = getSupabaseUrl();
+  const anonKey = getSupabaseAnonKey();
+
+  if (!isSupabaseConfigured(url, anonKey)) {
     throw new Error(
-      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel and redeploy.",
+      "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local (dev) or Vercel env vars (prod).",
     );
   }
 
   const cookieStore = await cookies();
 
-  return createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  return createServerClient(url, anonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
