@@ -2,12 +2,9 @@ import { API_V1 } from "@/lib/config";
 import type { ApiErrorBody, ApiSuccess, AuthTokens } from "@/lib/api/types";
 import {
   getAccessToken,
-  getAuthSource,
   getRefreshToken,
   setRyportTokens,
-  setSupabaseTokens,
 } from "@/lib/auth/tokens";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export class ApiError extends Error {
   code: string;
@@ -90,20 +87,6 @@ async function fetchWithAuth(
 }
 
 async function refreshAccessToken(): Promise<string | null> {
-  const source = getAuthSource();
-
-  if (source === "supabase") {
-    try {
-      const supabase = await getSupabaseBrowserClient();
-      const { data, error } = await supabase.auth.refreshSession();
-      if (error || !data.session) return null;
-      setSupabaseTokens(data.session.access_token, data.session.refresh_token);
-      return data.session.access_token;
-    } catch {
-      return null;
-    }
-  }
-
   const refresh = getRefreshToken();
   if (!refresh) return null;
 

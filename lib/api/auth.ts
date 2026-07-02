@@ -2,6 +2,8 @@ import { apiRequest } from "@/lib/api/client";
 import type {
   AuthResponse,
   AuthTokens,
+  OAuthProvider,
+  OAuthStart,
   TwoFactorSetup,
 } from "@/lib/api/types";
 
@@ -103,4 +105,27 @@ export async function regenerateBackupCodes(token: string, totpToken: string) {
     "/users/auth/2fa/backup-codes/regenerate/",
     { method: "POST", body: { token: totpToken }, token },
   );
+}
+
+export async function listOAuthProviders() {
+  return apiRequest<OAuthProvider[]>("/users/auth/oauth/", { skipAuth: true });
+}
+
+export async function startOAuth(provider: "google" | "github", redirectTo: string) {
+  const params = new URLSearchParams({ redirect_to: redirectTo });
+  return apiRequest<OAuthStart>(`/users/auth/oauth/${provider}/?${params}`, {
+    skipAuth: true,
+  });
+}
+
+export async function completeOAuth(body: {
+  code: string;
+  state: string;
+  totp_token?: string;
+}) {
+  return apiRequest<AuthResponse>("/users/auth/oauth/callback/", {
+    method: "POST",
+    body,
+    skipAuth: true,
+  });
 }

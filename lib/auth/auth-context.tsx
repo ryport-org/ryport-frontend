@@ -9,24 +9,18 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { OAUTH_CALLBACK_URL } from "@/lib/config";
 import { authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import type { Business, PlanFeature, PlanResponse, Profile } from "@/lib/api/types";
-import { startOAuthAction } from "@/lib/auth/oauth-actions";
-import {
-  getSupabaseAuthErrorMessage,
-  isAuthError,
-} from "@/lib/auth/supabase-errors";
+import { storeOAuthSession, clearOAuthSession } from "@/lib/auth/oauth-session";
 import {
   clearTokens,
   getAccessToken,
   getAuthSource,
   getRefreshToken,
   setRyportTokens,
-  setSupabaseTokens,
 } from "@/lib/auth/tokens";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type AuthContextValue = {
   user: Profile | null;
@@ -44,6 +38,7 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   startOAuth: (provider: "google" | "github") => Promise<void>;
+  completeOAuth: (code: string, state: string, totp?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -94,39 +89,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setActiveBusiness(active);
   }, []);
 
-  const hydrateSupabaseSession = useCallback(async (): Promise<boolean> => {
-    try {
-      const supabase = await getSupabaseBrowserClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return false;
-      setSupabaseTokens(session.access_token, session.refresh_token);
-      await bootstrap(session.access_token);
-      return true;
-    } catch {
-      return false;
-    }
-  }, [bootstrap]);
-
   const refreshSession = useCallback(async () => {
     setIsLoading(true);
     try {
-      const source = getAuthSource();
-
-      if (source === "supabase") {
-        const ok = await hydrateSupabaseSession();
-        if (!ok) {
-          clearTokens();
-          clearAppState();
-        }
-        return;
-      }
-
       const access = getAccessToken();
       const refresh = getRefreshToken();
 
-      if (source === "ryport" && (access || refresh)) {
+      if (access || refresh) {
         let token = access;
         if (!token && refresh) {
           const tokens = await authApi.refresh(refresh);
@@ -139,9 +108,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // OAuth callback may set Supabase cookies before localStorage is synced
-      if (await hydrateSupabaseSession()) return;
-
       clearTokens();
       clearAppState();
     } catch {
@@ -150,44 +116,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [bootstrap, clearAppState, hydrateSupabaseSession]);
+  }, [bootstrap, clearAppState]);
 
   useEffect(() => {
     void refreshSession();
-
-    let cancelled = false;
-    let unsubscribe: (() => void) | undefined;
-
-    void getSupabaseBrowserClient()
-      .then((supabase) => {
-        if (cancelled) return;
-        const {
-          data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-          if (getAuthSource() !== "supabase") return;
-          if (session) {
-            setSupabaseTokens(session.access_token, session.refresh_token);
-            try {
-              await bootstrap(session.access_token);
-            } catch {
-              if (event !== "INITIAL_SESSION") clearAppState();
-            }
-          } else if (event === "SIGNED_OUT") {
-            clearTokens();
-            clearAppState();
-          }
-        });
-        unsubscribe = () => subscription.unsubscribe();
-      })
-      .catch(() => {
-        /* OAuth not configured — email/password auth still works */
-      });
-
-    return () => {
-      cancelled = true;
-      unsubscribe?.();
-    };
-  }, [bootstrap, clearAppState, refreshSession]);
+  }, [refreshSession]);
 
   const login = useCallback(
     async (email: string, password: string, totp?: string) => {
@@ -228,30 +161,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    const source = getAuthSource();
     const access = getAccessToken();
     const refresh = getRefreshToken();
 
     try {
-      if (source === "ryport" && access && refresh) {
+      if (access && refresh) {
         await authApi.logout(refresh, access);
-      }
-      if (source === "supabase") {
-        const supabase = await getSupabaseBrowserClient();
-        await supabase.auth.signOut();
       }
     } catch {
       /* still clear locally */
     }
 
     clearTokens();
+    clearOAuthSession();
     clearAppState();
     router.push("/login");
   }, [clearAppState, router]);
 
   const startOAuth = useCallback(async (provider: "google" | "github") => {
-    await startOAuthAction(provider);
+    const { url, state } = await authApi.startOAuth(provider, OAUTH_CALLBACK_URL);
+    storeOAuthSession(state, provider);
+    window.location.assign(url);
   }, []);
+
+  const completeOAuth = useCallback(
+    async (code: string, state: string, totp?: string) => {
+      const data = await authApi.completeOAuth({
+        code,
+        state,
+        totp_token: totp,
+      });
+      setRyportTokens(data.access, data.refresh);
+      clearOAuthSession();
+      await bootstrap(data.access);
+      router.push("/app/dashboard");
+    },
+    [bootstrap, router],
+  );
 
   const value = useMemo(
     () => ({
@@ -270,6 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
+      completeOAuth,
     }),
     [
       user,
@@ -286,6 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       refreshSession,
       startOAuth,
+      completeOAuth,
     ],
   );
 
@@ -299,15 +247,15 @@ export function useAuth() {
 }
 
 export function getAuthErrorMessage(error: unknown): string {
-  if (isAuthError(error)) {
-    return getSupabaseAuthErrorMessage(error);
-  }
   if (error instanceof ApiError) {
     if (error.code === "invalid_credentials") {
       return "Invalid email or password. If you signed up with Google or GitHub, use those buttons below.";
     }
     if (error.code === "supabase_auth_error") {
       return error.message;
+    }
+    if (error.code === "oauth_state_mismatch") {
+      return "OAuth session expired. Please try signing in again.";
     }
     if (error.details && typeof error.details === "object") {
       const fieldMessages = Object.entries(error.details)

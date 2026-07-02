@@ -41,6 +41,9 @@ export const authApi = {
   disable2fa: auth.disable2fa,
   getBackupCodes: auth.getBackupCodes,
   regenerateBackupCodes: auth.regenerateBackupCodes,
+  listOAuthProviders: auth.listOAuthProviders,
+  startOAuth: auth.startOAuth,
+  completeOAuth: auth.completeOAuth,
 };
 
 export const usersApi = {
