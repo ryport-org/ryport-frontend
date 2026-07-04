@@ -1,4 +1,4 @@
-import { API_BASE_URL, APP_URL } from "@/lib/staff/config";
+import { API_BASE_URL, APP_URL } from "@/lib/config";
 
 export const STAFF_API_BASE_URL =
   process.env.NEXT_PUBLIC_STAFF_API_URL ?? API_BASE_URL;
