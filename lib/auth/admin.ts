@@ -1,9 +1,19 @@
 import { API_BASE_URL } from "@/lib/config";
 import type { Profile } from "@/lib/api/types";
 
-/** Django ops dashboard on the API host — not part of this Next.js app. */
+const STAFF_APP_URL = (
+  process.env.NEXT_PUBLIC_STAFF_APP_URL ?? "https://staff.ryport.com.ng"
+).replace(/\/+$/, "");
+
+/** Staff React dashboard — replaces legacy Django `/ryport-ops/` for internal ops. */
+export function getStaffDashboardUrl(path = "/login"): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${STAFF_APP_URL}${normalized}`;
+}
+
+/** @deprecated Use getStaffDashboardUrl — kept for call sites */
 export function getOpsDashboardUrl(): string {
-  return `${API_BASE_URL.replace(/\/+$/, "")}/ryport-ops/`;
+  return getStaffDashboardUrl("/login");
 }
 
 export function isAdminUser(profile: Profile | null | undefined): boolean {
@@ -15,5 +25,5 @@ export function isAdminUser(profile: Profile | null | undefined): boolean {
 
 export function redirectToOpsDashboard(): void {
   if (typeof window === "undefined") return;
-  window.location.assign(getOpsDashboardUrl());
+  window.location.assign(getStaffDashboardUrl("/login"));
 }

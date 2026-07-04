@@ -8,6 +8,8 @@ Marketing site and authenticated dashboard for [Ryport](https://www.ryport.com.n
 |-----|---------|
 | [`docs/frontend-dev-handoff.md`](docs/frontend-dev-handoff.md) | **Start here** — auth, bootstrap, plan gates, money rules |
 | [`docs/frontend-integration.md`](docs/frontend-integration.md) | Full API reference, sitemap, page wiring |
+| [`docs/staff-api-integration.md`](docs/staff-api-integration.md) | Staff dashboard API (`staff.ryport.com.ng`) |
+| [`staff/README.md`](staff/README.md) | Staff Next.js app — run on port 3001 |
 
 ## Setup
 
@@ -45,10 +47,18 @@ Open [http://localhost:3000](http://localhost:3000).
 - `/login`, `/register` — Email/password auth
 - `/app/dashboard` — Authenticated app (use `/app/*` not `/dashboard` for the product UI)
 
-## Do NOT rebuild
+## Do NOT rebuild in customer app
 
-- `/ryport-ops/` — internal ops (Django)
+- `/ryport-ops/` — legacy Django ops (replaced by [`staff/`](staff/README.md))
 - `/admin/` — Django admin
+
+## Staff dashboard
+
+Separate app in [`staff/`](staff/). Deploy to `staff.ryport.com.ng`:
+
+```bash
+cd staff && npm install && npm run dev
+```
 
 ## Deploy
 
