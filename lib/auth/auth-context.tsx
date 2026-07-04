@@ -10,10 +10,15 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 // OAuth temporarily disabled — re-enable with SocialLogins + OAuthHandler
-// import { OAUTH_NEXT_PATH } from "@/lib/config";
-import { authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
+import { aiApi, authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
-import type { Business, PlanFeature, PlanResponse, Profile } from "@/lib/api/types";
+import type {
+  AIQuota,
+  Business,
+  PlanFeature,
+  PlanResponse,
+  Profile,
+} from "@/lib/api/types";
 import { clearOAuthSession } from "@/lib/auth/oauth-session";
 import {
   clearTokens,
@@ -27,6 +32,7 @@ type AuthContextValue = {
   plan: PlanResponse | null;
   unreadNotifications: number;
   activeBusiness: Business | null;
+  aiQuota: AIQuota | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   canUse: (feature: string) => boolean;
@@ -57,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [activeBusiness, setActiveBusiness] = useState<Business | null>(null);
+  const [aiQuota, setAiQuota] = useState<AIQuota | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const features = useMemo(() => featureMap(plan?.features), [plan?.features]);
@@ -76,19 +83,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPlan(null);
     setUnreadNotifications(0);
     setActiveBusiness(null);
+    setAiQuota(null);
   }, []);
 
+  /** Post-login bootstrap — see docs/frontend-dev-handoff.md §3 */
   const bootstrap = useCallback(async (token: string) => {
-    const [profile, userPlan, unread, active] = await Promise.all([
+    const [profile, userPlan, unread, active, quota] = await Promise.all([
       usersApi.me(token),
       usersApi.plan(token),
       notificationsApi.unreadCount(token).catch(() => ({ count: 0 })),
       businessesApi.active(token).catch(() => null),
+      aiApi.quota(token).catch(() => null),
     ]);
     setUser(profile);
     setPlan(userPlan);
     setUnreadNotifications(unread.count);
     setActiveBusiness(active);
+    setAiQuota(quota);
   }, []);
 
   const refreshSession = useCallback(async () => {
@@ -224,6 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       plan,
       unreadNotifications,
       activeBusiness,
+      aiQuota,
       isLoading,
       isAuthenticated: Boolean(user),
       canUse,
@@ -243,6 +255,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       plan,
       unreadNotifications,
       activeBusiness,
+      aiQuota,
       isLoading,
       canUse,
       getLimit,
