@@ -145,7 +145,7 @@ Use `useAuth().canUse('feature_key')` — gates come from `GET /users/me/plan/`.
 | Page | Route | Endpoints |
 |------|-------|-----------|
 | Dashboard | `/app/dashboard` | `GET /dashboard/overview/` |
-| Ops (admin only) | `staff.ryport.com.ng` | Staff API — see `docs/staff-api-integration.md` |
+| Ops (admin only) | `/staff/login` → `/staff` | Staff API — see `docs/staff-api-integration.md` |
 | Transactions | `/app/transactions` | `GET/POST /transactions/` |
 | Budgets | `/app/budgets` | `GET/POST /budgets/` |
 | Reports | `/app/reports` | `POST /reports/generate/` |
@@ -175,7 +175,7 @@ Common codes: `invalid_credentials`, `email_not_confirmed`, `oauth_account_requi
 
 | User | After login | Data API |
 |------|-------------|----------|
-| `role === "admin"` (or `is_staff`) | Redirect to `https://staff.ryport.com.ng/login` | `/staff/api/v1/dashboard/overview/` |
+| `role === "admin"` (or `is_staff`) | Redirect to `/staff/login` | `/staff/api/v1/dashboard/overview/` |
 | Everyone else | `/app/dashboard` | `GET /api/v1/dashboard/overview/` |
 
 Admins are sent to the **staff React dashboard** (separate login — customer JWT does not work there).

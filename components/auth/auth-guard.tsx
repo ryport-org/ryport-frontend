@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { redirectToOpsDashboard } from "@/lib/auth/admin";
+import { staffPath } from "@/lib/staff/routes";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -12,7 +12,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
     if (isAdmin) {
-      redirectToOpsDashboard();
+      router.replace(staffPath("/login"));
       return;
     }
     if (!isAuthenticated) {

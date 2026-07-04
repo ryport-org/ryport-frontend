@@ -54,11 +54,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Staff dashboard
 
-Separate app in [`staff/`](staff/). Deploy to `staff.ryport.com.ng`:
+Integrated at **`/staff`** on the same domain (e.g. `https://www.ryport.com.ng/staff/login`).
 
-```bash
-cd staff && npm install && npm run dev
-```
+| Route | Purpose |
+|-------|---------|
+| `/staff/login` | Staff sign-in |
+| `/staff` | Platform overview (after login) |
+
+Docs: [`docs/staff-api-integration.md`](docs/staff-api-integration.md)
 
 ## Deploy
 

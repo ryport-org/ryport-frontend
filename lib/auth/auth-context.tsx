@@ -20,7 +20,8 @@ import type {
   Profile,
 } from "@/lib/api/types";
 import { clearOAuthSession } from "@/lib/auth/oauth-session";
-import { isAdminUser, redirectToOpsDashboard } from "@/lib/auth/admin";
+import { isAdminUser } from "@/lib/auth/admin";
+import { staffPath } from "@/lib/staff/routes";
 import {
   clearTokens,
   getAccessToken,
@@ -110,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const finishCustomerLogin = useCallback(
     (profile: Profile) => {
       if (isAdminUser(profile)) {
-        redirectToOpsDashboard();
+        router.push(staffPath("/login"));
         return;
       }
       router.push("/app/dashboard");
@@ -134,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (token) {
           const profile = await bootstrap(token);
           if (profile && isAdminUser(profile)) {
-            redirectToOpsDashboard();
+            router.push(staffPath("/login"));
           }
           return;
         }
@@ -148,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [bootstrap, clearAppState]);
+  }, [bootstrap, clearAppState, router]);
 
   useEffect(() => {
     void refreshSession();
