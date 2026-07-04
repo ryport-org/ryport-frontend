@@ -11,6 +11,7 @@ export class ApiError extends Error {
   status: number;
   requestId?: string;
   details?: Record<string, unknown>;
+  upgradeUrl?: string;
 
   constructor(
     code: string,
@@ -18,6 +19,7 @@ export class ApiError extends Error {
     status: number,
     requestId?: string,
     details?: Record<string, unknown>,
+    upgradeUrl?: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -25,6 +27,7 @@ export class ApiError extends Error {
     this.status = status;
     this.requestId = requestId;
     this.details = details;
+    this.upgradeUrl = upgradeUrl;
   }
 }
 
@@ -36,27 +39,92 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   skipRefresh?: boolean;
 };
 
+type ParsedEnvelope<T> = {
+  data: T;
+  cached?: boolean;
+};
+
+function extractApiError(
+  json: unknown,
+  status: number,
+): ApiError | null {
+  if (typeof json !== "object" || json === null) return null;
+
+  const body = json as Record<string, unknown>;
+
+  if (body.success === true) return null;
+
+  const err = body.error;
+  if (typeof err !== "object" || err === null) return null;
+
+  const error = err as {
+    code?: string;
+    message?: string;
+    details?: Record<string, unknown>;
+    upgrade_url?: string;
+  };
+
+  if (!error.code || !error.message) return null;
+
+  return new ApiError(
+    error.code,
+    error.message,
+    status,
+    typeof body.request_id === "string" ? body.request_id : undefined,
+    error.details,
+    error.upgrade_url,
+  );
+}
+
 async function parseResponse<T>(res: Response): Promise<T> {
   if (res.status === 204) return null as T;
 
-  let json: ApiSuccess<T> | ApiErrorBody;
+  let json: unknown;
   try {
-    json = (await res.json()) as ApiSuccess<T> | ApiErrorBody;
+    json = await res.json();
   } catch {
     throw new ApiError("parse_error", "Invalid response from server", res.status);
   }
 
-  if (!json.success) {
-    throw new ApiError(
-      json.error.code,
-      json.error.message,
-      res.status,
-      json.request_id,
-      json.error.details,
-    );
+  const apiError = extractApiError(json, res.status);
+  if (apiError) throw apiError;
+
+  if (
+    typeof json === "object" &&
+    json !== null &&
+    "success" in json &&
+    (json as ApiSuccess<T>).success === true
+  ) {
+    return (json as ApiSuccess<T>).data;
   }
 
-  return json.data;
+  throw new ApiError("parse_error", "Unexpected response from server", res.status);
+}
+
+async function parseResponseWithMeta<T>(res: Response): Promise<ParsedEnvelope<T>> {
+  if (res.status === 204) return { data: null as T };
+
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch {
+    throw new ApiError("parse_error", "Invalid response from server", res.status);
+  }
+
+  const apiError = extractApiError(json, res.status);
+  if (apiError) throw apiError;
+
+  if (
+    typeof json === "object" &&
+    json !== null &&
+    "success" in json &&
+    (json as ApiSuccess<T>).success === true
+  ) {
+    const body = json as ApiSuccess<T> & { cached?: boolean };
+    return { data: body.data, cached: body.cached };
+  }
+
+  throw new ApiError("parse_error", "Unexpected response from server", res.status);
 }
 
 async function fetchWithAuth(
@@ -101,10 +169,10 @@ async function refreshAccessToken(): Promise<string | null> {
   return tokens.access;
 }
 
-export async function apiRequest<T>(
+async function requestWithRefresh(
   path: string,
-  options: RequestOptions = {},
-): Promise<T> {
+  options: RequestOptions,
+): Promise<Response> {
   let res = await fetchWithAuth(path, options);
 
   if (res.status === 401 && !options.skipAuth && !options.skipRefresh && getRefreshToken()) {
@@ -119,7 +187,23 @@ export async function apiRequest<T>(
     }
   }
 
+  return res;
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const res = await requestWithRefresh(path, options);
   return parseResponse<T>(res);
+}
+
+export async function apiRequestWithMeta<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<ParsedEnvelope<T>> {
+  const res = await requestWithRefresh(path, options);
+  return parseResponseWithMeta<T>(res);
 }
 
 export async function apiRequestRaw(

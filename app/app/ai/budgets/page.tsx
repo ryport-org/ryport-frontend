@@ -8,30 +8,39 @@ import { PlanGate } from "@/components/plan/plan-gate";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAccessToken } from "@/lib/auth/tokens";
 import { aiApi } from "@/lib/api";
 import type { BudgetRecommendation } from "@/lib/api/types";
+import { AiUpgradeLink } from "@/components/ai/ai-upgrade-link";
+import { getAiErrorMessage, isFeatureNotAvailable } from "@/lib/ai/errors";
 import { formatNaira } from "@/lib/format";
 
 export default function SmartBudgetsPage() {
   const [recs, setRecs] = useState<BudgetRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) return;
-    aiApi.budgetRecommendations(token)
+    aiApi
+      .budgetRecommendations()
       .then(setRecs)
+      .catch((err) => {
+        setError(err);
+        setRecs([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   async function applyAll() {
-    const token = getAccessToken();
-    if (!token) return;
     setApplying(true);
+    setError(null);
+    setSuccess("");
     try {
-      await aiApi.applyBudgetRecommendations(token);
+      const created = await aiApi.applyBudgetRecommendations();
+      setSuccess(`Created ${created.length} budget${created.length === 1 ? "" : "s"}.`);
+    } catch (err) {
+      setError(err);
     } finally {
       setApplying(false);
     }
@@ -44,7 +53,7 @@ export default function SmartBudgetsPage() {
         description="AI-recommended limits based on your spending"
         action={
           recs.length > 0 ? (
-            <Button onClick={applyAll} disabled={applying}>
+            <Button onClick={() => void applyAll()} disabled={applying}>
               {applying ? "Applying…" : "Apply all"}
             </Button>
           ) : undefined
@@ -52,34 +61,54 @@ export default function SmartBudgetsPage() {
       />
 
       <AppPageBody>
-      <AppPageContent>
-        <PlanGate feature="cash_flow_prediction">
-          {loading ? (
-            <Skeleton className="h-48" />
-          ) : recs.length === 0 ? (
-            <Card className="p-12 text-center">
-              <p className="text-sm text-mist">No recommendations yet. Link accounts and add transactions first.</p>
-            </Card>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {recs.map((r) => (
-                <Card key={r.db_category}>
-                  <CardBody>
-                    <p className="text-sm font-semibold text-ink">{r.category}</p>
-                    <p className="mt-1 text-lg font-semibold text-ink">
-                      {formatNaira(r.recommended_limit * 100)}
-                    </p>
-                    <p className="mt-2 text-sm text-mist">{r.reasoning}</p>
-                    <p className="mt-2 text-xs text-mist">
-                      Confidence: {Math.round(r.confidence * 100)}%
-                    </p>
-                  </CardBody>
-                </Card>
-              ))}
-            </div>
-          )}
-        </PlanGate>
-      </AppPageContent>
-          </AppPageBody>
-    </AppPage>  );
+        <AppPageContent>
+          <PlanGate feature="cash_flow_prediction">
+            {loading ? (
+              <Skeleton className="h-48" />
+            ) : error ? (
+              <Card className="p-8 text-center">
+                <p className="text-sm text-coral-warn">{getAiErrorMessage(error)}</p>
+                {isFeatureNotAvailable(error) ? (
+                  <p className="mt-3">
+                    <AiUpgradeLink error={error} />
+                  </p>
+                ) : null}
+              </Card>
+            ) : recs.length === 0 ? (
+              <Card className="p-12 text-center">
+                <p className="text-sm text-mist">
+                  No recommendations yet. Link accounts and add transactions first.
+                </p>
+              </Card>
+            ) : (
+              <>
+                {success ? (
+                  <p className="mb-4 text-sm font-medium text-ink">{success}</p>
+                ) : null}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {recs.map((r) => (
+                    <Card key={r.db_category}>
+                      <CardBody>
+                        <p className="text-sm font-semibold text-ink">{r.category}</p>
+                        <p className="mt-1 text-lg font-semibold text-ink">
+                          {formatNaira(r.recommended_limit)}
+                        </p>
+                        <p className="mt-1 text-xs text-mist">
+                          Avg spend: {formatNaira(r.avg_spend)}
+                        </p>
+                        <p className="mt-2 text-sm text-mist">{r.reasoning}</p>
+                        <p className="mt-2 text-xs text-mist">
+                          Confidence: {Math.round(r.confidence * 100)}%
+                        </p>
+                      </CardBody>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
+          </PlanGate>
+        </AppPageContent>
+      </AppPageBody>
+    </AppPage>
+  );
 }

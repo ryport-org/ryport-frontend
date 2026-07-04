@@ -50,7 +50,7 @@ export default function TransactionDetailPage() {
     const token = getAccessToken();
     if (!token || !id) return;
     try {
-      await aiApi.categoriseTransaction(token, id);
+      await aiApi.categoriseTransaction(id);
       setTx(await transactionsApi.get(token, id));
     } catch (err) {
       setError(getAuthErrorMessage(err));

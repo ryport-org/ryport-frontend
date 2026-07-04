@@ -11,6 +11,16 @@ import * as teams from "@/lib/api/teams";
 import * as integrations from "@/lib/api/integrations";
 import * as dashboard from "@/lib/api/dashboard";
 import type { CursorPage, Transaction } from "@/lib/api/types";
+import { ApiError } from "@/lib/api/client";
+import { getAccessToken } from "@/lib/auth/tokens";
+
+function requireToken(token?: string | null): string {
+  const resolved = token ?? getAccessToken();
+  if (!resolved) {
+    throw new ApiError("not_authenticated", "Not logged in", 401);
+  }
+  return resolved;
+}
 
 export function normalizeTransactions(
   data: CursorPage<Transaction> | Transaction[],
@@ -89,17 +99,24 @@ export const reportsApi = {
 };
 
 export const aiApi = {
-  quota: ai.getAiQuota,
-  chat: (token: string, message: string, conversation_id?: string) =>
-    ai.sendChat(token, { message, conversation_id }),
-  conversations: ai.listConversations,
-  conversation: ai.getConversation,
-  cashFlowPredict: (token: string, days = 30) => ai.getCashFlowPrediction(token, days),
-  subscriptions: ai.getSubscriptions,
-  budgetRecommendations: ai.getBudgetRecommendations,
-  applyBudgetRecommendations: ai.applyBudgetRecommendations,
-  cfoAnalyse: ai.analyseCfo,
-  categoriseTransaction: ai.categoriseWithAi,
+  quota: (token?: string | null) => ai.getAiQuota(requireToken(token)),
+  chat: (message: string, conversation_id?: string, token?: string | null) =>
+    ai.sendChat(requireToken(token), { message, conversation_id }),
+  conversations: (token?: string | null) => ai.listConversations(requireToken(token)),
+  conversation: (id: string, token?: string | null) =>
+    ai.getConversation(requireToken(token), id),
+  cashFlowPredict: (days = 30, token?: string | null) =>
+    ai.getCashFlowPrediction(requireToken(token), days),
+  subscriptions: (refresh = false, token?: string | null) =>
+    ai.getSubscriptions(requireToken(token), refresh),
+  budgetRecommendations: (token?: string | null) =>
+    ai.getBudgetRecommendations(requireToken(token)),
+  applyBudgetRecommendations: (token?: string | null) =>
+    ai.applyBudgetRecommendations(requireToken(token)),
+  cfoAnalyse: (businessId?: string, token?: string | null) =>
+    ai.analyseCfo(requireToken(token), businessId),
+  categoriseTransaction: (transactionId: string, token?: string | null) =>
+    ai.categoriseWithAi(requireToken(token), transactionId),
 };
 
 export const notificationsApi = {

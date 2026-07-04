@@ -7,10 +7,7 @@ import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { Card, CardBody } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/auth-context";
-import { useEffect, useState } from "react";
-import { getAccessToken } from "@/lib/auth/tokens";
-import { aiApi } from "@/lib/api";
-import type { AIQuota } from "@/lib/api/types";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 const features = [
@@ -52,14 +49,11 @@ const features = [
 ];
 
 export default function AiHubPage() {
-  const { canUse } = useAuth();
-  const [quota, setQuota] = useState<AIQuota | null>(null);
+  const { canUse, aiQuota, refreshAiQuota } = useAuth();
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) return;
-    aiApi.quota(token).then(setQuota).catch(() => null);
-  }, []);
+    void refreshAiQuota();
+  }, [refreshAiQuota]);
 
   return (
     <AppPage>
@@ -67,11 +61,11 @@ export default function AiHubPage() {
 
       <AppPageBody>
         <AppPageContent className="max-w-5xl">
-          {quota && !quota.is_unlimited ? (
+          {aiQuota && !aiQuota.is_unlimited ? (
             <Card className="border-sky/20 bg-sky-soft/30">
               <CardBody className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-ink">
-                  <span className="font-semibold">{quota.remaining}</span> AI messages left today
+                  <span className="font-semibold">{aiQuota.remaining}</span> AI messages left today
                 </p>
                 <Link href="/app/upgrade" className="text-sm font-semibold text-sky hover:underline">
                   Upgrade for unlimited

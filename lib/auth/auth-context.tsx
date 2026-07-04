@@ -47,6 +47,7 @@ type AuthContextValue = {
   register: (email: string, password: string, passwordConfirm: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
+  refreshAiQuota: () => Promise<void>;
   // OAuth temporarily disabled
   // startOAuth: (provider: "google" | "github") => Promise<void>;
   // loadSessionAfterOAuth: (access: string) => Promise<void>;
@@ -264,6 +265,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
   */
 
+  const refreshAiQuota = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) {
+      setAiQuota(null);
+      return;
+    }
+    const quota = await aiApi.quota(token).catch(() => null);
+    setAiQuota(quota);
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -282,6 +293,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       refreshSession,
+      refreshAiQuota,
       // startOAuth,
       // loadSessionAfterOAuth,
       // exchangeOAuthCode,
@@ -302,6 +314,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       logout,
       refreshSession,
+      refreshAiQuota,
       // startOAuth,
       // loadSessionAfterOAuth,
       // exchangeOAuthCode,
@@ -321,6 +334,12 @@ export function getAuthErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.code === "invalid_credentials") {
       return "Invalid email or password.";
+    }
+    if (error.code === "quota_exceeded") {
+      return error.message || "You have reached your daily AI message limit.";
+    }
+    if (error.code === "feature_not_available") {
+      return error.message || "This feature is not on your current plan.";
     }
     /*
     if (error.code === "oauth_state_mismatch" || error.code === "missing_oauth_state") {

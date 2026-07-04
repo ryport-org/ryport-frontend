@@ -1,16 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Menu, Send, Sparkles, X } from "lucide-react";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getAccessToken } from "@/lib/auth/tokens";
 import { aiApi } from "@/lib/api";
-import type { AIQuota, ChatMessage, Conversation } from "@/lib/api/types";
-import { getAuthErrorMessage } from "@/lib/auth/auth-context";
+import type { ChatMessage, Conversation } from "@/lib/api/types";
+import { AiUpgradeLink } from "@/components/ai/ai-upgrade-link";
+import {
+  getAiErrorMessage,
+  isQuotaExceeded,
+  looksLikeAiMisconfiguration,
+} from "@/lib/ai/errors";
+import { useAuth } from "@/lib/auth/auth-context";
 import { cn } from "@/lib/utils";
 
 const suggestions = [
@@ -21,32 +27,39 @@ const suggestions = [
 
 export default function AiChatPage() {
   const router = useRouter();
+  const { aiQuota, refreshAiQuota } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [input, setInput] = useState("");
-  const [quota, setQuota] = useState<AIQuota | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [loadingThread, setLoadingThread] = useState(false);
+  const [error, setError] = useState<unknown>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const token = getAccessToken();
-    if (!token) return;
-    aiApi.quota(token).then(setQuota).catch(() => null);
-    aiApi.conversations(token).then(setConversations).catch(() => []);
+  const loadConversations = useCallback(async () => {
+    try {
+      const list = await aiApi.conversations();
+      setConversations(list);
+    } catch {
+      setConversations([]);
+    }
   }, []);
 
   useEffect(() => {
+    void refreshAiQuota();
+    void loadConversations();
+  }, [loadConversations, refreshAiQuota]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
   async function send(text: string) {
-    const token = getAccessToken();
-    if (!token || !text.trim()) return;
+    if (!text.trim() || loading) return;
     setLoading(true);
-    setError("");
+    setError(null);
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
@@ -57,40 +70,58 @@ export default function AiChatPage() {
     setInput("");
     setSidebarOpen(false);
     try {
-      const res = await aiApi.chat(token, text.trim(), conversationId);
+      const res = await aiApi.chat(text.trim(), conversationId);
+      const reply = res.reply || res.response;
       setConversationId(res.conversation_id);
       setMessages((m) => [
         ...m,
         {
           id: res.message_id,
           role: "assistant",
-          content: res.reply || res.response,
+          content: reply,
           created_at: new Date().toISOString(),
         },
       ]);
-      const q = await aiApi.quota(token);
-      setQuota(q);
+      if (looksLikeAiMisconfiguration(reply)) {
+        setError(new Error(reply));
+      }
+      await Promise.all([refreshAiQuota(), loadConversations()]);
     } catch (err) {
-      setError(getAuthErrorMessage(err));
+      setMessages((m) => m.filter((msg) => msg.id !== userMsg.id));
+      setInput(text.trim());
+      setError(err);
     } finally {
       setLoading(false);
     }
   }
 
   async function loadConversation(id: string) {
-    const token = getAccessToken();
-    if (!token) return;
-    const conv = await aiApi.conversation(token, id);
-    setConversationId(id);
-    setMessages(conv.messages ?? []);
-    setSidebarOpen(false);
+    setLoadingThread(true);
+    setError(null);
+    try {
+      const conv = await aiApi.conversation(id);
+      setConversationId(id);
+      setMessages(conv.messages ?? []);
+      setSidebarOpen(false);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoadingThread(false);
+    }
   }
 
   function startNewChat() {
     setConversationId(undefined);
     setMessages([]);
+    setError(null);
     setSidebarOpen(false);
   }
+
+  const quotaLabel = aiQuota
+    ? aiQuota.is_unlimited
+      ? "Unlimited messages"
+      : `${aiQuota.remaining} of ${aiQuota.limit} left today`
+    : null;
 
   const conversationSidebar = (
     <>
@@ -119,6 +150,7 @@ export default function AiChatPage() {
               <button
                 type="button"
                 onClick={() => loadConversation(c.id)}
+                disabled={loadingThread}
                 className={cn(
                   "w-full truncate rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
                   conversationId === c.id
@@ -132,12 +164,8 @@ export default function AiChatPage() {
           ))
         )}
       </ul>
-      {quota ? (
-        <p className="shrink-0 border-t border-line px-4 py-3 text-xs text-mist">
-          {quota.is_unlimited
-            ? "Unlimited messages"
-            : `${quota.remaining} of ${quota.limit} left today`}
-        </p>
+      {quotaLabel ? (
+        <p className="shrink-0 border-t border-line px-4 py-3 text-xs text-mist">{quotaLabel}</p>
       ) : null}
     </>
   );
@@ -149,6 +177,11 @@ export default function AiChatPage() {
         description="Ask anything about your finances in plain English"
         action={
           <div className="flex items-center gap-2">
+            {aiQuota && !aiQuota.is_unlimited ? (
+              <span className="hidden text-xs text-mist sm:inline">
+                {aiQuota.remaining} messages left
+              </span>
+            ) : null}
             <Button
               variant="ghost"
               className="gap-1.5 lg:hidden"
@@ -166,12 +199,10 @@ export default function AiChatPage() {
       />
 
       <AppPageBody scroll={false} className="relative flex min-h-0 flex-1 flex-row overflow-hidden">
-        {/* Desktop conversation sidebar */}
         <aside className="hidden w-56 shrink-0 flex-col overflow-hidden border-r border-line bg-white lg:flex xl:w-64">
           {conversationSidebar}
         </aside>
 
-        {/* Mobile conversation drawer */}
         {sidebarOpen ? (
           <>
             <button
@@ -186,10 +217,13 @@ export default function AiChatPage() {
           </>
         ) : null}
 
-        {/* Chat thread */}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-            {messages.length === 0 ? (
+            {loadingThread ? (
+              <div className="mx-auto max-w-2xl py-12 text-center text-sm text-mist">
+                Loading conversation…
+              </div>
+            ) : messages.length === 0 ? (
               <div className="mx-auto flex h-full max-w-lg flex-col items-center justify-center text-center">
                 <div className="flex size-12 items-center justify-center rounded-full bg-sky-soft">
                   <Sparkles className="size-5 text-sky" />
@@ -206,7 +240,8 @@ export default function AiChatPage() {
                       key={s}
                       type="button"
                       onClick={() => send(s)}
-                      className="rounded-full border border-line bg-white px-4 py-2.5 text-left text-sm text-ink transition-colors hover:border-sky hover:bg-sky-soft sm:text-center"
+                      disabled={loading}
+                      className="rounded-full border border-line bg-white px-4 py-2.5 text-left text-sm text-ink transition-colors hover:border-sky hover:bg-sky-soft sm:text-center disabled:opacity-50"
                     >
                       {s}
                     </button>
@@ -226,6 +261,9 @@ export default function AiChatPage() {
                         msg.role === "user"
                           ? "rounded-br-md bg-ink text-white"
                           : "rounded-bl-md border border-line bg-white text-ink",
+                        msg.role === "assistant" && looksLikeAiMisconfiguration(msg.content)
+                          ? "border-coral-warn/30 text-coral-warn"
+                          : "",
                       )}
                     >
                       {msg.content}
@@ -243,7 +281,27 @@ export default function AiChatPage() {
               </div>
             )}
             {error ? (
-              <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-coral-warn">{error}</p>
+              <div className="mx-auto mt-4 max-w-2xl text-center text-sm text-coral-warn">
+                <p>{getAiErrorMessage(error)}</p>
+                {isQuotaExceeded(error) ? (
+                  <p className="mt-2">
+                    <AiUpgradeLink error={error} /> or try again after{" "}
+                    {aiQuota?.resets_at
+                      ? new Date(aiQuota.resets_at).toLocaleTimeString("en-NG", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
+                      : "midnight"}
+                    .
+                  </p>
+                ) : (
+                  <p className="mt-2">
+                    <Link href="/app/upgrade" className="font-semibold text-sky hover:underline">
+                      View plans
+                    </Link>
+                  </p>
+                )}
+              </div>
             ) : null}
           </div>
 
@@ -251,7 +309,7 @@ export default function AiChatPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                send(input);
+                void send(input);
               }}
               className="mx-auto flex max-w-2xl gap-2"
             >
@@ -259,10 +317,15 @@ export default function AiChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask where your money went…"
-                disabled={loading}
+                disabled={loading || loadingThread}
+                maxLength={4000}
                 className="min-w-0 flex-1"
               />
-              <Button type="submit" disabled={loading || !input.trim()} className="shrink-0 px-4">
+              <Button
+                type="submit"
+                disabled={loading || loadingThread || !input.trim()}
+                className="shrink-0 px-4"
+              >
                 <Send className="size-4" />
                 <span className="sr-only">Send</span>
               </Button>

@@ -1,6 +1,8 @@
-import { apiRequest } from "@/lib/api/client";
+import { apiRequest, apiRequestWithMeta } from "@/lib/api/client";
 import type {
   AIQuota,
+  AiCategoriseResult,
+  AppliedBudgetRecommendation,
   BudgetRecommendation,
   CashFlowPrediction,
   CfoAnalysis,
@@ -17,7 +19,13 @@ export async function sendChat(
   token: string,
   body: { message: string; conversation_id?: string },
 ) {
-  return apiRequest<ChatResponse>("/ai/chat/", { method: "POST", body, token });
+  const payload: { message: string; conversation_id?: string } = {
+    message: body.message,
+  };
+  if (body.conversation_id) {
+    payload.conversation_id = body.conversation_id;
+  }
+  return apiRequest<ChatResponse>("/ai/chat/", { method: "POST", body: payload, token });
 }
 
 export async function listConversations(token: string) {
@@ -29,15 +37,16 @@ export async function getConversation(token: string, id: string) {
 }
 
 export async function categoriseWithAi(token: string, transactionId: string) {
-  return apiRequest<Record<string, unknown>>(
+  return apiRequest<AiCategoriseResult>(
     `/ai/transactions/${transactionId}/categorise/`,
     { method: "POST", token },
   );
 }
 
 export async function getCashFlowPrediction(token: string, days = 30) {
+  const clamped = Math.min(90, Math.max(1, days));
   return apiRequest<CashFlowPrediction>(
-    `/ai/cash-flow/predict/?days=${days}`,
+    `/ai/cash-flow/predict/?days=${clamped}`,
     { token },
   );
 }
@@ -54,16 +63,17 @@ export async function getBudgetRecommendations(token: string) {
 }
 
 export async function applyBudgetRecommendations(token: string) {
-  return apiRequest<BudgetRecommendation[]>(
+  return apiRequest<AppliedBudgetRecommendation[]>(
     "/ai/budget-recommendations/apply/",
     { method: "POST", token },
   );
 }
 
 export async function analyseCfo(token: string, businessId?: string) {
-  return apiRequest<CfoAnalysis>("/ai/cfo/analyse/", {
+  const { data, cached } = await apiRequestWithMeta<CfoAnalysis>("/ai/cfo/analyse/", {
     method: "POST",
     body: businessId ? { business_id: businessId } : {},
     token,
   });
+  return { ...data, cached: cached ?? data.cached };
 }

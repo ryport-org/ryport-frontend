@@ -145,6 +145,7 @@ export type Conversation = {
   id: string;
   title?: string;
   messages?: ChatMessage[];
+  message_count?: number;
   created_at: string;
   updated_at?: string;
 };
@@ -165,24 +166,48 @@ export type AIQuota = {
   is_unlimited: boolean;
 };
 
+export type CashFlowProjection = {
+  date: string;
+  projected_balance: number;
+  balance_naira?: string;
+};
+
 export type CashFlowPrediction = {
   current_balance?: number;
-  projections?: { date: string; balance_kobo: number }[];
-  days_until_low?: number;
-  low_balance_date?: string;
+  current_balance_naira?: string;
+  projections?: CashFlowProjection[];
+  days_until_low?: number | null;
+  low_balance_date?: string | null;
+  expected_income_date?: string | null;
   ai_insight?: string;
   burn_rate_daily?: number;
   burn_rate_monthly?: number;
-  runway_weeks?: number;
+  burn_rate_kobo_per_month?: number;
 };
 
 export type SubscriptionItem = {
   merchant: string;
   amount_monthly_kobo: number;
-  amount_monthly_naira?: number;
-  frequency: string;
+  amount_monthly_naira?: string;
+  amount_annual_naira?: string;
+  frequency: "monthly" | "weekly" | string;
   last_charged?: string;
+  times_charged?: number;
+  category?: string;
   is_duplicate?: boolean;
+};
+
+export type AiCategoriseResult = {
+  category: string;
+  was_cached: boolean;
+};
+
+export type AppliedBudgetRecommendation = {
+  id: string;
+  category: string;
+  limit_kobo: number;
+  period: "weekly" | "monthly";
+  is_ai_recommended: boolean;
 };
 
 export type BudgetRecommendation = {
@@ -195,13 +220,37 @@ export type BudgetRecommendation = {
 };
 
 export type CfoAnalysis = {
+  generated_at?: string;
+  business?: string;
+  period_days?: number;
   health_score?: number;
   executive_summary?: string;
-  runway?: { months?: number; zero_date?: string; risk_level?: string };
-  burn_rate?: { monthly?: number; trend?: string };
+  summary?: string;
+  runway?: {
+    months?: number;
+    weeks?: number;
+    zero_date?: string;
+    risk_level?: string;
+    current_balance?: number;
+  };
+  runway_months?: number;
+  runway_notes?: string;
+  burn_rate?: {
+    monthly?: number;
+    weekly?: number;
+    daily?: number;
+    trend?: string;
+    trend_percentage?: number;
+  };
+  burn_rate_kobo_per_month?: number;
+  revenue_analysis?: { mom_growth_percent?: number; trend?: string };
   risks?: { severity: string; description: string }[];
+  risk_flags?: { severity: string; description: string }[];
   cost_savings?: Record<string, unknown>[];
+  savings_recommendations?: Record<string, unknown>[];
   wasteful_expenses?: Record<string, unknown>[];
+  hiring_recommendation?: Record<string, unknown>;
+  pricing_recommendation?: Record<string, unknown>;
   cached?: boolean;
 };
 
