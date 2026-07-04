@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { NavBrand } from "@/components/marketing/nav-brand";
+import { AuthNavActions } from "@/components/marketing/auth-nav-actions";
 import { isNavActive, navMenus } from "@/components/marketing/nav-config";
 import { cn } from "@/lib/utils";
 
@@ -81,12 +82,7 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="hidden rounded-full px-3 py-1.5 text-sm font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white xl:inline-flex"
-            >
-              Sign in
-            </Link>
+            <AuthNavActions className="hidden xl:flex" />
 
             <button
               type="button"
@@ -98,12 +94,7 @@ export function SiteHeader() {
               {open ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
 
-            <Link
-              href="/register"
-              className="inline-flex rounded-full bg-white px-4 py-2 text-xs font-semibold text-ink transition-opacity hover:opacity-90 sm:px-5 sm:text-sm"
-            >
-              Get started
-            </Link>
+            <AuthNavActions className="xl:hidden" />
           </div>
         </div>
 
@@ -148,14 +139,13 @@ export function SiteHeader() {
                 </div>
               );
             })}
-            <div className="mt-1 border-t border-white/10 pt-1">
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className="block rounded-xl px-4 py-3 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"
-              >
-                Sign in
-              </Link>
+            <div className="mt-1 border-t border-white/10 pt-3">
+              <AuthNavActions
+                onNavigate={() => setOpen(false)}
+                showRegister={false}
+                linkClassName="block w-full rounded-xl px-4 py-3 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white xl:hidden"
+                primaryClassName="block w-full rounded-xl px-4 py-3 text-center text-sm font-semibold text-ink"
+              />
             </div>
           </nav>
         ) : null}

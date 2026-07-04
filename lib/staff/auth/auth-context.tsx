@@ -19,6 +19,7 @@ import {
   setStaffTokens,
 } from "@/lib/staff/auth/tokens";
 import { staffPath } from "@/lib/staff/routes";
+import { isStaffAuthError } from "@/lib/auth/session-utils";
 
 type StaffAuthContextValue = {
   staffUser: StaffUser | null;
@@ -73,24 +74,41 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
       const access = getStaffAccessToken();
       const refresh = getStaffRefreshToken();
 
-      if (access || refresh) {
-        let token = access;
-        if (!token && refresh) {
-          const tokens = await staffAuthApi.refresh(refresh);
-          setStaffTokens(tokens.access, refresh);
-          token = tokens.access;
-        }
-        if (token) {
-          await bootstrap(token);
+      if (!access && !refresh) {
+        setStaffUser(null);
+        return;
+      }
+
+      const loadProfile = async (token: string) => {
+        await bootstrap(token);
+      };
+
+      if (access) {
+        try {
+          await loadProfile(access);
           return;
+        } catch (err) {
+          if (!refresh || !isStaffAuthError(err)) return;
         }
       }
 
-      clearStaffTokens();
-      setStaffUser(null);
-    } catch {
-      clearStaffTokens();
-      setStaffUser(null);
+      if (refresh) {
+        try {
+          const tokens = await staffAuthApi.refresh(refresh);
+          setStaffTokens(tokens.access, tokens.refresh ?? refresh);
+          await loadProfile(tokens.access);
+        } catch (err) {
+          if (isStaffAuthError(err)) {
+            clearStaffTokens();
+            setStaffUser(null);
+          }
+        }
+      }
+    } catch (err) {
+      if (isStaffAuthError(err)) {
+        clearStaffTokens();
+        setStaffUser(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +168,7 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       staffUser,
       isLoading,
-      isAuthenticated: Boolean(staffUser),
+      isAuthenticated: Boolean(staffUser) || Boolean(getStaffAccessToken()),
       can,
       login,
       acceptInvite,

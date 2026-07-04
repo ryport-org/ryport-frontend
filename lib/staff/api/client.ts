@@ -88,13 +88,13 @@ async function refreshAccessToken(): Promise<string | null> {
   const refresh = getStaffRefreshToken();
   if (!refresh) return null;
 
-  const data = await staffRequest<{ access: string }>("/auth/refresh/", {
+  const data = await staffRequest<{ access: string; refresh?: string }>("/auth/refresh/", {
     method: "POST",
     body: { refresh },
     skipAuth: true,
     skipRefresh: true,
   });
-  setStaffTokens(data.access, refresh);
+  setStaffTokens(data.access, data.refresh ?? refresh);
   return data.access;
 }
 

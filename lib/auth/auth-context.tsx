@@ -21,6 +21,7 @@ import type {
 } from "@/lib/api/types";
 import { clearOAuthSession } from "@/lib/auth/oauth-session";
 import { isAdminUser } from "@/lib/auth/admin";
+import { isCustomerAuthError } from "@/lib/auth/session-utils";
 import { staffPath } from "@/lib/staff/routes";
 import {
   clearTokens,
@@ -125,31 +126,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const access = getAccessToken();
       const refresh = getRefreshToken();
 
-      if (access || refresh) {
-        let token = access;
-        if (!token && refresh) {
-          const tokens = await authApi.refresh(refresh);
-          setRyportTokens(tokens.access, tokens.refresh);
-          token = tokens.access;
-        }
-        if (token) {
-          const profile = await bootstrap(token);
-          if (profile && isAdminUser(profile)) {
-            router.push(staffPath("/login"));
-          }
+      if (!access && !refresh) {
+        clearAppState();
+        return;
+      }
+
+      const loadProfile = async (token: string) => {
+        await bootstrap(token);
+      };
+
+      if (access) {
+        try {
+          await loadProfile(access);
           return;
+        } catch (err) {
+          if (!refresh || !isCustomerAuthError(err)) return;
         }
       }
 
-      clearTokens();
-      clearAppState();
-    } catch {
-      clearTokens();
-      clearAppState();
+      if (refresh) {
+        try {
+          const tokens = await authApi.refresh(refresh);
+          setRyportTokens(tokens.access, tokens.refresh);
+          await loadProfile(tokens.access);
+        } catch (err) {
+          if (isCustomerAuthError(err)) {
+            clearTokens();
+            clearAppState();
+          }
+        }
+      }
+    } catch (err) {
+      if (isCustomerAuthError(err)) {
+        clearTokens();
+        clearAppState();
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [bootstrap, clearAppState, router]);
+  }, [bootstrap, clearAppState]);
 
   useEffect(() => {
     void refreshSession();
@@ -257,7 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       activeBusiness,
       aiQuota,
       isLoading,
-      isAuthenticated: Boolean(user),
+      isAuthenticated: Boolean(user) || Boolean(getAccessToken()),
       isAdmin,
       canUse,
       getLimit,

@@ -34,6 +34,7 @@ export interface StaffAuthResponse {
 
 export interface StaffRefreshResponse {
   access: string;
+  refresh?: string;
 }
 
 export interface ApiSuccess<T> {

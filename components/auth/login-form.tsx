@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordField } from "@/components/auth/password-field";
@@ -10,8 +10,9 @@ import { PasswordField } from "@/components/auth/password-field";
 import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
 
 function LoginFormInner() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, loginWithOtp, requestOtp } = useAuth();
+  const { login, loginWithOtp, requestOtp, isAuthenticated, isLoading, isAdmin } = useAuth();
   const [mode, setMode] = useState<"password" | "otp">("password");
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
@@ -23,6 +24,18 @@ function LoginFormInner() {
       setError(decodeURIComponent(oauthError.replace(/\+/g, " ")));
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+    const next = searchParams.get("next");
+    if (isAdmin) {
+      router.replace("/staff/login");
+      return;
+    }
+    router.replace(next && next.startsWith("/app") ? next : "/app/dashboard");
+  }, [isAdmin, isAuthenticated, isLoading, router, searchParams]);
+
+  if (!isLoading && isAuthenticated) return null;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
