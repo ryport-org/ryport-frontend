@@ -34,7 +34,7 @@ const NAV: NavItem[] = [
   { href: staffPath("/analytics"), label: "Analytics", icon: BarChart3, permission: "can_view_analytics" },
   { href: staffPath("/support"), label: "Support", icon: ClipboardList, permission: "can_suspend_users" },
   { href: staffPath("/announcements"), label: "Announcements", icon: Bell, permission: "can_send_announcements" },
-  { href: staffPath("/staff"), label: "Staff", icon: Shield, permission: "can_manage_staff" },
+  { href: staffPath("/team"), label: "Staff", icon: Shield, permission: "can_manage_staff" },
   { href: staffPath("/audit"), label: "Audit log", icon: Activity, permission: "can_view_audit_log" },
   { href: staffPath("/system"), label: "System", icon: Wrench, permission: "can_view_system" },
   { href: staffPath("/settings"), label: "Settings", icon: Settings },

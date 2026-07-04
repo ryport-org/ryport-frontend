@@ -50,7 +50,10 @@ export default function StaffManagementPage() {
           {error ? (
             <ApiErrorBanner
               message={error}
-              onRetry={() => { staff.reload(); invites.reload(); }}
+              onRetry={() => {
+                staff.reload();
+                invites.reload();
+              }}
             />
           ) : null}
 
@@ -59,7 +62,10 @@ export default function StaffManagementPage() {
               <h2 className="text-sm font-semibold text-ink">Invite staff</h2>
             </CardHeader>
             <CardBody className="pt-0">
-              <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={(e) => void invite(e)}>
+              <form
+                className="flex flex-col gap-3 sm:flex-row sm:items-end"
+                onSubmit={(e) => void invite(e)}
+              >
                 <div className="flex-1">
                   <Input
                     type="email"
@@ -105,7 +111,9 @@ export default function StaffManagementPage() {
                       <li key={m.id} className="flex items-center justify-between py-3">
                         <div>
                           <p className="text-sm font-medium text-ink">{m.email}</p>
-                          <p className="text-xs capitalize text-muted">{m.role} · {m.department}</p>
+                          <p className="text-xs capitalize text-muted">
+                            {m.role} · {m.department}
+                          </p>
                         </div>
                         <Badge variant={m.is_active ? "success" : "danger"}>
                           {m.is_active ? "Active" : "Inactive"}

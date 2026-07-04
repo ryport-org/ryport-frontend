@@ -3,17 +3,19 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useStaffAuth } from "@/lib/staff/auth/auth-context";
+import { getStaffAccessToken } from "@/lib/staff/auth/tokens";
 import { staffPath } from "@/lib/staff/routes";
 
 export function StaffAuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useStaffAuth();
+  const { staffUser, isLoading } = useStaffAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isLoading) return;
+    if (!staffUser && !getStaffAccessToken()) {
       router.replace(staffPath("/login"));
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isLoading, staffUser, router]);
 
   if (isLoading) {
     return (
@@ -26,7 +28,7 @@ export function StaffAuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) return null;
+  if (!staffUser) return null;
 
   return children;
 }

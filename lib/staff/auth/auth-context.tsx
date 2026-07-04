@@ -88,7 +88,12 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
           await loadProfile(access);
           return;
         } catch (err) {
-          if (!refresh || !isStaffAuthError(err)) return;
+          if (!isStaffAuthError(err)) return;
+          if (!refresh) {
+            clearStaffTokens();
+            setStaffUser(null);
+            return;
+          }
         }
       }
 
@@ -168,7 +173,7 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       staffUser,
       isLoading,
-      isAuthenticated: Boolean(staffUser) || Boolean(getStaffAccessToken()),
+      isAuthenticated: Boolean(staffUser),
       can,
       login,
       acceptInvite,

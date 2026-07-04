@@ -9,5 +9,10 @@ export function isCustomerAuthError(error: unknown): boolean {
 
 export function isStaffAuthError(error: unknown): boolean {
   if (!(error instanceof StaffApiError)) return false;
-  return error.status === 401 || error.code === "invalid_token" || error.code === "not_authenticated";
+  return (
+    error.status === 401 ||
+    error.code === "invalid_token" ||
+    error.code === "not_authenticated" ||
+    error.code === "authentication_failed"
+  );
 }

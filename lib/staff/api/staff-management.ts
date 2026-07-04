@@ -6,7 +6,7 @@ export async function listStaff(
   params: { role?: StaffRole; is_active?: boolean; page?: number } = {},
   token?: string | null,
 ) {
-  return staffRequest<Paginated<StaffMember>>(`/staff/${buildQuery(params)}`, { token });
+  return staffRequest<Paginated<StaffMember>>(`/staff${buildQuery(params)}`, { token });
 }
 
 export async function inviteStaff(

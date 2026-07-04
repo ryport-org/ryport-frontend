@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { StaffAuthGuard } from "@/components/staff/auth/auth-guard";
 import { StaffShell } from "@/components/staff/shell/app-shell";
 
