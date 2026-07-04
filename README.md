@@ -9,6 +9,8 @@ Marketing site and authenticated dashboard for [Ryport](https://www.ryport.com.n
 | [`docs/frontend-dev-handoff.md`](docs/frontend-dev-handoff.md) | **Start here** — auth, bootstrap, plan gates, money rules |
 | [`docs/frontend-integration.md`](docs/frontend-integration.md) | Full API reference, sitemap, page wiring |
 | [`docs/staff-api-integration.md`](docs/staff-api-integration.md) | Staff dashboard API (`staff.ryport.com.ng`) |
+| [`docs/staff-frontend-endpoints.md`](docs/staff-frontend-endpoints.md) | Staff endpoint map (integrated at `/staff`) |
+| [`docs/staff-dashboard-backend-requirements.md`](docs/staff-dashboard-backend-requirements.md) | Backend checklist |
 | [`staff/README.md`](staff/README.md) | Staff Next.js app — run on port 3001 |
 
 ## Setup

@@ -40,7 +40,7 @@ export function getStaffAuthErrorMessage(err: unknown): string {
       return "Too many failed attempts. Try again in about 15 minutes.";
     }
     if (err.code === "invalid_credentials") {
-      return "Invalid email or password.";
+      return "Invalid email or password, or this account does not have staff access. Staff login is separate from the customer app — use credentials created via staff invite or create_superadmin on the backend.";
     }
     if (err.code === "insufficient_permissions") {
       return "You do not have permission to perform this action.";

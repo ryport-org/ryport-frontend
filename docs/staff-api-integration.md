@@ -1,7 +1,9 @@
 # Ryport Staff API — Frontend Integration Guide
 
-**Audience:** Frontend engineers building the internal staff dashboard at `https://staff.ryport.com.ng`  
+**Audience:** Frontend engineers building the staff dashboard at `https://www.ryport.com.ng/staff`  
 **Backend API:** `https://ryport.onrender.com/staff/api/v1/`  
+**Endpoint map:** [`staff-frontend-endpoints.md`](./staff-frontend-endpoints.md)  
+**Backend requirements:** [`staff-dashboard-backend-requirements.md`](./staff-dashboard-backend-requirements.md)  
 **Last updated:** July 2026
 
 This document is the integration reference for the **Staff REST API** — a completely separate API from the customer app at `/api/v1/`. Do not use customer Supabase tokens on staff endpoints. Do not use Django admin or `/ryport-ops/` from React.
@@ -33,7 +35,7 @@ This document is the integration reference for the **Staff REST API** — a comp
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  Staff frontend (YOU BUILD THIS)                                 │
-│  Next.js / React @ staff.ryport.com.ng                           │
+│  Next.js / React @ www.ryport.com.ng/staff                       │
 └───────────────────────────┬─────────────────────────────────────┘
                             │ HTTPS + Staff JWT Bearer
                             ▼
@@ -62,7 +64,7 @@ This document is the integration reference for the **Staff REST API** — a comp
 
 ```env
 NEXT_PUBLIC_STAFF_API_URL=https://ryport.onrender.com
-NEXT_PUBLIC_STAFF_APP_URL=https://staff.ryport.com.ng
+NEXT_PUBLIC_STAFF_APP_URL=https://www.ryport.com.ng
 ```
 
 All staff API calls:
@@ -71,17 +73,19 @@ All staff API calls:
 ${NEXT_PUBLIC_STAFF_API_URL}/staff/api/v1/...
 ```
 
+Staff UI routes live under `/staff/*` on the main domain.
+
 ### Local development
 
 ```env
 NEXT_PUBLIC_STAFF_API_URL=http://localhost:8000
-NEXT_PUBLIC_STAFF_APP_URL=http://localhost:3001
+NEXT_PUBLIC_STAFF_APP_URL=http://localhost:3000
 ```
 
 CORS is configured for:
 
-- `https://staff.ryport.com.ng`
-- `http://localhost:3001`
+- `https://www.ryport.com.ng`
+- `http://localhost:3000`
 
 ---
 
@@ -336,19 +340,19 @@ Refresh access token proactively before expiry (8h) or on **401** with a single 
 
 | Page | Route (frontend) | Primary API |
 |------|------------------|-------------|
-| Login | `/login` | `POST /auth/login/` |
-| Accept invite | `/accept-invite` | `POST /staff/accept-invite/` |
-| Dashboard | `/` | `GET /dashboard/overview/` |
-| Users list | `/users` | `GET /users/?plan=&is_suspended=&q=&sort=` |
-| User detail | `/users/:id` | `GET /users/:id/`, notes, suspend actions |
-| Revenue | `/revenue` | `GET /revenue/summary/`, MRR chart |
-| Analytics | `/analytics` | feature-adoption, engagement, ai, banking, transactions |
-| Support queue | `/support` | `GET /support/flagged-users/`, `/support/notes/` |
-| Announcements | `/announcements` | CRUD + preview (superadmin) |
-| Staff management | `/staff` | list, invite, deactivate (superadmin) |
-| Audit log | `/audit` | `GET /audit/` (superadmin) |
-| System | `/system` | health, celery, errors, alerts (engineering+) |
-| Settings | `/settings` | `GET/PATCH /auth/me/`, change password |
+| Login | `/staff/login` | `POST /auth/login/` |
+| Accept invite | `/staff/accept-invite` | `POST /staff/accept-invite/` |
+| Dashboard | `/staff` | `GET /dashboard/overview/` |
+| Users list | `/staff/users` | `GET /users/?plan=&is_suspended=&q=&sort=` |
+| User detail | `/staff/users/:id` | `GET /users/:id/`, notes, suspend actions |
+| Revenue | `/staff/revenue` | `GET /revenue/summary/`, MRR chart |
+| Analytics | `/staff/analytics` | feature-adoption, engagement, ai, banking, transactions |
+| Support queue | `/staff/support` | `GET /support/flagged-users/`, `/support/notes/` |
+| Announcements | `/staff/announcements` | CRUD + preview (superadmin) |
+| Staff management | `/staff/staff` | list, invite, deactivate (superadmin) |
+| Audit log | `/staff/audit` | `GET /audit/` (superadmin) |
+| System | `/staff/system` | health, celery, errors, alerts (engineering+) |
+| Settings | `/staff/settings` | `GET/PATCH /auth/me/`, change password |
 
 ### Dashboard charts
 
@@ -701,7 +705,7 @@ export async function staffFetch<T>(
 | URL | Reason |
 |-----|--------|
 | `/api/v1/*` with customer token | Wrong auth system — will fail or leak wrong data model |
-| `/ryport-ops/` | Legacy Django ops UI — being replaced by staff.ryport.com.ng |
+| `/ryport-ops/` | Legacy Django ops UI — replaced by `/staff` on www.ryport.com.ng |
 | `/admin/` | Django admin — not for dashboard UX |
 
 The staff frontend should **only** talk to `/staff/api/v1/`.
@@ -717,10 +721,10 @@ Backend (Render):
 - [ ] `python manage.py migrate` run
 - [ ] `python manage.py create_superadmin` run once
 
-Frontend (staff.ryport.com.ng):
+Frontend (`www.ryport.com.ng/staff`):
 
 - [ ] `NEXT_PUBLIC_STAFF_API_URL=https://ryport.onrender.com`
-- [ ] App hosted at `https://staff.ryport.com.ng` (CORS allowlisted)
+- [ ] Staff routes deployed at `/staff/*` on main Next.js app
 - [ ] Login, invite accept, and token refresh flows implemented
 - [ ] Nav gated by `permissions` from `/auth/me/`
 
@@ -728,18 +732,29 @@ Frontend (staff.ryport.com.ng):
 
 ## 15. Test credentials
 
-After backend deploy + `create_superadmin`:
+After backend deploy, run:
+
+```bash
+python manage.py sync_staff_api_profiles
+python manage.py create_superadmin --email ryport@ryport.com.ng
+```
 
 | Field | Value |
 |-------|-------|
-| Email | `ryport@gmail.com` |
-| Password | `Ryport##33*` (change immediately in production) |
+| Email | `ryport@ryport.com.ng` (ops account) or `ryport@gmail.com` (seed) |
+| Password | Same as `/ryport-ops/` — **not** the customer app password |
 | Role | `superadmin` |
 
-Invite additional staff via `POST /staff/api/v1/staff/invite/` (superadmin only). Invited users receive an email with link:
+**401 on login?** Run `sync_staff_api_profiles`, verify ops password, or clear lockout:
+
+```bash
+python manage.py clear_staff_login_lockouts --all
+```
+
+Invite link format:
 
 ```
-https://staff.ryport.com.ng/accept-invite?token=<token>
+https://www.ryport.com.ng/staff/accept-invite?token=<token>
 ```
 
 ---
@@ -748,8 +763,10 @@ https://staff.ryport.com.ng/accept-invite?token=<token>
 
 | Doc | Audience |
 |-----|----------|
-| `docs/frontend-integration.md` | Customer app (`www.ryport.com.ng`) |
-| `docs/frontend-dev-handoff.md` | Customer app quick start |
-| **This file** | Staff dashboard (`staff.ryport.com.ng`) |
+| [`staff-frontend-endpoints.md`](./staff-frontend-endpoints.md) | Frontend endpoint map (start here) |
+| [`staff-dashboard-backend-requirements.md`](./staff-dashboard-backend-requirements.md) | Backend sprint checklist |
+| [`frontend-integration.md`](./frontend-integration.md) | Customer app |
+| [`frontend-dev-handoff.md`](./frontend-dev-handoff.md) | Customer app quick start |
+| **This file** | Staff API full reference |
 
-**Implementation:** Next.js app in [`staff/`](../staff/README.md)
+**Implementation:** `app/staff/`, `lib/staff/`, `components/staff/`

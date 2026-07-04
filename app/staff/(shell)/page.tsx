@@ -7,26 +7,33 @@ import { KpiGrid } from "@/components/staff/dashboard/kpi-grid";
 import { PlanDistribution } from "@/components/staff/dashboard/plan-distribution";
 import { ServiceStatusPanel } from "@/components/staff/dashboard/service-status";
 import { PageBody, PageHeader } from "@/components/staff/shell/page-header";
-import { Button } from "@/components/staff/ui/button";
-import { Card, CardBody } from "@/components/staff/ui/card";
-import { Skeleton } from "@/components/staff/ui/skeleton";
+import { ApiErrorBanner, LoadingGrid } from "@/components/staff/shared/api-state";
+import { SimpleBarChart } from "@/components/staff/shared/simple-chart";
 import { staffDashboardApi } from "@/lib/staff/api";
-import type { DashboardOverview } from "@/lib/staff/api/types";
+import type { ChartData, DashboardOverview } from "@/lib/staff/api/types";
 import { getStaffAccessToken } from "@/lib/staff/auth/tokens";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
+  const [userGrowth, setUserGrowth] = useState<ChartData | null>(null);
+  const [revenueChart, setRevenueChart] = useState<ChartData | null>(null);
 
-  async function loadOverview() {
+  async function load() {
     const token = getStaffAccessToken();
     if (!token) return;
     setLoading(true);
     setError("");
     try {
-      const data = await staffDashboardApi.getOverview(token);
-      setOverview(data);
+      const [overviewData, growth, revenue] = await Promise.all([
+        staffDashboardApi.getOverview(token),
+        staffDashboardApi.getUserGrowthChart(30, token).catch(() => null),
+        staffDashboardApi.getRevenueChart(12, token).catch(() => null),
+      ]);
+      setOverview(overviewData);
+      setUserGrowth(growth);
+      setRevenueChart(revenue);
     } catch {
       setError("Could not load dashboard overview. The stats cache may be rebuilding — try again.");
       setOverview(null);
@@ -36,7 +43,7 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    void loadOverview();
+    void load();
   }, []);
 
   return (
@@ -46,32 +53,24 @@ export default function DashboardPage() {
         description="KPIs, service health, and recent activity across Ryport"
       />
       <PageBody>
-        {error ? (
-          <Card className="mb-6 border-danger/30 bg-danger/5">
-            <CardBody className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-danger">{error}</p>
-              <Button type="button" variant="secondary" onClick={() => void loadOverview()}>
-                Retry
-              </Button>
-            </CardBody>
-          </Card>
-        ) : null}
+        {error ? <div className="mb-6"><ApiErrorBanner message={error} onRetry={() => void load()} /></div> : null}
 
         {loading ? (
           <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-28" />
-              ))}
-            </div>
-            <Skeleton className="h-64" />
+            <LoadingGrid />
+            <div className="h-64 animate-pulse rounded-lg bg-border/60" />
           </div>
         ) : overview ? (
           <div className="space-y-6">
             <KpiGrid kpis={overview.kpis} />
 
+            <div className="grid gap-6 lg:grid-cols-2">
+              <SimpleBarChart title="User growth (30d)" chart={userGrowth} />
+              <SimpleBarChart title="Revenue (12mo)" chart={revenueChart} />
+            </div>
+
             <div className="grid gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2 space-y-6">
+              <div className="space-y-6 lg:col-span-2">
                 <PlanDistribution distribution={overview.plan_distribution} />
                 <ActivityFeed activity={overview.recent_activity} />
               </div>

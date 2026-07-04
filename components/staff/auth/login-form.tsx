@@ -30,7 +30,8 @@ export function LoginForm() {
     <div className="w-full max-w-sm">
       <h1 className="text-2xl font-semibold text-ink">Staff sign in</h1>
       <p className="mt-2 text-sm text-muted">
-        Internal access only. Use your Ryport staff credentials.
+        Staff access only. This login is separate from the customer app at /login — you
+        need a staff account created by an admin invite or backend superadmin setup.
       </p>
 
       <form className="mt-8 space-y-4" onSubmit={handleSubmit}>

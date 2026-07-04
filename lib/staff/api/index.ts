@@ -1,5 +1,21 @@
+import * as analytics from "@/lib/staff/api/analytics";
+import * as announcements from "@/lib/staff/api/announcements";
+import * as audit from "@/lib/staff/api/audit";
 import * as auth from "@/lib/staff/api/auth";
 import * as dashboard from "@/lib/staff/api/dashboard";
+import * as revenue from "@/lib/staff/api/revenue";
+import * as staffManagement from "@/lib/staff/api/staff-management";
+import * as support from "@/lib/staff/api/support";
+import * as system from "@/lib/staff/api/system";
+import * as users from "@/lib/staff/api/users";
 
 export const staffAuthApi = auth;
 export const staffDashboardApi = dashboard;
+export const staffUsersApi = users;
+export const staffRevenueApi = revenue;
+export const staffAnalyticsApi = analytics;
+export const staffSupportApi = support;
+export const staffAnnouncementsApi = announcements;
+export const staffManagementApi = staffManagement;
+export const staffAuditApi = audit;
+export const staffSystemApi = system;
