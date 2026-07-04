@@ -20,6 +20,7 @@ import type {
   Profile,
 } from "@/lib/api/types";
 import { clearOAuthSession } from "@/lib/auth/oauth-session";
+import { isAdminUser, redirectToOpsDashboard } from "@/lib/auth/admin";
 import {
   clearTokens,
   getAccessToken,
@@ -35,6 +36,7 @@ type AuthContextValue = {
   aiQuota: AIQuota | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   canUse: (feature: string) => boolean;
   getLimit: (key: string) => number | null;
   login: (email: string, password: string, totp?: string) => Promise<void>;
@@ -78,6 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [features],
   );
 
+  const isAdmin = useMemo(() => isAdminUser(user), [user]);
+
   const clearAppState = useCallback(() => {
     setUser(null);
     setPlan(null);
@@ -100,7 +104,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUnreadNotifications(unread.count);
     setActiveBusiness(active);
     setAiQuota(quota);
+    return profile;
   }, []);
+
+  const finishCustomerLogin = useCallback(
+    (profile: Profile) => {
+      if (isAdminUser(profile)) {
+        redirectToOpsDashboard();
+        return;
+      }
+      router.push("/app/dashboard");
+    },
+    [router],
+  );
 
   const refreshSession = useCallback(async () => {
     setIsLoading(true);
@@ -116,7 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           token = tokens.access;
         }
         if (token) {
-          await bootstrap(token);
+          const profile = await bootstrap(token);
+          if (profile && isAdminUser(profile)) {
+            redirectToOpsDashboard();
+          }
           return;
         }
       }
@@ -139,10 +158,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password: string, totp?: string) => {
       const data = await authApi.login({ email, password, totp_token: totp });
       setRyportTokens(data.access, data.refresh);
-      await bootstrap(data.access);
-      router.push("/app/dashboard");
+      const profile = await bootstrap(data.access);
+      finishCustomerLogin(profile);
     },
-    [bootstrap, router],
+    [bootstrap, finishCustomerLogin],
   );
 
   const requestOtp = useCallback(async (email: string) => {
@@ -153,10 +172,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, otp: string) => {
       const data = await authApi.verifyOtp(email, otp);
       setRyportTokens(data.access, data.refresh);
-      await bootstrap(data.access);
-      router.push("/app/dashboard");
+      const profile = await bootstrap(data.access);
+      finishCustomerLogin(profile);
     },
-    [bootstrap, router],
+    [bootstrap, finishCustomerLogin],
   );
 
   const register = useCallback(
@@ -167,10 +186,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password_confirm: passwordConfirm,
       });
       setRyportTokens(data.access, data.refresh);
-      await bootstrap(data.access);
-      router.push("/app/dashboard");
+      const profile = await bootstrap(data.access);
+      finishCustomerLogin(profile);
     },
-    [bootstrap, router],
+    [bootstrap, finishCustomerLogin],
   );
 
   const logout = useCallback(async () => {
@@ -238,6 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       aiQuota,
       isLoading,
       isAuthenticated: Boolean(user),
+      isAdmin,
       canUse,
       getLimit,
       login,
@@ -257,6 +277,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       activeBusiness,
       aiQuota,
       isLoading,
+      isAdmin,
       canUse,
       getLimit,
       login,

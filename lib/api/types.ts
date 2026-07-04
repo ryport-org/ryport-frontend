@@ -27,6 +27,8 @@ export type Profile = {
   id: string;
   email: string;
   plan: Plan;
+  role?: "user" | "admin" | string;
+  is_staff?: boolean;
   is_2fa_enabled: boolean;
   last_login_ip: string | null;
   created_at: string;

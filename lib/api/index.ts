@@ -9,6 +9,7 @@ import * as notifications from "@/lib/api/notifications";
 import * as businesses from "@/lib/api/businesses";
 import * as teams from "@/lib/api/teams";
 import * as integrations from "@/lib/api/integrations";
+import * as dashboard from "@/lib/api/dashboard";
 import type { CursorPage, Transaction } from "@/lib/api/types";
 
 export function normalizeTransactions(
@@ -131,6 +132,10 @@ export const integrationsApi = {
   listApiKeys: integrations.listApiKeys,
   createApiKey: integrations.createApiKey,
   revokeApiKey: integrations.revokeApiKey,
+};
+
+export const dashboardApi = {
+  overview: dashboard.getOverview,
 };
 
 export { ApiError, apiRequest, healthCheck } from "@/lib/api/client";

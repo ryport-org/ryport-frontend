@@ -144,7 +144,8 @@ Use `useAuth().canUse('feature_key')` — gates come from `GET /users/me/plan/`.
 
 | Page | Route | Endpoints |
 |------|-------|-----------|
-| Dashboard | `/app/dashboard` | transactions, budgets, notifications, AI quota |
+| Dashboard | `/app/dashboard` | `GET /dashboard/overview/` |
+| Ops (admin only) | Backend `/ryport-ops/` | Django ops UI — not React |
 | Transactions | `/app/transactions` | `GET/POST /transactions/` |
 | Budgets | `/app/budgets` | `GET/POST /budgets/` |
 | Reports | `/app/reports` | `POST /reports/generate/` |
@@ -170,7 +171,18 @@ Common codes: `invalid_credentials`, `email_not_confirmed`, `oauth_account_requi
 
 ---
 
-## 8. Do NOT build in React
+## 8. Admin vs customer dashboards
+
+| User | After login | Data API |
+|------|-------------|----------|
+| `role === "admin"` (or `is_staff`) | Redirect to `{API_URL}/ryport-ops/` | `/ryport-ops/api/overview/` (Django) |
+| Everyone else | `/app/dashboard` | `GET /api/v1/dashboard/overview/` |
+
+Admins are **not** shown the React customer app shell — they are sent to the backend ops dashboard.
+
+---
+
+## 9. Do NOT build in React
 
 | URL | Reason |
 |-----|--------|
@@ -179,7 +191,7 @@ Common codes: `invalid_credentials`, `email_not_confirmed`, `oauth_account_requi
 
 ---
 
-## 9. Health checks
+## 10. Health checks
 
 ```bash
 curl https://ryport.onrender.com/api/health/live/
@@ -188,7 +200,7 @@ curl https://ryport.onrender.com/api/health/
 
 ---
 
-## 10. Test account (dev seed only)
+## 11. Test account (dev seed only)
 
 After `python manage.py seed_dev`:
 
