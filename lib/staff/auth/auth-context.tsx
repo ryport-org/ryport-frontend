@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { staffAuthApi } from "@/lib/staff/api";
 import { StaffApiError } from "@/lib/staff/api/client";
 import type { StaffPermissionKey, StaffUser } from "@/lib/staff/api/types";
@@ -18,7 +18,7 @@ import {
   getStaffRefreshToken,
   setStaffTokens,
 } from "@/lib/staff/auth/tokens";
-import { staffPath } from "@/lib/staff/routes";
+import { isStaffAppPath, staffPath } from "@/lib/staff/routes";
 import { isStaffAuthError } from "@/lib/auth/session-utils";
 
 type StaffAuthContextValue = {
@@ -54,6 +54,7 @@ export function getStaffAuthErrorMessage(err: unknown): string {
 
 export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [staffUser, setStaffUser] = useState<StaffUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -69,6 +70,11 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshSession = useCallback(async () => {
+    if (!isStaffAppPath(pathname)) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const access = getStaffAccessToken();
@@ -117,7 +123,7 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [bootstrap]);
+  }, [bootstrap, pathname]);
 
   useEffect(() => {
     void refreshSession();

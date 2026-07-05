@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 // OAuth temporarily disabled — re-enable with SocialLogins + OAuthHandler
 import { aiApi, authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
@@ -22,7 +22,7 @@ import type {
 import { clearOAuthSession } from "@/lib/auth/oauth-session";
 import { isAdminUser } from "@/lib/auth/admin";
 import { isCustomerAuthError } from "@/lib/auth/session-utils";
-import { staffPath } from "@/lib/staff/routes";
+import { isStaffAppPath, staffPath } from "@/lib/staff/routes";
 import {
   clearTokens,
   getAccessToken,
@@ -64,6 +64,7 @@ function featureMap(features: PlanFeature[] | undefined) {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<Profile | null>(null);
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -122,6 +123,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const refreshSession = useCallback(async () => {
+    if (isStaffAppPath(pathname)) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const access = getAccessToken();
@@ -165,7 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [bootstrap, clearAppState]);
+  }, [bootstrap, clearAppState, pathname]);
 
   useEffect(() => {
     void refreshSession();

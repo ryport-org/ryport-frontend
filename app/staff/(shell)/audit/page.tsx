@@ -24,7 +24,7 @@ export default function AuditPage() {
           {error ? <ApiErrorBanner message={error} onRetry={reload} /> : null}
           {loading ? (
             <LoadingGrid count={1} height="h-64" />
-          ) : data && data.results.length > 0 ? (
+          ) : data?.results?.length ? (
             <Card>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">

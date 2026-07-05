@@ -8,7 +8,7 @@ export function SimpleBarChart({
   title: string;
   chart: ChartData | null;
 }) {
-  if (!chart || chart.labels.length === 0) {
+  if (!chart?.labels?.length) {
     return (
       <Card>
         <CardHeader>
@@ -21,7 +21,7 @@ export function SimpleBarChart({
     );
   }
 
-  const max = Math.max(...chart.data, 1);
+  const max = Math.max(...(chart.data ?? []), 1);
 
   return (
     <Card>

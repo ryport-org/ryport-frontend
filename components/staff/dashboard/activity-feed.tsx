@@ -5,7 +5,7 @@ function formatEvent(event: string) {
   return event.replace(/_/g, " ");
 }
 
-export function ActivityFeed({ activity }: { activity: RecentActivity[] }) {
+export function ActivityFeed({ activity = [] }: { activity?: RecentActivity[] }) {
   return (
     <Card>
       <CardHeader>

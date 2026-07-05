@@ -10,11 +10,11 @@ function statusVariant(status: string): "success" | "warning" | "danger" | "defa
 }
 
 export function ServiceStatusPanel({
-  serviceStatus,
+  serviceStatus = {},
 }: {
-  serviceStatus: Record<string, ServiceStatusEntry>;
+  serviceStatus?: Record<string, ServiceStatusEntry>;
 }) {
-  const entries = Object.entries(serviceStatus);
+  const entries = Object.entries(serviceStatus ?? {});
 
   return (
     <Card>

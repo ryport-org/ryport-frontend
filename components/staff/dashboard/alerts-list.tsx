@@ -8,7 +8,7 @@ function severityVariant(severity: string): "warning" | "danger" | "default" {
   return "default";
 }
 
-export function AlertsList({ alerts }: { alerts: SystemAlert[] }) {
+export function AlertsList({ alerts = [] }: { alerts?: SystemAlert[] }) {
   return (
     <Card>
       <CardHeader>

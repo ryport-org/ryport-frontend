@@ -1,11 +1,11 @@
 import { Card, CardBody, CardHeader } from "@/components/staff/ui/card";
 
 export function PlanDistribution({
-  distribution,
+  distribution = {},
 }: {
-  distribution: Record<string, number>;
+  distribution?: Record<string, number>;
 }) {
-  const total = Object.values(distribution).reduce((sum, n) => sum + n, 0);
+  const total = Object.values(distribution ?? {}).reduce((sum, n) => sum + n, 0);
 
   return (
     <Card>

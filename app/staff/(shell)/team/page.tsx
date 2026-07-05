@@ -105,7 +105,7 @@ export default function StaffManagementPage() {
               <CardBody className="pt-0">
                 {staff.loading ? (
                   <LoadingGrid count={1} height="h-24" />
-                ) : staff.data?.results.length ? (
+                ) : staff.data?.results?.length ? (
                   <ul className="divide-y divide-border">
                     {staff.data.results.map((m) => (
                       <li key={m.id} className="flex items-center justify-between py-3">
