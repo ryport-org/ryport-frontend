@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Quote, CheckCircle2 } from "lucide-react";
 
 const testimonials = [
   {
@@ -7,6 +8,8 @@ const testimonials = [
     name: "Chiamaka Obilor",
     role: "Founder, Pectrids",
     image: "/testimonial-chiamaka.jpg",
+    location: "Lagos, Nigeria",
+    metric: "Saved 24% monthly",
   },
   {
     quote: "Ryport replaced three spreadsheets.",
@@ -14,6 +17,8 @@ const testimonials = [
     name: "Ryan Okafor",
     role: "CEO, Stackline",
     image: null,
+    location: "Abuja, Nigeria",
+    metric: "4.2 mo runway visibility",
   },
   {
     quote: "The AI summaries actually make sense.",
@@ -21,14 +26,16 @@ const testimonials = [
     name: "Ada Nwosu",
     role: "Owner, Bloom Studio",
     image: null,
+    location: "Port Harcourt, Nigeria",
+    metric: "Tax-ready in 5 mins",
   },
 ];
 
 function Avatar({ name, image }: { name: string; image: string | null }) {
   if (image) {
     return (
-      <div className="relative size-10 overflow-hidden rounded-full border border-line">
-        <Image src={image} alt="" fill className="object-cover" sizes="40px" />
+      <div className="relative size-12 overflow-hidden rounded-full border border-line shadow-sm">
+        <Image src={image} alt={name} fill className="object-cover" sizes="48px" />
       </div>
     );
   }
@@ -39,7 +46,7 @@ function Avatar({ name, image }: { name: string; image: string | null }) {
     .join("");
 
   return (
-    <div className="flex size-10 items-center justify-center rounded-full bg-sky-soft text-xs font-semibold text-sky">
+    <div className="flex size-12 items-center justify-center rounded-full bg-brand/10 text-sm font-bold text-brand border border-brand/20">
       {initials}
     </div>
   );
@@ -47,23 +54,42 @@ function Avatar({ name, image }: { name: string; image: string | null }) {
 
 export function CustomersGridSection() {
   return (
-    <section className="bg-paper">
-      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
-        <div className="grid gap-6 md:grid-cols-3">
+    <section className="bg-paper border-t border-line">
+      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
+        <div className="mx-auto mb-14 max-w-2xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-sky">Verified Stories</p>
+          <h2 className="mt-3 font-display text-2xl text-ink sm:text-3xl">
+            Trusted by creators, freelancers, and founders across Nigeria
+          </h2>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-3">
           {testimonials.map((item) => (
             <div
               key={item.name}
-              className="flex flex-col rounded-2xl border border-line bg-white p-8"
+              className="flex flex-col justify-between rounded-3xl border border-line bg-white p-8 shadow-sm transition-all hover:border-sky/40 hover:shadow-md"
             >
-              <p className="font-display text-lg leading-snug text-ink">
-                &ldquo;{item.quote}&rdquo;
-              </p>
-              <p className="mt-4 flex-1 text-sm leading-relaxed text-mist">{item.body}</p>
-              <div className="mt-8 flex items-center gap-3">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                    <CheckCircle2 className="size-3" /> {item.metric}
+                  </span>
+                  <Quote className="size-5 text-mist/40" />
+                </div>
+
+                <p className="mt-5 font-display text-xl leading-snug text-ink font-semibold">
+                  &ldquo;{item.quote}&rdquo;
+                </p>
+
+                <p className="mt-3 text-sm leading-relaxed text-mist">{item.body}</p>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-line/60 flex items-center gap-4">
                 <Avatar name={item.name} image={item.image} />
                 <div>
-                  <p className="text-sm font-medium text-ink">{item.name}</p>
+                  <p className="text-sm font-semibold text-ink">{item.name}</p>
                   <p className="text-xs text-mist">{item.role}</p>
+                  <p className="text-[11px] font-mono text-sky">{item.location}</p>
                 </div>
               </div>
             </div>

@@ -1,30 +1,56 @@
 import { upgradeScenarios } from "@/lib/pricing-data";
+import { UserCheck, Sparkles, Building } from "lucide-react";
+
+const scenarioIcons = [UserCheck, Sparkles, Building];
 
 export function UpgradeScenarios() {
   return (
-    <section className="border-t border-line bg-paper">
-      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
-        <div className="mx-auto mb-10 max-w-2xl text-center">
-          <h2 className="font-display text-2xl text-ink">Why upgrade?</h2>
-          <p className="mt-2 text-sm text-mist">See how Ryport fits your situation.</p>
+    <section className="border-t border-line bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
+        <div className="mx-auto mb-14 max-w-2xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-wide text-sky">Use Cases</p>
+          <h2 className="mt-3 font-display text-2xl text-ink sm:text-3xl">
+            Which plan matches your financial situation?
+          </h2>
+          <p className="mt-3 text-sm text-mist">
+            Real Nigerian scenarios showing how Ryport evolves with you over time.
+          </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {upgradeScenarios.map((item) => (
-            <div key={item.name} className="flex flex-col justify-between rounded-xl border border-line bg-white p-6">
-              <div>
-                <span className="inline-flex rounded-full bg-sky-soft px-2.5 py-0.5 text-xs font-semibold text-sky">
-                  {item.plan}
-                </span>
-                <h3 className="mt-3 font-semibold text-ink">{item.name}</h3>
-                <p className="text-xs text-mist">{item.role}</p>
-                <p className="mt-4 text-sm leading-relaxed text-mist">{item.story}</p>
+        <div className="grid gap-8 md:grid-cols-3">
+          {upgradeScenarios.map((item, idx) => {
+            const IconComp = scenarioIcons[idx] || UserCheck;
+            return (
+              <div
+                key={item.name}
+                className="flex flex-col justify-between rounded-2xl border border-line bg-paper p-8 transition-all hover:border-sky/40 hover:bg-white hover:shadow-md"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-soft px-3 py-1 text-xs font-bold text-sky">
+                      <IconComp className="size-3.5" />
+                      {item.plan} Tier
+                    </span>
+                    <span className="font-mono text-xs text-mist">Scenario 0{idx + 1}</span>
+                  </div>
+
+                  <h3 className="mt-5 font-display text-xl text-ink font-semibold">
+                    {item.name}
+                  </h3>
+                  <p className="mt-1 text-xs font-medium text-mist">{item.role}</p>
+
+                  <p className="mt-4 text-sm leading-relaxed text-mist">
+                    {item.story}
+                  </p>
+                </div>
+
+                <div className="mt-8 pt-4 border-t border-line/60 flex items-center justify-between text-[11px] text-mist/80 italic">
+                  <span>Illustrative example scenario</span>
+                  <span className="font-semibold not-italic text-sky">Learn more →</span>
+                </div>
               </div>
-              <p className="mt-4 border-t border-line/60 pt-2 text-[11px] font-medium italic text-mist/80">
-                Illustrative example scenario
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

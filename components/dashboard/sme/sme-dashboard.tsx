@@ -177,47 +177,47 @@ export function SmeDashboard() {
 
       {/* 1. Prominent Runway & Burn Rate Section */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-sky/20 bg-sky-soft/30">
-          <CardBody className="p-5">
+        <Card className="border-sky/20 bg-sky-soft/30 h-full">
+          <CardBody className="flex flex-col justify-between p-5 h-full">
             <span className="text-xs font-semibold uppercase tracking-wider text-sky">Financial Runway</span>
-            <div className="mt-2 flex items-baseline gap-2">
+            <div className="my-2 flex items-baseline gap-2">
               <span className="font-display text-3xl text-ink">
                 {runway?.runway_months != null ? `${runway.runway_months} months` : runway?.runway_days != null ? `${runway.runway_days} days` : "N/A"}
               </span>
             </div>
-            <p className="mt-1 text-xs text-mist">
+            <p className="mt-1 text-xs text-mist pt-1 border-t border-sky/10">
               Based on active cash balance and current monthly burn rate.
             </p>
           </CardBody>
         </Card>
 
-        <Card>
-          <CardBody className="p-5">
+        <Card className="h-full">
+          <CardBody className="flex flex-col justify-between p-5 h-full">
             <span className="text-xs font-semibold uppercase tracking-wider text-mist">Monthly Burn Rate</span>
-            <div className="mt-2 font-display text-2xl text-ink">
+            <div className="my-2 font-display text-2xl text-ink">
               {formatNaira(runway?.burn_rate_monthly_kobo ?? 0)}
             </div>
-            <p className="mt-1 text-xs text-mist">Average net cash outflow per month.</p>
+            <p className="mt-1 text-xs text-mist pt-1 border-t border-line/40">Average net cash outflow per month.</p>
           </CardBody>
         </Card>
 
         {/* Team Summary Box */}
-        <Card className="sm:col-span-2 lg:col-span-1">
-          <CardBody className="flex flex-col justify-between p-5">
+        <Card className="sm:col-span-2 lg:col-span-1 h-full">
+          <CardBody className="flex flex-col justify-between p-5 h-full">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-mist">Team Workspace</span>
               <Users className="size-4 text-sky" />
             </div>
-            <div className="mt-2">
+            <div className="my-2">
               <p className="font-display text-2xl text-ink">{team_summary?.member_count ?? 0} Members</p>
               <p className="text-xs text-mist">
                 {team_summary?.pending_invites_count ?? 0} pending invite{(team_summary?.pending_invites_count ?? 0) !== 1 ? "s" : ""}
               </p>
             </div>
-            <div className="mt-3 text-right">
+            <div className="pt-1 border-t border-line/40 text-right">
               <Link
                 href={`/app/businesses/${active_business?.id ?? ""}/team`}
-                className="inline-flex items-center gap-1 text-xs font-medium text-sky hover:underline min-h-[44px]"
+                className="inline-flex items-center gap-1 text-xs font-medium text-sky hover:underline"
               >
                 Manage team <ArrowRight className="size-3" />
               </Link>

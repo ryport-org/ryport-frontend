@@ -4,58 +4,125 @@ import {
   IllustrationCfo,
 } from "@/components/marketing/illustrations";
 import { IllustrationFrame } from "@/components/marketing/illustration-frame";
+import { ShieldCheck, Zap, LineChart } from "lucide-react";
 
 const steps = [
   {
     step: "01",
-    title: "Connect your bank",
+    tagline: "Bank Sync Engine",
+    title: "Link your Nigerian bank accounts",
     description:
-      "Link a supported Nigerian account. Transactions sync automatically — no manual imports.",
+      "Connect your supported bank accounts (Access, GTBank, Zenith, Kuda, Moniepoint) via Mono Open Banking. Transactions sync automatically with bank-grade security — zero manual entry.",
     Illustration: IllustrationBankConnect,
+    icon: ShieldCheck,
+    highlight: "AES-256 encrypted · Read-only access",
   },
   {
     step: "02",
-    title: "Let AI categorise",
+    tagline: "Instant Intelligence",
+    title: "Let AI categorise every naira",
     description:
-      "Food, transport, business, utilities — classified instantly. Ask anything in plain English.",
+      "Food, fuel, school fees, market stock, generator power, subscription renewals — instantly tagged and organized. Ask Ryport anything in plain English like 'How much went to fuel this month?'",
     Illustration: IllustrationAiChat,
+    icon: Zap,
+    highlight: "Sub-second AI classification",
   },
   {
     step: "03",
-    title: "Grow with intelligence",
+    tagline: "Evolving OS",
+    title: "Scale from personal assistant to AI CFO",
     description:
-      "Budgets, cash flow forecasts, and on Advanced — a full AI CFO with runway and P&L.",
+      "Set category budgets, track cash runway, and forecast upcoming obligations. For SMBs and agencies, unlock a full AI CFO with P&L reports and runway predictions.",
     Illustration: IllustrationCfo,
+    icon: LineChart,
+    highlight: "Budgets · Cashflow · P&L Forecasts",
   },
 ];
 
 export function HowItWorksSection() {
   return (
     <section id="how-it-works" className="scroll-mt-32 border-t border-line bg-white">
-      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-24">
+      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-28">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-medium text-sky">How it works</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-sky">How it works</p>
           <h2
             className="mt-3 font-display text-ink"
-            style={{ fontSize: "clamp(1.75rem, 3vw + 0.5rem, 2.5rem)", lineHeight: 1.15 }}
+            style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)", lineHeight: 1.12 }}
           >
-            Three steps to financial clarity
+            Three steps to complete financial control
           </h2>
+          <p className="mt-4 text-mist" style={{ fontSize: "var(--text-subhead)", lineHeight: 1.6 }}>
+            Designed for how money actually moves in Nigeria — fast setup, automatic sync, and human-readable insights.
+          </p>
         </div>
 
-        <div className="mt-14 grid gap-10 md:grid-cols-3">
-          {steps.map((item) => (
-            <div key={item.step} className="flex flex-col gap-5">
-              <IllustrationFrame>
-                <item.Illustration />
-              </IllustrationFrame>
-              <div>
-                <span className="text-xs font-semibold text-sky">{item.step}</span>
-                <h3 className="mt-2 text-lg font-semibold text-ink">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-mist">{item.description}</p>
-              </div>
-            </div>
-          ))}
+        {/* Stepper Timeline Container */}
+        <div className="relative mt-16 lg:mt-24">
+          {/* Vertical Center Spine Line (Desktop) */}
+          <div
+            className="hidden lg:block absolute left-1/2 top-10 bottom-10 w-0.5 -translate-x-1/2 bg-gradient-to-b from-sky/20 via-sky to-brand/20"
+            aria-hidden="true"
+          />
+
+          <div className="space-y-16 lg:space-y-24">
+            {steps.map((item, idx) => {
+              const isEven = idx % 2 === 1;
+              const IconComp = item.icon;
+
+              return (
+                <div
+                  key={item.step}
+                  className={`relative grid gap-8 items-center lg:grid-cols-12 ${
+                    isEven ? "lg:flex-row-reverse" : ""
+                  }`}
+                >
+                  {/* Step Visual / Card Frame */}
+                  <div
+                    className={`lg:col-span-6 ${
+                      isEven ? "lg:order-2 lg:pl-8" : "lg:order-1 lg:pr-8"
+                    }`}
+                  >
+                    <div className="group relative rounded-2xl border border-line bg-paper p-4 transition-all duration-300 hover:border-sky/40 hover:shadow-[0_8px_30px_rgba(61,139,255,0.08)]">
+                      <IllustrationFrame variant="white" className="w-full">
+                        <item.Illustration />
+                      </IllustrationFrame>
+                      <div className="mt-3 flex items-center justify-between px-2 py-1">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky">
+                          <IconComp className="size-3.5" />
+                          {item.highlight}
+                        </span>
+                        <span className="font-mono text-xs font-bold text-mist">Stage 0{idx + 1}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Central Node Marker (Desktop) */}
+                  <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 size-12 items-center justify-center rounded-full border-4 border-white bg-brand font-mono text-sm font-bold text-white shadow-md shadow-brand/25 z-10">
+                    {item.step}
+                  </div>
+
+                  {/* Step Description */}
+                  <div
+                    className={`lg:col-span-6 ${
+                      isEven ? "lg:order-1 lg:text-right lg:pr-12" : "lg:order-2 lg:pl-12"
+                    }`}
+                  >
+                    <div className="inline-flex items-center gap-2 rounded-full bg-sky-soft px-3 py-1 text-xs font-semibold text-sky">
+                      <span>{item.tagline}</span>
+                    </div>
+
+                    <h3 className="mt-3 font-display text-2xl text-ink lg:text-3xl">
+                      {item.title}
+                    </h3>
+
+                    <p className="mt-4 text-sm leading-relaxed text-mist lg:text-base">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

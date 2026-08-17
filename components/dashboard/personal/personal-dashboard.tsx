@@ -71,7 +71,7 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* 1. Balance Summary & AI Quota Header */}
+      {/* 1. Balance Summary, AI Quota & Spending Overview (Balanced 3-Column Top Grid) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <BalanceSummaryCard
           totalBalanceKobo={data.balance_summary?.total_balance_kobo ?? 0}
@@ -80,7 +80,9 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
         <AiQuotaBadgeCard quota={data.ai_quota} />
         {isProOrAdvanced && data.cash_flow_forecast ? (
           <CashFlowForecastCard forecast={data.cash_flow_forecast} />
-        ) : null}
+        ) : (
+          <MonthlySpendSummaryCard categories={data.spend_by_category ?? []} />
+        )}
       </div>
 
       {/* Conditional Cards for Pro / Advanced Tiers */}
@@ -96,12 +98,12 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
       ) : null}
 
       {/* 2. Main Analytics & Lists Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column: Recent Transactions & Spend Category Chart */}
+      <div className="grid gap-6 lg:grid-cols-3 items-start">
+        {/* Left Column: Spend Category Chart & Recent Transactions */}
         <div className="space-y-6 lg:col-span-2">
           <SpendByCategoryCard categories={data.spend_by_category ?? []} />
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between border-b border-line/60 bg-paper/30 py-3.5">
               <h2 className="text-sm font-semibold text-ink">Recent transactions</h2>
               <Link
                 href="/app/transactions"
@@ -115,7 +117,7 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
         </div>
 
         {/* Right Column: Budget Alerts & Goal Progress */}
-        <div className="space-y-6">
+        <div className="space-y-6 lg:col-span-1">
           <BudgetAlertsCard alerts={data.budget_alerts ?? []} />
           <GoalProgressCard goal={data.goal_progress} />
         </div>
@@ -134,8 +136,8 @@ function BalanceSummaryCard({
   linkedAccountsCount: number;
 }) {
   return (
-    <Card className="overflow-hidden">
-      <CardBody className="p-5">
+    <Card className="overflow-hidden h-full">
+      <CardBody className="flex flex-col justify-between p-5 h-full">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-mist">
             Total Net Balance
@@ -143,14 +145,22 @@ function BalanceSummaryCard({
           <CreditCard className="size-4 text-mist" />
         </div>
         <p
-          className="mt-2 font-display tabular-nums text-ink"
-          style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)", lineHeight: 1 }}
+          className="my-3 font-display tabular-nums text-ink"
+          style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)", lineHeight: 1 }}
         >
           {formatNaira(totalBalanceKobo)}
         </p>
-        <p className="mt-2 text-xs text-mist">
-          {linkedAccountsCount} linked account{linkedAccountsCount !== 1 ? "s" : ""}
-        </p>
+        <div className="flex items-center justify-between pt-1 border-t border-line/40">
+          <p className="text-xs text-mist">
+            {linkedAccountsCount} linked account{linkedAccountsCount !== 1 ? "s" : ""}
+          </p>
+          <Link
+            href="/app/accounts"
+            className="inline-flex items-center gap-1 text-xs font-medium text-sky hover:underline"
+          >
+            Manage <ArrowRight className="size-3" />
+          </Link>
+        </div>
       </CardBody>
     </Card>
   );
@@ -161,8 +171,8 @@ function AiQuotaBadgeCard({ quota }: { quota: PersonalDashboardData["ai_quota"] 
   const isUnlimited = quota?.is_unlimited || (quota?.limit ?? 0) < 0;
 
   return (
-    <Card className="border-sky/20 bg-sky-soft/20">
-      <CardBody className="flex flex-col justify-between p-5">
+    <Card className="border-sky/20 bg-sky-soft/20 h-full">
+      <CardBody className="flex flex-col justify-between p-5 h-full">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex size-7 items-center justify-center rounded-lg bg-sky text-white">
@@ -176,8 +186,11 @@ function AiQuotaBadgeCard({ quota }: { quota: PersonalDashboardData["ai_quota"] 
             {isUnlimited ? "Unlimited" : `${remaining} left`}
           </span>
         </div>
-        <div className="mt-4 flex items-center justify-between">
-          <p className="text-xs text-mist">Ask questions about your spending & budgets.</p>
+        <p className="my-3 text-xs text-mist leading-relaxed">
+          Ask intelligent questions about your spending, budget alerts & financial insights.
+        </p>
+        <div className="flex items-center justify-between pt-1 border-t border-sky/10">
+          <span className="text-[11px] text-mist">Powered by Ryport AI</span>
           <Button href="/app/ai/chat" variant="primary" className="text-xs py-1.5 px-3">
             Open Chat
           </Button>
@@ -193,22 +206,63 @@ function CashFlowForecastCard({
   forecast: NonNullable<PersonalDashboardData["cash_flow_forecast"]>;
 }) {
   return (
-    <Card className="border-brand/20 bg-brand/5">
-      <CardBody className="p-5">
+    <Card className="border-brand/20 bg-brand/5 h-full">
+      <CardBody className="flex flex-col justify-between p-5 h-full">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-mist">
             30-Day Cash Flow Forecast
           </span>
           <TrendingUp className="size-4 text-brand" />
         </div>
-        <p className="mt-2 font-display text-xl text-ink">
+        <p
+          className="my-3 font-display tabular-nums text-ink"
+          style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)", lineHeight: 1 }}
+        >
           {formatNaira(forecast.projected_30d_kobo)}
         </p>
-        <div className="mt-2 flex items-center justify-between">
+        <div className="flex items-center justify-between pt-1 border-t border-brand/10">
           <span className="text-xs text-mist">Trend: {forecast.trend}</span>
           <Link
             href="/app/ai/cash-flow"
             className="text-xs font-medium text-brand hover:underline inline-flex items-center gap-1"
+          >
+            Details <ArrowRight className="size-3" />
+          </Link>
+        </div>
+      </CardBody>
+    </Card>
+  );
+}
+
+function MonthlySpendSummaryCard({
+  categories,
+}: {
+  categories: PersonalDashboardData["spend_by_category"];
+}) {
+  const totalKobo = categories.reduce((sum, c) => sum + c.amount_kobo, 0);
+
+  return (
+    <Card className="overflow-hidden h-full">
+      <CardBody className="flex flex-col justify-between p-5 h-full">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-wider text-mist">
+            Monthly Spending
+          </span>
+          <TrendingUp className="size-4 text-sky" />
+        </div>
+        <p
+          className="my-3 font-display tabular-nums text-ink"
+          style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)", lineHeight: 1 }}
+        >
+          {formatNaira(totalKobo)}
+        </p>
+        <div className="flex items-center justify-between pt-1 border-t border-line/40">
+          <p className="text-xs text-mist">
+            Across {categories.length} category slot{categories.length !== 1 ? "s" : ""}
+          </p>
+          <Link
+            href="/app/transactions"
+            className="inline-flex items-center gap-1 text-xs font-medium text-sky hover:underline"
           >
             Details <ArrowRight className="size-3" />
           </Link>

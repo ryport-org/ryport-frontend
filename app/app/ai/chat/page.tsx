@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Menu, Send, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Menu, Send, Sparkles, X, ShieldAlert } from "lucide-react";
 import { AppHeader } from "@/components/dashboard/app-header";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { aiApi } from "@/lib/api";
+import { ApiError } from "@/lib/api/client";
 import type { ChatMessage, Conversation } from "@/lib/api/types";
-import { AiUpgradeLink } from "@/components/ai/ai-upgrade-link";
 import {
   getAiErrorMessage,
   isQuotaExceeded,
@@ -56,27 +56,47 @@ export default function AiChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+  const isLimitReached = Boolean(aiQuota && !aiQuota.is_unlimited && aiQuota.remaining <= 0);
+
   async function send(text: string) {
-    if (!text.trim() || loading) return;
+    const trimmed = text.trim();
+    if (!trimmed || loading) return;
+
     setLoading(true);
     setError(null);
+
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "user",
-      content: text.trim(),
+      content: trimmed,
       created_at: new Date().toISOString(),
     };
+
+    // Always append user message and clear input field immediately
     setMessages((m) => [...m, userMsg]);
     setInput("");
     setSidebarOpen(false);
+
+    if (isLimitReached) {
+      setError(
+        new ApiError(
+          "quota_exceeded",
+          "You have reached your daily limit of 10 AI chat questions. Upgrade to Pro for unlimited AI chat.",
+          403
+        )
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await aiApi.chat(text.trim(), conversationId);
+      const res = await aiApi.chat(trimmed, conversationId);
       const reply = res.reply || res.response;
       setConversationId(res.conversation_id);
       setMessages((m) => [
         ...m,
         {
-          id: res.message_id,
+          id: res.message_id || crypto.randomUUID(),
           role: "assistant",
           content: reply,
           created_at: new Date().toISOString(),
@@ -87,8 +107,6 @@ export default function AiChatPage() {
       }
       await Promise.all([refreshAiQuota(), loadConversations()]);
     } catch (err) {
-      setMessages((m) => m.filter((msg) => msg.id !== userMsg.id));
-      setInput(text.trim());
       setError(err);
     } finally {
       setLoading(false);
@@ -169,6 +187,16 @@ export default function AiChatPage() {
       ) : null}
     </>
   );
+
+  const currentErrorObj =
+    error ||
+    (isLimitReached
+      ? new ApiError(
+          "quota_exceeded",
+          "You have reached your daily limit of 10 AI chat questions. Upgrade to Pro for unlimited AI chat.",
+          403
+        )
+      : null);
 
   return (
     <AppPage>
@@ -280,27 +308,44 @@ export default function AiChatPage() {
                 <div ref={bottomRef} />
               </div>
             )}
-            {error ? (
-              <div className="mx-auto mt-4 max-w-2xl text-center text-sm text-coral-warn">
-                <p>{getAiErrorMessage(error)}</p>
-                {isQuotaExceeded(error) ? (
-                  <p className="mt-2">
-                    <AiUpgradeLink error={error} /> or try again after{" "}
-                    {aiQuota?.resets_at
-                      ? new Date(aiQuota.resets_at).toLocaleTimeString("en-NG", {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })
-                      : "midnight"}
-                    .
-                  </p>
-                ) : (
-                  <p className="mt-2">
-                    <Link href="/app/upgrade" className="font-semibold text-sky hover:underline">
-                      View plans
-                    </Link>
-                  </p>
-                )}
+
+            {currentErrorObj ? (
+              <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-sky/30 bg-white p-6 text-center shadow-md shadow-sky/5">
+                <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand/10 text-brand">
+                  {isQuotaExceeded(currentErrorObj) ? (
+                    <Sparkles className="size-6 text-brand" />
+                  ) : (
+                    <ShieldAlert className="size-6 text-coral-warn" />
+                  )}
+                </div>
+
+                <h3 className="mt-3 font-display text-xl font-bold text-ink">
+                  {isQuotaExceeded(currentErrorObj)
+                    ? "Daily 10 AI Question Limit Reached"
+                    : "AI Chat Notice"}
+                </h3>
+
+                <p className="mt-2 text-sm leading-relaxed text-mist">
+                  {getAiErrorMessage(currentErrorObj)}
+                </p>
+
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                  <Link
+                    href="/app/upgrade"
+                    className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand/20 hover:bg-brand/90 transition-all"
+                  >
+                    Upgrade to Pro — ₦5,000/mo
+                  </Link>
+                  {aiQuota?.resets_at ? (
+                    <span className="text-xs text-mist">
+                      Resets at{" "}
+                      {new Date(aiQuota.resets_at).toLocaleTimeString("en-NG", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             ) : null}
           </div>
@@ -316,7 +361,11 @@ export default function AiChatPage() {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask where your money went…"
+                placeholder={
+                  isLimitReached
+                    ? "Daily 10 question limit reached. Upgrade to continue..."
+                    : "Ask where your money went…"
+                }
                 disabled={loading || loadingThread}
                 maxLength={4000}
                 className="min-w-0 flex-1"
