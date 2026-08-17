@@ -17,6 +17,11 @@ const BUSINESS_TYPES = [
   { id: "limited_liability", label: "Limited Liability Company (LTD)" },
   { id: "partnership", label: "Partnership" },
   { id: "agency", label: "Agency / Studio" },
+  { id: "retail", label: "Retail Trade" },
+  { id: "services", label: "Professional Services" },
+  { id: "manufacturing", label: "Manufacturing" },
+  { id: "technology", label: "Technology / Software" },
+  { id: "hospitality", label: "Hospitality / Food Service" },
   { id: "other", label: "Other / Unregistered Business" },
 ];
 

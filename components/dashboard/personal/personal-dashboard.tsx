@@ -21,6 +21,7 @@ import { getAccessToken } from "@/lib/auth/tokens";
 import { dashboardApi } from "@/lib/api";
 import type { PersonalDashboardData, Plan } from "@/lib/api/types";
 import { formatNaira } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 interface PersonalDashboardProps {
   planTier?: Plan | null;
@@ -71,8 +72,8 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* 1. Balance Summary, AI Quota & Spending Overview (Balanced 3-Column Top Grid) */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* 1. Balance Summary, AI Quota & Spending Overview (Perfectly Aligned 3-Column Top Grid) */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
         <BalanceSummaryCard
           totalBalanceKobo={data.balance_summary?.total_balance_kobo ?? 0}
           linkedAccountsCount={data.balance_summary?.linked_accounts_count ?? 0}
@@ -87,7 +88,7 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
 
       {/* Conditional Cards for Pro / Advanced Tiers */}
       {isProOrAdvanced && (data.business_personal_split || data.open_invoices_summary) ? (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 items-stretch">
           {data.business_personal_split ? (
             <BusinessPersonalSplitCard split={data.business_personal_split} />
           ) : null}
@@ -97,12 +98,12 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
         </div>
       ) : null}
 
-      {/* 2. Main Analytics & Lists Grid */}
-      <div className="grid gap-6 lg:grid-cols-3 items-start">
+      {/* 2. Main Analytics & Lists Grid (Left & Right Columns End on Same Straight Line) */}
+      <div className="grid gap-6 lg:grid-cols-3 items-stretch">
         {/* Left Column: Spend Category Chart & Recent Transactions */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="flex flex-col justify-between gap-6 lg:col-span-2">
           <SpendByCategoryCard categories={data.spend_by_category ?? []} />
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden flex flex-col flex-1">
             <CardHeader className="flex flex-row items-center justify-between border-b border-line/60 bg-paper/30 py-3.5">
               <h2 className="text-sm font-semibold text-ink">Recent transactions</h2>
               <Link
@@ -112,14 +113,16 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
                 View all <ArrowRight className="size-3" />
               </Link>
             </CardHeader>
-            <TransactionList transactions={(data.recent_transactions ?? []).slice(0, 6)} />
+            <div className="flex-1 flex flex-col justify-between">
+              <TransactionList transactions={(data.recent_transactions ?? []).slice(0, 6)} />
+            </div>
           </Card>
         </div>
 
         {/* Right Column: Budget Alerts & Goal Progress */}
-        <div className="space-y-6 lg:col-span-1">
+        <div className="flex flex-col justify-between gap-6 lg:col-span-1">
           <BudgetAlertsCard alerts={data.budget_alerts ?? []} />
-          <GoalProgressCard goal={data.goal_progress} />
+          <GoalProgressCard goal={data.goal_progress} className="flex-1" />
         </div>
       </div>
     </div>
@@ -136,21 +139,23 @@ function BalanceSummaryCard({
   linkedAccountsCount: number;
 }) {
   return (
-    <Card className="overflow-hidden h-full">
-      <CardBody className="flex flex-col justify-between p-5 h-full">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-mist">
-            Total Net Balance
-          </span>
-          <CreditCard className="size-4 text-mist" />
+    <Card className="overflow-hidden flex flex-col h-full">
+      <CardBody className="flex flex-col justify-between flex-1 p-5 sm:p-6">
+        <div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-mist">
+              Total Net Balance
+            </span>
+            <CreditCard className="size-4 text-mist" />
+          </div>
+          <p
+            className="my-3 font-display tabular-nums text-ink"
+            style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)", lineHeight: 1 }}
+          >
+            {formatNaira(totalBalanceKobo)}
+          </p>
         </div>
-        <p
-          className="my-3 font-display tabular-nums text-ink"
-          style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)", lineHeight: 1 }}
-        >
-          {formatNaira(totalBalanceKobo)}
-        </p>
-        <div className="flex items-center justify-between pt-1 border-t border-line/40">
+        <div className="flex items-center justify-between pt-3 border-t border-line/40">
           <p className="text-xs text-mist">
             {linkedAccountsCount} linked account{linkedAccountsCount !== 1 ? "s" : ""}
           </p>
@@ -171,25 +176,27 @@ function AiQuotaBadgeCard({ quota }: { quota: PersonalDashboardData["ai_quota"] 
   const isUnlimited = quota?.is_unlimited || (quota?.limit ?? 0) < 0;
 
   return (
-    <Card className="border-sky/20 bg-sky-soft/20 h-full">
-      <CardBody className="flex flex-col justify-between p-5 h-full">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-sky text-white">
-              <Sparkles className="size-4" />
+    <Card className="border-sky/20 bg-sky-soft/20 flex flex-col h-full">
+      <CardBody className="flex flex-col justify-between flex-1 p-5 sm:p-6">
+        <div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-sky text-white">
+                <Sparkles className="size-4" />
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-sky">
+                AI CFO Assistant
+              </span>
             </div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-sky">
-              AI CFO Assistant
+            <span className="rounded-full bg-sky/10 px-2.5 py-0.5 text-xs font-bold text-sky">
+              {isUnlimited ? "Unlimited" : `${remaining} left`}
             </span>
           </div>
-          <span className="rounded-full bg-sky/10 px-2.5 py-0.5 text-xs font-bold text-sky">
-            {isUnlimited ? "Unlimited" : `${remaining} left`}
-          </span>
+          <p className="my-3 text-xs text-mist leading-relaxed">
+            Ask intelligent questions about your spending, budget alerts & financial insights.
+          </p>
         </div>
-        <p className="my-3 text-xs text-mist leading-relaxed">
-          Ask intelligent questions about your spending, budget alerts & financial insights.
-        </p>
-        <div className="flex items-center justify-between pt-1 border-t border-sky/10">
+        <div className="flex items-center justify-between pt-3 border-t border-sky/10">
           <span className="text-[11px] text-mist">Powered by Ryport AI</span>
           <Button href="/app/ai/chat" variant="primary" className="text-xs py-1.5 px-3">
             Open Chat
@@ -206,21 +213,23 @@ function CashFlowForecastCard({
   forecast: NonNullable<PersonalDashboardData["cash_flow_forecast"]>;
 }) {
   return (
-    <Card className="border-brand/20 bg-brand/5 h-full">
-      <CardBody className="flex flex-col justify-between p-5 h-full">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-mist">
-            30-Day Cash Flow Forecast
-          </span>
-          <TrendingUp className="size-4 text-brand" />
+    <Card className="border-brand/20 bg-brand/5 flex flex-col h-full">
+      <CardBody className="flex flex-col justify-between flex-1 p-5 sm:p-6">
+        <div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-mist">
+              30-Day Cash Flow Forecast
+            </span>
+            <TrendingUp className="size-4 text-brand" />
+          </div>
+          <p
+            className="my-3 font-display tabular-nums text-ink"
+            style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)", lineHeight: 1 }}
+          >
+            {formatNaira(forecast.projected_30d_kobo)}
+          </p>
         </div>
-        <p
-          className="my-3 font-display tabular-nums text-ink"
-          style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)", lineHeight: 1 }}
-        >
-          {formatNaira(forecast.projected_30d_kobo)}
-        </p>
-        <div className="flex items-center justify-between pt-1 border-t border-brand/10">
+        <div className="flex items-center justify-between pt-3 border-t border-brand/10">
           <span className="text-xs text-mist">Trend: {forecast.trend}</span>
           <Link
             href="/app/ai/cash-flow"
@@ -242,21 +251,23 @@ function MonthlySpendSummaryCard({
   const totalKobo = categories.reduce((sum, c) => sum + c.amount_kobo, 0);
 
   return (
-    <Card className="overflow-hidden h-full">
-      <CardBody className="flex flex-col justify-between p-5 h-full">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-mist">
-            Monthly Spending
-          </span>
-          <TrendingUp className="size-4 text-sky" />
+    <Card className="overflow-hidden flex flex-col h-full">
+      <CardBody className="flex flex-col justify-between flex-1 p-5 sm:p-6">
+        <div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-mist">
+              Monthly Spending
+            </span>
+            <TrendingUp className="size-4 text-sky" />
+          </div>
+          <p
+            className="my-3 font-display tabular-nums text-ink"
+            style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)", lineHeight: 1 }}
+          >
+            {formatNaira(totalKobo)}
+          </p>
         </div>
-        <p
-          className="my-3 font-display tabular-nums text-ink"
-          style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.25rem)", lineHeight: 1 }}
-        >
-          {formatNaira(totalKobo)}
-        </p>
-        <div className="flex items-center justify-between pt-1 border-t border-line/40">
+        <div className="flex items-center justify-between pt-3 border-t border-line/40">
           <p className="text-xs text-mist">
             Across {categories.length} category slot{categories.length !== 1 ? "s" : ""}
           </p>
@@ -280,18 +291,18 @@ function SpendByCategoryCard({
   const maxKobo = Math.max(...categories.map((c) => c.amount_kobo), 1);
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <PieChart className="size-4 text-sky" />
           <h2 className="text-sm font-semibold text-ink">Spend by Category (This Month)</h2>
         </div>
       </CardHeader>
-      <CardBody className="pt-0">
+      <CardBody className="pt-0 flex-1 flex flex-col justify-center">
         {categories.length === 0 ? (
           <p className="py-6 text-center text-xs text-mist">No spending recorded this month.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 flex-1">
             {categories.map((cat) => {
               const widthPct = Math.min(Math.round((cat.amount_kobo / maxKobo) * 100), 100);
               return (
@@ -320,19 +331,19 @@ function SpendByCategoryCard({
 
 function BudgetAlertsCard({ alerts }: { alerts: PersonalDashboardData["budget_alerts"] }) {
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <h2 className="text-sm font-semibold text-ink">Budget Alerts</h2>
       </CardHeader>
-      <CardBody className="pt-0">
+      <CardBody className="pt-0 flex-1 flex flex-col justify-center">
         {alerts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-line p-6 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-line p-6 text-center">
             <CheckCircle2 className="size-8 text-emerald-500 mb-2" />
             <p className="text-xs font-semibold text-ink">No alerts — you&apos;re on track</p>
             <p className="mt-1 text-[11px] text-mist">Your category spending is within set budget limits.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 flex-1">
             {alerts.map((alert) => (
               <div
                 key={alert.id}
@@ -354,18 +365,24 @@ function BudgetAlertsCard({ alerts }: { alerts: PersonalDashboardData["budget_al
   );
 }
 
-function GoalProgressCard({ goal }: { goal: PersonalDashboardData["goal_progress"] }) {
+function GoalProgressCard({
+  goal,
+  className,
+}: {
+  goal: PersonalDashboardData["goal_progress"];
+  className?: string;
+}) {
   return (
-    <Card>
+    <Card className={cn("flex flex-col", className)}>
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <Target className="size-4 text-sky" />
           <h2 className="text-sm font-semibold text-ink">Savings Goal</h2>
         </div>
       </CardHeader>
-      <CardBody className="pt-0">
+      <CardBody className="pt-0 flex-1 flex flex-col justify-between">
         {!goal ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-line p-6 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center rounded-lg border border-dashed border-line p-6 text-center">
             <Target className="size-8 text-mist mb-2" />
             <p className="text-xs font-semibold text-ink">Set your first goal</p>
             <p className="mt-1 text-[11px] text-mist mb-3">Track progress towards key financial targets.</p>
@@ -374,7 +391,7 @@ function GoalProgressCard({ goal }: { goal: PersonalDashboardData["goal_progress
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 flex-1 flex flex-col justify-center">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-semibold text-ink">{goal.title}</h3>
               <span className="text-xs font-bold text-sky">{goal.percentage}%</span>
@@ -406,8 +423,8 @@ function BusinessPersonalSplitCard({
   const businessPct = 100 - personalPct;
 
   return (
-    <Card>
-      <CardBody className="p-4">
+    <Card className="flex flex-col h-full">
+      <CardBody className="p-4 flex-1 flex flex-col justify-between">
         <span className="text-xs font-semibold text-ink">Business vs Personal Split</span>
         <div className="mt-2 flex h-2.5 w-full overflow-hidden rounded-full bg-line">
           <div className="bg-sky transition-all" style={{ width: `${personalPct}%` }} />
@@ -432,8 +449,8 @@ function OpenInvoicesSummaryCard({
   summary: NonNullable<PersonalDashboardData["open_invoices_summary"]>;
 }) {
   return (
-    <Card>
-      <CardBody className="flex items-center justify-between p-4">
+    <Card className="flex flex-col h-full">
+      <CardBody className="flex items-center justify-between p-4 flex-1">
         <div>
           <span className="text-xs font-semibold text-ink">Open Invoices</span>
           <p className="mt-1 font-display text-lg text-ink">

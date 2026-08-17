@@ -21,19 +21,9 @@ export function HeroSection() {
         <HeroSkyBackground />
 
         <div className="relative z-10 mx-auto max-w-5xl px-6 pt-24 text-center sm:px-8 sm:pt-28 lg:px-10 lg:pt-32">
-          {/* Badge */}
-          <div className="flex justify-center">
-            <span className="inline-flex items-center rounded-full bg-brand p-1 text-xs font-medium text-white shadow-sm">
-              <span className="px-3 py-1.5">Built for Nigeria</span>
-              <span className="rounded-full bg-white px-3 py-1.5 text-ink">
-                Mono Open Banking · Paystack · Nigerian Banks
-              </span>
-            </span>
-          </div>
-
           {/* Headline */}
           <h1
-            className="mx-auto mt-8 max-w-3xl font-display text-ink"
+            className="mx-auto mt-4 max-w-3xl font-display text-ink"
             style={{
               fontSize: "clamp(2.5rem, 5.5vw + 0.5rem, 4.5rem)",
               lineHeight: 1.08,

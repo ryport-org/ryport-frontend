@@ -107,11 +107,11 @@ export function HowItWorksSection() {
                       isEven ? "lg:order-1 lg:text-right lg:pr-12" : "lg:order-2 lg:pl-12"
                     }`}
                   >
-                    <div className="inline-flex items-center gap-2 rounded-full bg-sky-soft px-3 py-1 text-xs font-semibold text-sky">
-                      <span>{item.tagline}</span>
-                    </div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-sky">
+                      {item.tagline}
+                    </p>
 
-                    <h3 className="mt-3 font-display text-2xl text-ink lg:text-3xl">
+                    <h3 className="mt-2 font-display text-2xl text-ink lg:text-3xl">
                       {item.title}
                     </h3>
 

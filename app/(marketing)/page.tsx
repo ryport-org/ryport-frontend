@@ -5,7 +5,6 @@ import { ExploreSection } from "@/components/marketing/explore-section";
 import { FeaturesGridSection } from "@/components/marketing/features-grid-section";
 import { HeroSection } from "@/components/marketing/hero-section";
 import { HowItWorksSection } from "@/components/marketing/how-it-works-section";
-import { IntegrationsStrip } from "@/components/marketing/integrations-strip";
 import { PricingSection } from "@/components/marketing/pricing-section";
 import { ProductShowcaseSection } from "@/components/marketing/product-showcase-section";
 import { TestimonialSection } from "@/components/marketing/testimonial-section";
@@ -30,7 +29,6 @@ export default function HomePage() {
         data={[organizationJsonLd(), websiteJsonLd(), softwareApplicationJsonLd()]}
       />
       <HeroSection />
-      <IntegrationsStrip />
       <HowItWorksSection />
       <ProductShowcaseSection />
       <BenefitsSection />

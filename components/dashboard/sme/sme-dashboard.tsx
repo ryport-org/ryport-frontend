@@ -91,9 +91,16 @@ export function SmeDashboard() {
       <Card className="border-coral-warn/30 bg-coral-warn/5">
         <CardBody className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-coral-warn">{error ?? "Failed to load SME dashboard."}</p>
-          <Button type="button" variant="secondary" onClick={() => void fetchSmeData(true)}>
-            Retry
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/onboarding/business">
+              <Button type="button" variant="primary" className="text-xs">
+                Set up business
+              </Button>
+            </Link>
+            <Button type="button" variant="secondary" className="text-xs" onClick={() => void fetchSmeData(true)}>
+              Retry
+            </Button>
+          </div>
         </CardBody>
       </Card>
     );

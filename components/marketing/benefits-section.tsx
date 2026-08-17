@@ -25,10 +25,10 @@ export function BenefitsSection({ hideHeader = false }: { hideHeader?: boolean }
               className="mt-3 font-display text-ink"
               style={{ fontSize: "clamp(2rem, 3.5vw, 3rem)", lineHeight: 1.12 }}
             >
-              Built for Nigeria. Powered by AI.
+              Smart Financial Operating System
             </h2>
             <p className="mt-4 text-mist" style={{ fontSize: "var(--text-subhead)", lineHeight: 1.6 }}>
-              Mono Open Banking, Paystack, and local bank formats — intelligence generic global finance apps can&apos;t provide.
+              Automated accounting, proactive budget controls, and AI CFO insights built to scale with your financial growth.
             </p>
           </div>
         )}
