@@ -23,7 +23,7 @@ export function UpgradeScenarios() {
             return (
               <div
                 key={item.name}
-                className="flex flex-col justify-between rounded-2xl border border-line bg-paper p-8 transition-all hover:border-sky/40 hover:bg-white hover:shadow-md"
+                className="aspect-square flex flex-col justify-between rounded-3xl border border-line bg-paper p-8 lg:p-10 transition-all hover:border-sky/40 hover:bg-white hover:shadow-md"
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -34,7 +34,7 @@ export function UpgradeScenarios() {
                     <span className="font-mono text-xs text-mist">Scenario 0{idx + 1}</span>
                   </div>
 
-                  <h3 className="mt-5 font-display text-xl text-ink font-semibold">
+                  <h3 className="mt-6 font-display text-2xl text-ink font-semibold">
                     {item.name}
                   </h3>
                   <p className="mt-1 text-xs font-medium text-mist">{item.role}</p>
@@ -44,8 +44,8 @@ export function UpgradeScenarios() {
                   </p>
                 </div>
 
-                <div className="mt-8 pt-4 border-t border-line/60 flex items-center justify-between text-[11px] text-mist/80 italic">
-                  <span>Illustrative example scenario</span>
+                <div className="mt-8 pt-4 border-t border-line/60 flex items-center justify-between text-xs text-mist/80 italic">
+                  <span>Illustrative scenario</span>
                   <span className="font-semibold not-italic text-sky">Learn more →</span>
                 </div>
               </div>

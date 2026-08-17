@@ -21,9 +21,31 @@ export const DEFAULT_KEYWORDS = [
 ];
 
 export function absoluteUrl(path = ""): string {
-  const base = APP_URL.replace(/\/+$/, "");
+  const base = (APP_URL || "https://www.ryport.com.ng").replace(/\/+$/, "");
   if (!path) return base;
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function readSeoEnv(key: string, fallback: string): string {
+  const value = process.env[key] || process.env[`NEXT_PUBLIC_${key}`];
+  if (value && value.trim()) return value.trim();
+  return fallback;
+}
+
+export function getSearchEngineVerification() {
+  const google = readSeoEnv("GOOGLE_SITE_VERIFICATION", "google-site-verification-placeholder");
+  const yandex = readSeoEnv("YANDEX_SITE_VERIFICATION", "yandex-verification-placeholder");
+  const bing = readSeoEnv("BING_SITE_VERIFICATION", readSeoEnv("MSVALIDATE_01", "bing-site-verification-placeholder"));
+  const pinterest = readSeoEnv("PINTEREST_SITE_VERIFICATION", "");
+
+  return {
+    google,
+    yandex,
+    other: {
+      "msvalidate.01": bing,
+      ...(pinterest ? { "p:domain_verify": pinterest } : {}),
+    },
+  };
 }
 
 type CreateMetadataOptions = {
@@ -48,9 +70,10 @@ export function createMetadata({
     ? `${title} | ${SITE_NAME}`
     : `${SITE_NAME} — ${SITE_TAGLINE}`;
   const imageUrl = absoluteUrl(image);
+  const verification = getSearchEngineVerification();
 
   return {
-    metadataBase: new URL(APP_URL),
+    metadataBase: new URL(absoluteUrl()),
     title: {
       default: fullTitle,
       template: `%s | ${SITE_NAME}`,
@@ -127,11 +150,7 @@ export function createMetadata({
             "max-snippet": -1,
           },
         },
-    verification: {
-      google: "google-site-verification-placeholder",
-      yandex: "yandex-verification-placeholder",
-      yahoo: "yahoo-verification-placeholder",
-    },
+    verification,
     other: {
       "apple-mobile-web-app-capable": "yes",
       "apple-mobile-web-app-status-bar-style": "black-translucent",
@@ -169,3 +188,18 @@ export const MARKETING_ROUTES = [
   { path: "/login", priority: 0.5, changeFrequency: "monthly" as const },
   { path: "/register", priority: 0.5, changeFrequency: "monthly" as const },
 ];
+
+/** Helper supporting multi-sitemap chunks for future large dataset expansion */
+export function getSitemapEntries(chunkIndex = 0, chunkSize = 50000) {
+  const start = chunkIndex * chunkSize;
+  const end = start + chunkSize;
+  const routesChunk = MARKETING_ROUTES.slice(start, end);
+  const lastModified = new Date();
+
+  return routesChunk.map(({ path, priority, changeFrequency }) => ({
+    url: absoluteUrl(path),
+    lastModified,
+    changeFrequency,
+    priority,
+  }));
+}

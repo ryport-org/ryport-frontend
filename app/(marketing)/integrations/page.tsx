@@ -60,26 +60,33 @@ export default function IntegrationsPage() {
               return (
                 <div
                   key={item.name}
-                  className="rounded-3xl border border-line bg-white p-8 shadow-sm transition-all hover:border-sky/40 hover:shadow-md"
+                  className="aspect-square flex flex-col justify-between rounded-3xl border border-line bg-white p-8 lg:p-10 shadow-sm transition-all hover:border-sky/40 hover:shadow-md"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-                      <IconComp className="size-6" />
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex size-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                        <IconComp className="size-7" />
+                      </div>
+                      <span className="rounded-full bg-sky-soft px-3.5 py-1.5 text-xs font-semibold text-sky">
+                        {item.status}
+                      </span>
                     </div>
-                    <span className="rounded-full bg-sky-soft px-3 py-1 text-xs font-semibold text-sky">
-                      {item.status}
-                    </span>
+
+                    <p className="mt-6 text-xs font-bold uppercase tracking-wider text-sky">{item.category}</p>
+
+                    <h3 className="mt-1.5 font-display text-2xl text-ink font-semibold">
+                      {item.name}
+                    </h3>
+
+                    <p className="mt-4 text-sm leading-relaxed text-mist">
+                      {item.description}
+                    </p>
                   </div>
 
-                  <p className="mt-5 text-xs font-bold uppercase tracking-wider text-sky">{item.category}</p>
-
-                  <h3 className="mt-1 font-display text-xl text-ink font-semibold">
-                    {item.name}
-                  </h3>
-
-                  <p className="mt-3 text-sm leading-relaxed text-mist">
-                    {item.description}
-                  </p>
+                  <div className="pt-4 border-t border-line/60 flex items-center justify-between text-xs text-mist">
+                    <span>Direct API Integration</span>
+                    <span className="font-semibold text-sky">Active</span>
+                  </div>
                 </div>
               );
             })}

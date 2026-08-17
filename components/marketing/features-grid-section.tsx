@@ -100,30 +100,30 @@ export function FeaturesGridSection({ hideHeader = false }: { hideHeader?: boole
           ))}
         </div>
 
-        {/* Feature Spotlight Grid */}
+        {/* Feature Equal Square Grid */}
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredFeatures.map((feature) => {
             const IconComp = feature.icon;
             return (
               <div
                 key={feature.title}
-                className="group relative flex flex-col justify-between rounded-2xl border border-line bg-paper p-6 transition-all duration-300 hover:border-sky/50 hover:bg-white hover:shadow-lg hover:shadow-sky/5"
+                className="group relative aspect-square flex flex-col justify-between rounded-2xl border border-line bg-paper p-7 lg:p-8 transition-all duration-300 hover:border-sky/50 hover:bg-white hover:shadow-lg hover:shadow-sky/5"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-white text-brand shadow-sm border border-line/80 group-hover:bg-brand group-hover:text-white transition-colors">
+                    <div className="flex size-11 items-center justify-center rounded-xl bg-white text-brand shadow-sm border border-line/80 group-hover:bg-brand group-hover:text-white transition-colors">
                       <IconComp className="size-5" />
                     </div>
-                    <span className="rounded-full bg-sky-soft px-2.5 py-1 text-[11px] font-semibold text-sky">
+                    <span className="rounded-full bg-sky-soft px-3 py-1 text-xs font-semibold text-sky">
                       {feature.badge}
                     </span>
                   </div>
 
-                  <h3 className="mt-5 text-lg font-semibold text-ink group-hover:text-brand transition-colors">
+                  <h3 className="mt-6 text-xl font-semibold text-ink group-hover:text-brand transition-colors">
                     {feature.title}
                   </h3>
 
-                  <p className="mt-2 text-sm leading-relaxed text-mist">
+                  <p className="mt-3 text-sm leading-relaxed text-mist">
                     {feature.description}
                   </p>
                 </div>

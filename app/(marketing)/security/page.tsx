@@ -59,24 +59,31 @@ export default function SecurityPage() {
               return (
                 <div
                   key={item.title}
-                  className="rounded-3xl border border-line bg-white p-8 shadow-sm transition-all hover:border-sky/40 hover:shadow-md"
+                  className="aspect-square flex flex-col justify-between rounded-3xl border border-line bg-white p-8 lg:p-10 shadow-sm transition-all hover:border-sky/40 hover:shadow-md"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-soft text-sky">
-                      <IconComp className="size-6" />
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex size-14 items-center justify-center rounded-2xl bg-sky-soft text-sky">
+                        <IconComp className="size-7" />
+                      </div>
+                      <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3.5 py-1 text-xs font-semibold text-emerald-700">
+                        {item.badge}
+                      </span>
                     </div>
-                    <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700">
-                      {item.badge}
-                    </span>
+
+                    <h3 className="mt-6 font-display text-2xl text-ink font-semibold">
+                      {item.title}
+                    </h3>
+
+                    <p className="mt-4 text-sm leading-relaxed text-mist">
+                      {item.description}
+                    </p>
                   </div>
 
-                  <h3 className="mt-6 font-display text-xl text-ink font-semibold">
-                    {item.title}
-                  </h3>
-
-                  <p className="mt-3 text-sm leading-relaxed text-mist">
-                    {item.description}
-                  </p>
+                  <div className="pt-4 border-t border-line/60 flex items-center justify-between text-xs text-mist">
+                    <span>Enterprise Grade</span>
+                    <span className="font-semibold text-emerald-600">Compliant</span>
+                  </div>
                 </div>
               );
             })}
