@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { aiApi, authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import type {
   AIQuota,
@@ -71,7 +71,6 @@ function featureMap(features: PlanFeature[] | undefined) {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [user, setUser] = useState<Profile | null>(null);
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -159,7 +158,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const refreshSession = useCallback(async () => {
-    if (isStaffAppPath(pathname)) {
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+    if (isStaffAppPath(currentPath)) {
       setIsLoading(false);
       return;
     }
@@ -207,10 +207,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [bootstrap, clearAppState, pathname]);
+  }, [bootstrap, clearAppState]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshSession();
   }, [refreshSession]);
 

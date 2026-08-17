@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { staffAuthApi } from "@/lib/staff/api";
 import { StaffApiError } from "@/lib/staff/api/client";
 import type { StaffPermissionKey, StaffUser } from "@/lib/staff/api/types";
@@ -54,7 +54,6 @@ export function getStaffAuthErrorMessage(err: unknown): string {
 
 export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [staffUser, setStaffUser] = useState<StaffUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -70,7 +69,8 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshSession = useCallback(async () => {
-    if (!isStaffAppPath(pathname)) {
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+    if (!isStaffAppPath(currentPath)) {
       setIsLoading(false);
       return;
     }
@@ -123,7 +123,7 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [bootstrap, pathname]);
+  }, [bootstrap]);
 
   useEffect(() => {
     void refreshSession();
