@@ -25,8 +25,39 @@ import { businessesApi, dashboardApi } from "@/lib/api";
 import type { Business, SmeDashboardData } from "@/lib/api/types";
 import { formatNaira } from "@/lib/format";
 
+const createDefaultSmeData = (biz: Business): SmeDashboardData => ({
+  active_business: biz,
+  runway: {
+    runway_days: null,
+    runway_months: null,
+    burn_rate_monthly_kobo: 0,
+  },
+  pl_snapshot: {
+    revenue_kobo: 0,
+    expenses_kobo: 0,
+    net_profit_kobo: 0,
+    period: "This Month",
+  },
+  cost_anomalies: [],
+  staff_summary: {
+    total_payroll_kobo: 0,
+    staff_count: 0,
+    missed_payments: 0,
+  },
+  tax_status: {
+    cit_status: "Unverified",
+    vat_status: "Unverified",
+    last_verified_date: new Date().toISOString().split("T")[0],
+  },
+  energy_cost_trend: null,
+  team_summary: {
+    member_count: 1,
+    pending_invites_count: 0,
+  },
+});
+
 export function SmeDashboard() {
-  const { bootstrap } = useAuth();
+  const { activeBusiness, bootstrap } = useAuth();
   const [data, setData] = useState<SmeDashboardData | null>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,24 +78,31 @@ export function SmeDashboard() {
     setError(null);
 
     try {
+      const targetBizId = activeBusiness?.id;
       const [smeRes, bizList] = await Promise.all([
-        dashboardApi.sme(token),
+        dashboardApi.sme(token, targetBizId),
         businessesApi.list(token).catch(() => []),
       ]);
       setData(smeRes);
       setBusinesses(bizList);
     } catch {
-      // Auto-recovery: If initial SME call failed (e.g. active business not set in backend session),
-      // fetch business list and auto-switch to the first available business
+      // Auto-recovery: If initial SME call failed (e.g. newly created business with no metrics),
+      // fetch business list and auto-switch to active business
       try {
         const bizList = await businessesApi.list(token);
         setBusinesses(bizList);
-        if (bizList.length > 0) {
-          await businessesApi.switch(token, bizList[0].id);
-          await bootstrap(token).catch(() => {});
-          const smeRes = await dashboardApi.sme(token);
-          setData(smeRes);
-          return;
+        const targetBiz = activeBusiness || (bizList.length > 0 ? bizList[0] : null);
+        if (targetBiz) {
+          await businessesApi.switch(token, targetBiz.id).catch(() => {});
+          try {
+            const smeRes = await dashboardApi.sme(token, targetBiz.id);
+            setData(smeRes);
+            return;
+          } catch {
+            // Provide clean new-business dashboard structure so newly created business renders cleanly
+            setData(createDefaultSmeData(targetBiz));
+            return;
+          }
         }
       } catch {
         // Fallback if auto-recovery also fails
@@ -74,7 +112,7 @@ export function SmeDashboard() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [bootstrap]);
+  }, [activeBusiness]);
 
   useEffect(() => {
     void fetchSmeData();

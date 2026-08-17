@@ -30,6 +30,8 @@ export async function getPersonalDashboard(token?: string | null) {
   return apiRequest<PersonalDashboardData>("/dashboard/personal/", { token });
 }
 
-export async function getSmeDashboard(token?: string | null) {
-  return apiRequest<SmeDashboardData>("/dashboard/sme/", { token });
+export async function getSmeDashboard(token?: string | null, businessId?: string) {
+  const path = businessId ? `/dashboard/sme/?business_id=${businessId}` : "/dashboard/sme/";
+  const headers = businessId ? { "X-Business-ID": businessId } : undefined;
+  return apiRequest<SmeDashboardData>(path, { token, headers });
 }
