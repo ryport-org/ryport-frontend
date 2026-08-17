@@ -26,8 +26,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   ...createMetadata(),
   icons: {
-    icon: "/icon.jpeg",
-    apple: "/apple-icon.jpeg",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", type: "image/png" },
+    ],
   },
   category: "finance",
   applicationName: "Ryport",

@@ -26,6 +26,107 @@ export type UserSegment = "individual" | "freelancer" | "sme";
 export type DashboardContext = {
   active_business: Business | null;
   segment: UserSegment | null;
+  plan_tier?: Plan;
+};
+
+export type CategorySpend = {
+  category: string;
+  amount_kobo: number;
+  percentage: number;
+};
+
+export type BudgetAlert = {
+  id: string;
+  message: string;
+  category?: string;
+  severity?: "info" | "warning" | "critical" | string;
+};
+
+export type GoalProgress = {
+  id: string;
+  title: string;
+  target_kobo: number;
+  current_kobo: number;
+  percentage: number;
+  target_date?: string;
+};
+
+export type PersonalDashboardData = {
+  balance_summary: {
+    total_balance_kobo: number;
+    linked_accounts_count: number;
+  };
+  spend_by_category: CategorySpend[];
+  budget_alerts: BudgetAlert[];
+  goal_progress?: GoalProgress | null;
+  ai_quota: AIQuota | null;
+  recent_transactions: Transaction[];
+  business_personal_split?: {
+    personal_kobo: number;
+    business_kobo: number;
+  } | null;
+  cash_flow_forecast?: {
+    projected_30d_kobo: number;
+    trend: string;
+  } | null;
+  open_invoices_summary?: {
+    count: number;
+    total_kobo: number;
+  } | null;
+};
+
+export type CostAnomaly = {
+  id: string;
+  category: string;
+  increase_percent: number;
+  description: string;
+  severity: "high" | "medium" | "low" | string;
+};
+
+export type StaffCostSummary = {
+  total_payroll_kobo: number;
+  staff_count: number;
+  missed_payments: number;
+  missed_payment_flags?: string[];
+};
+
+export type TaxStatus = {
+  cit_status: string;
+  vat_status: string;
+  last_verified_date: string | null;
+  notes?: string;
+};
+
+export type EnergyCostTrend = {
+  current_month_kobo: number;
+  previous_month_kobo: number;
+  change_percent: number;
+  data_points?: { month: string; amount_kobo: number }[];
+};
+
+export type TeamSummary = {
+  member_count: number;
+  pending_invites_count: number;
+};
+
+export type SmeDashboardData = {
+  active_business: Business;
+  runway: {
+    runway_days: number | null;
+    runway_months: number | null;
+    burn_rate_monthly_kobo: number;
+  };
+  pl_snapshot: {
+    revenue_kobo: number;
+    expenses_kobo: number;
+    net_profit_kobo: number;
+    period: string;
+  };
+  cost_anomalies: CostAnomaly[];
+  staff_summary: StaffCostSummary;
+  tax_status: TaxStatus;
+  energy_cost_trend?: EnergyCostTrend | null;
+  team_summary: TeamSummary;
 };
 
 export type AuthTokens = { access: string; refresh: string };

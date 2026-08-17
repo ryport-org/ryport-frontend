@@ -1,5 +1,12 @@
 import { apiRequest } from "@/lib/api/client";
-import type { AIQuota, Budget, BudgetUsage, Transaction } from "@/lib/api/types";
+import type {
+  AIQuota,
+  Budget,
+  BudgetUsage,
+  PersonalDashboardData,
+  SmeDashboardData,
+  Transaction,
+} from "@/lib/api/types";
 
 export type DashboardOverview = {
   net_position_kobo?: number;
@@ -17,4 +24,12 @@ export type DashboardOverview = {
 
 export async function getOverview(token?: string | null) {
   return apiRequest<DashboardOverview>("/dashboard/overview/", { token });
+}
+
+export async function getPersonalDashboard(token?: string | null) {
+  return apiRequest<PersonalDashboardData>("/dashboard/personal/", { token });
+}
+
+export async function getSmeDashboard(token?: string | null) {
+  return apiRequest<SmeDashboardData>("/dashboard/sme/", { token });
 }

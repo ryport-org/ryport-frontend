@@ -162,6 +162,8 @@ export const integrationsApi = {
 
 export const dashboardApi = {
   overview: dashboard.getOverview,
+  personal: dashboard.getPersonalDashboard,
+  sme: dashboard.getSmeDashboard,
 };
 
 export { ApiError, apiRequest, healthCheck } from "@/lib/api/client";
