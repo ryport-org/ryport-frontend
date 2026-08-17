@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Contact — Ryport",
-  description: "Get in touch with the Ryport team.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Contact Us",
+  description:
+    "Get in touch with the Ryport team for support, custom enterprise integrations, or partnership inquiries.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

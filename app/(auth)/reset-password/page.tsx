@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata = { title: "Reset password — Ryport" };
+export const metadata: Metadata = createMetadata({
+  title: "Reset Password",
+  description: "Reset your Ryport account password securely.",
+  path: "/reset-password",
+  noIndex: true,
+});
 
 export default function ResetPasswordPage() {
   return (

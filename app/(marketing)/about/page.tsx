@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { ContentHeading, ContentSection } from "@/components/marketing/content-section";
 import { CtaSection } from "@/components/marketing/cta-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "About — Ryport",
+export const metadata: Metadata = createMetadata({
+  title: "About Us",
   description:
-    "Ryport is an AI-powered Financial Operating System built for individuals, professionals, and businesses in Nigeria.",
-};
+    "Ryport is Nigeria's premier AI-powered Financial Operating System for individuals, freelancers, and growing SMEs.",
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

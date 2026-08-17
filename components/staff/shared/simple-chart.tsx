@@ -8,7 +8,10 @@ export function SimpleBarChart({
   title: string;
   chart: ChartData | null;
 }) {
-  if (!chart?.labels?.length) {
+  const labels = Array.isArray(chart?.labels) ? chart.labels : [];
+  const data = Array.isArray(chart?.data) ? chart.data : [];
+
+  if (!labels.length) {
     return (
       <Card>
         <CardHeader>
@@ -21,7 +24,8 @@ export function SimpleBarChart({
     );
   }
 
-  const max = Math.max(...(chart.data ?? []), 1);
+  const numericData = data.map((d) => (typeof d === "number" && !isNaN(d) ? d : 0));
+  const max = Math.max(...numericData, 1);
 
   return (
     <Card>
@@ -30,8 +34,8 @@ export function SimpleBarChart({
       </CardHeader>
       <CardBody className="pt-0">
         <ul className="space-y-2">
-          {chart.labels.map((label, i) => {
-            const value = chart.data[i] ?? 0;
+          {labels.map((label, i) => {
+            const value = numericData[i] ?? 0;
             const pct = Math.round((value / max) * 100);
             return (
               <li key={`${label}-${i}`}>
@@ -42,7 +46,7 @@ export function SimpleBarChart({
                 <div className="h-1.5 overflow-hidden rounded-full bg-border">
                   <div
                     className="h-full rounded-full bg-accent"
-                    style={{ width: `${pct}%` }}
+                    style={{ width: `${Math.max(pct, 0)}%` }}
                   />
                 </div>
               </li>

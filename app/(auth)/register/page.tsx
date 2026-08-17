@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/register-form";
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata = {
-  title: "Get started — Ryport",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Create Your Free Account",
+  description: "Start free — ₦0/mo forever. Connect Nigerian bank accounts, automate budgets, and chat with AI CFO.",
+  path: "/register",
+});
 
 export default function RegisterPage() {
   return (

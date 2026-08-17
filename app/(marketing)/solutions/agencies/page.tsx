@@ -2,30 +2,31 @@ import type { Metadata } from "next";
 import { CtaSection } from "@/components/marketing/cta-section";
 import { ContentHeading, ContentSection } from "@/components/marketing/content-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Agencies — Ryport",
-  description: "Project revenue, team costs, and agency cash flow in one place.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Cash Flow & Runway Tracking for Agencies",
+  description:
+    "Multi-account bank aggregation, team cash flow visibility, and automated client invoice tracking for Nigerian digital agencies.",
+  path: "/solutions/agencies",
+});
 
 export default function AgenciesPage() {
   return (
     <>
       <PageHero
         eyebrow="Solutions"
-        title="Clarity for agencies"
-        description="Track project revenue, monitor team spending, and keep runway visible as you scale."
+        title="Built for agencies & studios"
+        description="Consolidate multiple client bank accounts, monitor retainer burn rate, and calculate runway in real time."
       />
       <ContentSection>
-        <ContentHeading>Per-project visibility</ContentHeading>
+        <ContentHeading>Multi-account aggregation</ContentHeading>
         <p>
-          See which clients and projects are profitable — and which need attention
-          before margins slip.
+          Connect all your agency accounts — operations, payroll, tax reserves — into one central dashboard powered by Mono Open Banking.
         </p>
-        <ContentHeading>Team-ready</ContentHeading>
+        <ContentHeading>Runway & burn rate intelligence</ContentHeading>
         <p>
-          Give your ops lead or co-founder shared visibility without exporting
-          spreadsheets every week.
+          Never guess your monthly burn rate again. Ryport calculates exact runway days and flags cost anomalies before they hurt profitability.
         </p>
       </ContentSection>
       <CtaSection />

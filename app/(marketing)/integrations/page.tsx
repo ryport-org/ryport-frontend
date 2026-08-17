@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { CtaSection } from "@/components/marketing/cta-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 import { Building2, Zap, FileSpreadsheet, Bell, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Integrations — Ryport",
-  description: "Connect the banks and financial tools you already use in Nigeria with Ryport.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Integrations & Bank Sync",
+  description:
+    "Connect Nigerian bank accounts (GTBank, Access, Zenith, Kuda, Moniepoint) and payment platforms like Paystack.",
+  path: "/integrations",
+});
 
 const integrationsList = [
   {

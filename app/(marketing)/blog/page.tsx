@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Blog — Ryport",
-  description: "Insights on cash flow, growth, and running a smarter business.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Blog & Financial Intelligence Insights",
+  description: "Practical guides, cash flow strategies, and fintech insights for Nigerian founders, freelancers, and SMEs.",
+  path: "/blog",
+});
 
 const posts = [
   {

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { ContentHeading, ContentSection } from "@/components/marketing/content-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Terms of Service — Ryport",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Terms of Service",
+  description: "Read Ryport Technologies' terms of service and usage conditions.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

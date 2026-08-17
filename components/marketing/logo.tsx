@@ -26,7 +26,7 @@ export function Logo({ className, size = "md" }: LogoProps) {
     >
       <Image
         src="/logo.png"
-        alt="Ryport"
+        alt="Ryport Logo"
         width={dim}
         height={dim}
         className="h-auto w-auto object-contain"
@@ -56,7 +56,7 @@ export function LogoMark({ className, size = 22 }: LogoMarkProps) {
     >
       <Image
         src="/logo.png"
-        alt=""
+        alt="Ryport Logo Mark"
         width={size}
         height={size}
         className="object-contain"

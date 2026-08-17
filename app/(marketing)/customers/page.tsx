@@ -1,23 +1,24 @@
 import type { Metadata } from "next";
-import { CtaSection } from "@/components/marketing/cta-section";
 import { CustomersGridSection } from "@/components/marketing/customers-grid-section";
+import { CtaSection } from "@/components/marketing/cta-section";
 import { PageHero } from "@/components/marketing/page-hero";
-import { UpgradeScenarios } from "@/components/marketing/upgrade-scenarios";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Customers — Ryport",
-  description: "See how students, freelancers, and founders use Ryport across Nigeria.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Customer Stories & Verified Case Studies",
+  description:
+    "Read verified stories from creators, freelancers, and SME founders across Nigeria using Ryport to track cash flow and calculate runway.",
+  path: "/customers",
+});
 
 export default function CustomersPage() {
   return (
     <>
       <PageHero
         eyebrow="Customers"
-        title="Real people. Real results."
-        description="From students saving their first ₦5,000 to founders running multi-million-naira businesses."
+        title="Stories from founders & creators"
+        description="See how Nigerian individuals, freelancers, and growing SMEs use Ryport to gain financial clarity."
       />
-      <UpgradeScenarios />
       <CustomersGridSection />
       <CtaSection />
     </>

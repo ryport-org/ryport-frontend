@@ -18,7 +18,7 @@ export function NavBrand({ className }: NavBrandProps) {
       <span className="flex size-10 items-center justify-center rounded-full bg-white sm:size-11">
         <Image
           src="/logo.png"
-          alt=""
+          alt="Ryport Logo"
           width={22}
           height={22}
           className="object-contain"

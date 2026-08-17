@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import { BenefitsSection } from "@/components/marketing/benefits-section";
 import { CtaSection } from "@/components/marketing/cta-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Why Ryport — Ryport",
-  description: "Understand, manage, and grow — Ryport grows with you from personal finance to AI CFO.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Why Choose Ryport",
+  description:
+    "Understand, manage, and grow — Ryport evolves with you from personal finance management to an intelligent AI CFO.",
+  path: "/why-ryport",
+});
 
 export default function WhyRyportPage() {
   return (

@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import { AiInsightsSection } from "@/components/marketing/ai-insights-section";
 import { CtaSection } from "@/components/marketing/cta-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "AI Insights — Ryport",
-  description: "Plain-English summaries that explain why your numbers moved.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "AI CFO Insights",
+  description:
+    "Plain-English financial summaries, spending anomaly detection, and automated 30-day cash flow projections.",
+  path: "/ai-insights",
+});
 
 export default function AiInsightsPage() {
   return (

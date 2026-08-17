@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { CtaSection } from "@/components/marketing/cta-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 import { ShieldCheck, Lock, Server, FileCheck2 } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Security — Ryport",
-  description: "Bank-grade security for your financial data. Encrypted at rest and in transit.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Bank-Grade Security",
+  description:
+    "Ryport uses AES-256 encryption, TLS 1.3, read-only open banking access via Mono, and 2FA to keep your financial data safe.",
+  path: "/security",
+});
 
 const securityPillars = [
   {

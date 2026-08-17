@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { ContentHeading, ContentSection } from "@/components/marketing/content-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy — Ryport",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Privacy Policy",
+  description: "Learn how Ryport Technologies protects your financial data and privacy.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

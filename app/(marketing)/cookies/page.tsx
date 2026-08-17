@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { ContentHeading, ContentSection } from "@/components/marketing/content-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Cookie Policy — Ryport",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Cookie Policy",
+  description: "Learn about essential and functional cookies used on the Ryport platform.",
+  path: "/cookies",
+});
 
 export default function CookiesPage() {
   return (

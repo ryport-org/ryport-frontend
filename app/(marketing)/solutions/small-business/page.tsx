@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import { CtaSection } from "@/components/marketing/cta-section";
 import { ContentHeading, ContentSection } from "@/components/marketing/content-section";
 import { PageHero } from "@/components/marketing/page-hero";
+import { createMetadata } from "@/lib/seo/site";
 
-export const metadata: Metadata = {
-  title: "Small Business — Ryport",
-  description: "Financial clarity for small businesses without the accounting overhead.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Financial Operating System for Small Business",
+  description:
+    "Financial clarity, cash flow runway calculations, and AI CFO tools for small businesses in Nigeria without accounting overhead.",
+  path: "/solutions/small-business",
+});
 
 export default function SmallBusinessPage() {
   return (
