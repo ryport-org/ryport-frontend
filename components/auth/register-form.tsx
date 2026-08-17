@@ -193,7 +193,7 @@ export function RegisterForm() {
 
       <form className="mt-8 space-y-4" onSubmit={handleSubmit} noValidate>
         {/* Banner Error */}
-        <FormBanner error={bannerError} onRetry={() => handleSubmit({ preventDefault: () => {} } as any)} />
+        <FormBanner error={bannerError} onRetry={() => handleSubmit({ preventDefault: () => {} } as unknown as React.FormEvent<HTMLFormElement>)} />
 
         {/* First Name & Last Name */}
         <div className="grid grid-cols-2 gap-3">

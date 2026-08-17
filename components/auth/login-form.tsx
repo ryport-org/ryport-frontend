@@ -33,19 +33,13 @@ function LoginFormInner() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
 
-  // Form submission state & general banner error
-  const [bannerError, setBannerError] = useState<FormattedError | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-
-  // Handle OAuth error in URL if any
-  useEffect(() => {
+  // Form submission state & general banner error (initialized with URL oauth error if present)
+  const [bannerError, setBannerError] = useState<FormattedError | null>(() => {
     const oauthError = searchParams.get("error");
-    if (oauthError) {
-      setBannerError({
-        message: decodeURIComponent(oauthError.replace(/\+/g, " ")),
-      });
-    }
-  }, [searchParams]);
+    if (!oauthError) return null;
+    return { message: decodeURIComponent(oauthError.replace(/\+/g, " ")) };
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   // Handle redirect if already authenticated
   useEffect(() => {
@@ -186,7 +180,7 @@ function LoginFormInner() {
 
       <form className="mt-6 space-y-5" onSubmit={handleSubmit} noValidate>
         {/* Banner Error Display */}
-        <FormBanner error={bannerError} onRetry={() => handleSubmit({ preventDefault: () => {} } as any)} />
+        <FormBanner error={bannerError} onRetry={() => handleSubmit({ preventDefault: () => {} } as unknown as React.FormEvent<HTMLFormElement>)} />
 
         {/* Email Field */}
         <div>

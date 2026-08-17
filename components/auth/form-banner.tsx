@@ -11,7 +11,7 @@ interface FormBannerProps {
 export function FormBanner({ error, onRetry }: FormBannerProps) {
   if (!error || !error.message) return null;
 
-  const { message, isNetworkError, isRateLimited, isServerError, isAuthError, requestId } = error;
+  const { message, isNetworkError, isRateLimited, isServerError, requestId } = error;
 
   let bgClass = "bg-coral-warn/10 border-coral-warn/30 text-coral-warn";
   let Icon = AlertTriangle;

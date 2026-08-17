@@ -108,7 +108,7 @@ export function OnboardingBusinessForm() {
       </div>
 
       <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
-        <FormBanner error={bannerError} onRetry={() => handleSubmit({ preventDefault: () => {} } as any)} />
+        <FormBanner error={bannerError} onRetry={() => handleSubmit({ preventDefault: () => {} } as unknown as React.FormEvent<HTMLFormElement>)} />
 
         {/* Business Name */}
         <div>

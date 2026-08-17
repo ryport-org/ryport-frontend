@@ -10,7 +10,6 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { aiApi, authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
-import { ApiError } from "@/lib/api/client";
 import type {
   AIQuota,
   Business,
@@ -211,6 +210,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [bootstrap, clearAppState, pathname]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshSession();
   }, [refreshSession]);
 

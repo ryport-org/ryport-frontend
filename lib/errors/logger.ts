@@ -9,6 +9,12 @@ export interface ErrorLogDetails {
   context?: Record<string, unknown>;
 }
 
+type SentryCapture = {
+  captureException: (error: unknown) => void;
+  setTag: (key: string, value: string) => void;
+  setContext: (name: string, context: Record<string, unknown>) => void;
+};
+
 export function logAuthError(error: unknown, endpoint?: string, extraContext?: Record<string, unknown>): void {
   const timestamp = new Date().toISOString();
   let code = "unknown_error";
@@ -46,8 +52,8 @@ export function logAuthError(error: unknown, endpoint?: string, extraContext?: R
   }
 
   // Production Sentry integration (guarded check)
-  if (typeof window !== "undefined" && (window as unknown as { Sentry?: { captureException: Function } }).Sentry) {
-    const Sentry = (window as unknown as { Sentry: { captureException: Function; setTag: Function; setContext: Function } }).Sentry;
+  if (typeof window !== "undefined" && (window as unknown as { Sentry?: SentryCapture }).Sentry) {
+    const Sentry = (window as unknown as { Sentry: SentryCapture }).Sentry;
     if (requestId !== "N/A") {
       Sentry.setTag("request_id", requestId);
     }

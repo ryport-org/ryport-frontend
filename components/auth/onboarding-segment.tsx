@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Briefcase, Building2, Check, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { FormBanner } from "@/components/auth/form-banner";
 import { useAuth } from "@/lib/auth/auth-context";
 import { usersApi } from "@/lib/api";
