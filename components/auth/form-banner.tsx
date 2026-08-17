@@ -11,7 +11,7 @@ interface FormBannerProps {
 export function FormBanner({ error, onRetry }: FormBannerProps) {
   if (!error || !error.message) return null;
 
-  const { message, isNetworkError, isRateLimited, isServerError, requestId } = error;
+  const { message, fieldErrors, isNetworkError, isRateLimited, isServerError, requestId } = error;
 
   let bgClass = "bg-coral-warn/10 border-coral-warn/30 text-coral-warn";
   let Icon = AlertTriangle;
@@ -27,6 +27,8 @@ export function FormBanner({ error, onRetry }: FormBannerProps) {
     Icon = AlertTriangle;
   }
 
+  const detailsList = fieldErrors ? Object.entries(fieldErrors) : [];
+
   return (
     <div
       className={`rounded-lg border p-3.5 text-sm transition-all ${bgClass}`}
@@ -37,6 +39,15 @@ export function FormBanner({ error, onRetry }: FormBannerProps) {
         <Icon className="mt-0.5 size-4 shrink-0" />
         <div className="flex-1">
           <p className="font-medium leading-snug">{message}</p>
+          {detailsList.length > 0 && (
+            <ul className="mt-1.5 space-y-0.5 text-xs opacity-90">
+              {detailsList.map(([key, val]) => (
+                <li key={key} className="capitalize">
+                  • <span className="font-semibold">{key.replace(/_/g, " ")}:</span> {val}
+                </li>
+              ))}
+            </ul>
+          )}
           {requestId && (
             <p className="mt-1 font-mono text-[11px] opacity-75">
               Support ID: <span className="select-all font-semibold">{requestId}</span>

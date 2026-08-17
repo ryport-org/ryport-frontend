@@ -17,11 +17,6 @@ const BUSINESS_TYPES = [
   { id: "limited_liability", label: "Limited Liability Company (LTD)" },
   { id: "partnership", label: "Partnership" },
   { id: "agency", label: "Agency / Studio" },
-  { id: "retail", label: "Retail Trade" },
-  { id: "services", label: "Professional Services" },
-  { id: "manufacturing", label: "Manufacturing" },
-  { id: "technology", label: "Technology / Software" },
-  { id: "hospitality", label: "Hospitality / Food Service" },
   { id: "other", label: "Other / Unregistered Business" },
 ];
 
@@ -77,12 +72,18 @@ export function OnboardingBusinessForm() {
     }
 
     try {
-      // Create business via POST /api/v1/businesses/
-      await businessesApi.create(token, {
+      // Create business via POST /api/v1/businesses/ with both type and entity_type for compatibility
+      const newBiz = await businessesApi.create(token, {
         name: businessName.trim(),
         type: businessType,
+        entity_type: businessType,
         currency,
       });
+
+      // Auto-switch to activate the newly created business on backend
+      if (newBiz && newBiz.id) {
+        await businessesApi.switch(token, newBiz.id).catch(() => {});
+      }
 
       // Refetch context & bootstrap to confirm SME active_business setup
       await bootstrap(token);

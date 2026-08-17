@@ -54,12 +54,27 @@ export function SmeDashboard() {
       setData(smeRes);
       setBusinesses(bizList);
     } catch {
+      // Auto-recovery: If initial SME call failed (e.g. active business not set in backend session),
+      // fetch business list and auto-switch to the first available business
+      try {
+        const bizList = await businessesApi.list(token);
+        setBusinesses(bizList);
+        if (bizList.length > 0) {
+          await businessesApi.switch(token, bizList[0].id);
+          await bootstrap(token).catch(() => {});
+          const smeRes = await dashboardApi.sme(token);
+          setData(smeRes);
+          return;
+        }
+      } catch {
+        // Fallback if auto-recovery also fails
+      }
       setError("Could not load business dashboard data. Ensure your active business is selected.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [bootstrap]);
 
   useEffect(() => {
     void fetchSmeData();
@@ -92,12 +107,19 @@ export function SmeDashboard() {
         <CardBody className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-coral-warn">{error ?? "Failed to load SME dashboard."}</p>
           <div className="flex items-center gap-2">
-            <Link href="/onboarding/business">
-              <Button type="button" variant="primary" className="text-xs">
-                Set up business
-              </Button>
-            </Link>
-            <Button type="button" variant="secondary" className="text-xs" onClick={() => void fetchSmeData(true)}>
+            {businesses.length > 1 ? (
+              <select
+                onChange={(e) => void handleSwitchBusiness(e.target.value)}
+                defaultValue=""
+                className="rounded-lg border border-line bg-white px-3 py-1.5 text-xs text-ink"
+              >
+                <option value="" disabled>Switch Business...</option>
+                {businesses.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            ) : null}
+            <Button type="button" variant="secondary" onClick={() => void fetchSmeData(true)}>
               Retry
             </Button>
           </div>

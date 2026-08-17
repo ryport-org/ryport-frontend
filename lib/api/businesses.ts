@@ -7,7 +7,7 @@ export async function listBusinesses(token: string) {
 
 export async function createBusiness(
   token: string,
-  body: { name: string; type: string; currency?: string },
+  body: { name: string; type?: string; entity_type?: string; currency?: string },
 ) {
   return apiRequest<Business>("/businesses/", { method: "POST", body, token });
 }
