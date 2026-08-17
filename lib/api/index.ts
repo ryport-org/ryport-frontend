@@ -58,9 +58,18 @@ export const authApi = {
   syncSession: auth.syncSession,
 };
 
+import * as onboarding from "@/lib/api/onboarding";
+
 export const usersApi = {
   me: users.getMe,
   plan: users.getPlan,
+  updateSegment: onboarding.updateSegment,
+  getDashboardContext: onboarding.getDashboardContext,
+};
+
+export const onboardingApi = {
+  updateSegment: onboarding.updateSegment,
+  getDashboardContext: onboarding.getDashboardContext,
 };
 
 export const accountsApi = {

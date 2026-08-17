@@ -6,25 +6,48 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordField } from "@/components/auth/password-field";
-// OAuth temporarily disabled — re-enable: import { SocialLogins } from "@/components/auth/social-logins";
-import { getAuthErrorMessage, useAuth } from "@/lib/auth/auth-context";
+import { FieldError } from "@/components/auth/field-error";
+import { FormBanner } from "@/components/auth/form-banner";
+import { useAuth } from "@/lib/auth/auth-context";
+import { validateEmail, validatePassword } from "@/lib/validation/auth";
+import { getErrorMessage, type FormattedError } from "@/lib/errors/messages";
+import { logAuthError } from "@/lib/errors/logger";
 
 function LoginFormInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, loginWithOtp, requestOtp, isAuthenticated, isLoading, isAdmin } = useAuth();
+
   const [mode, setMode] = useState<"password" | "otp">("password");
   const [otpSent, setOtpSent] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
+  // Form values
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [totp, setTotp] = useState("");
+  const [otp, setOtp] = useState("");
+
+  // Field error states
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+
+  // Form submission state & general banner error
+  const [bannerError, setBannerError] = useState<FormattedError | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Handle OAuth error in URL if any
   useEffect(() => {
     const oauthError = searchParams.get("error");
     if (oauthError) {
-      setError(decodeURIComponent(oauthError.replace(/\+/g, " ")));
+      setBannerError({
+        message: decodeURIComponent(oauthError.replace(/\+/g, " ")),
+      });
     }
   }, [searchParams]);
 
+  // Handle redirect if already authenticated
   useEffect(() => {
     if (isLoading || !isAuthenticated) return;
     const next = searchParams.get("next");
@@ -37,33 +60,90 @@ function LoginFormInner() {
 
   if (!isLoading && isAuthenticated) return null;
 
+  // Real-time validation handlers
+  const handleEmailBlur = () => {
+    setEmailTouched(true);
+    setEmailError(validateEmail(email));
+  };
+
+  const handlePasswordBlur = () => {
+    setPasswordTouched(true);
+    const result = validatePassword(password);
+    setPasswordError(result.error);
+  };
+
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    if (emailTouched) {
+      setEmailError(validateEmail(val));
+    }
+    setBannerError(null);
+  };
+
+  const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    if (passwordTouched) {
+      const result = validatePassword(val);
+      setPasswordError(result.error);
+    }
+    setBannerError(null);
+  };
+
+  // Determine if form is client-side valid
+  const isEmailValid = validateEmail(email) === null;
+  const isPasswordValid = validatePassword(password).valid;
+  const isFormValid =
+    mode === "password"
+      ? isEmailValid && isPasswordValid
+      : isEmailValid && (!otpSent || otp.trim().length > 0);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const email = String(fd.get("email"));
-    setLoading(true);
-    setError("");
+    setBannerError(null);
+
+    // Force touch all fields
+    setEmailTouched(true);
+    setPasswordTouched(true);
+
+    const emailErr = validateEmail(email);
+    setEmailError(emailErr);
+
+    if (mode === "password") {
+      const passResult = validatePassword(password);
+      setPasswordError(passResult.error);
+
+      if (emailErr || !passResult.valid) {
+        return;
+      }
+    } else if (emailErr) {
+      return;
+    }
+
+    setSubmitting(true);
+
     try {
       if (mode === "otp") {
-        const otp = String(fd.get("otp") || "");
         if (!otpSent) {
-          await requestOtp(email);
+          await requestOtp(email.trim());
           setOtpSent(true);
         } else {
-          await loginWithOtp(email, otp);
+          await loginWithOtp(email.trim(), otp.trim());
         }
       } else {
-        const totpRaw = fd.get("totp");
-        const totp =
-          typeof totpRaw === "string" && totpRaw.trim().length > 0
-            ? totpRaw.trim()
-            : undefined;
-        await login(email.trim(), String(fd.get("password")), totp);
+        const totpClean = totp.trim().length > 0 ? totp.trim() : undefined;
+        await login(email.trim(), password, totpClean);
       }
     } catch (err) {
-      setError(getAuthErrorMessage(err));
+      logAuthError(err, mode === "otp" ? "/users/auth/otp/" : "/users/auth/login/");
+      const formatted = getErrorMessage(err);
+      setBannerError(formatted);
+
+      if (formatted.fieldErrors) {
+        if (formatted.fieldErrors.email) setEmailError(formatted.fieldErrors.email);
+        if (formatted.fieldErrors.password) setPasswordError(formatted.fieldErrors.password);
+      }
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
@@ -74,27 +154,44 @@ function LoginFormInner() {
         Enter your email and password to access your account.
       </p>
 
+      {/* Mode Toggle: Password vs OTP */}
       <div className="mt-6 flex gap-2 rounded-lg border border-line bg-paper p-1">
         <button
           type="button"
-          onClick={() => { setMode("password"); setOtpSent(false); }}
-          className={`flex-1 rounded-md py-2 text-sm font-medium ${mode === "password" ? "bg-white text-ink shadow-sm" : "text-mist"}`}
+          onClick={() => {
+            setMode("password");
+            setOtpSent(false);
+            setBannerError(null);
+          }}
+          className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+            mode === "password" ? "bg-white text-ink shadow-xs" : "text-mist hover:text-ink"
+          }`}
         >
           Password
         </button>
         <button
           type="button"
-          onClick={() => { setMode("otp"); setOtpSent(false); }}
-          className={`flex-1 rounded-md py-2 text-sm font-medium ${mode === "otp" ? "bg-white text-ink shadow-sm" : "text-mist"}`}
+          onClick={() => {
+            setMode("otp");
+            setOtpSent(false);
+            setBannerError(null);
+          }}
+          className={`flex-1 rounded-md py-2 text-sm font-medium transition-colors ${
+            mode === "otp" ? "bg-white text-ink shadow-xs" : "text-mist hover:text-ink"
+          }`}
         >
           Email code
         </button>
       </div>
 
-      <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+      <form className="mt-6 space-y-5" onSubmit={handleSubmit} noValidate>
+        {/* Banner Error Display */}
+        <FormBanner error={bannerError} onRetry={() => handleSubmit({ preventDefault: () => {} } as any)} />
+
+        {/* Email Field */}
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-ink">
-            Email
+            Email address
           </label>
           <Input
             id="email"
@@ -102,14 +199,32 @@ function LoginFormInner() {
             type="email"
             autoComplete="email"
             required
-            className="mt-1.5"
+            disabled={submitting}
+            value={email}
+            onChange={(e) => handleEmailChange(e.target.value)}
+            onBlur={handleEmailBlur}
+            aria-invalid={Boolean(emailError)}
+            aria-describedby={emailError ? "email-error" : undefined}
+            className={`mt-1.5 ${
+              emailError ? "border-coral-warn focus:border-coral-warn focus:ring-coral-warn/20" : ""
+            }`}
             placeholder="you@company.com"
           />
+          <FieldError id="email-error" error={emailError} />
         </div>
 
+        {/* Password Mode Fields */}
         {mode === "password" ? (
           <>
-            <PasswordField id="password" />
+            <PasswordField
+              id="password"
+              value={password}
+              onChange={(e) => handlePasswordChange(e.target.value)}
+              onBlur={handlePasswordBlur}
+              error={passwordError}
+              disabled={submitting}
+            />
+
             <div>
               <label htmlFor="totp" className="block text-sm font-medium text-ink">
                 2FA code <span className="font-normal text-mist">(if enabled)</span>
@@ -120,7 +235,10 @@ function LoginFormInner() {
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                className="mt-1.5"
+                disabled={submitting}
+                value={totp}
+                onChange={(e) => setTotp(e.target.value)}
+                className="mt-1.5 font-mono"
                 placeholder="000000"
               />
             </div>
@@ -136,12 +254,16 @@ function LoginFormInner() {
               type="text"
               inputMode="numeric"
               required
-              className="mt-1.5"
+              disabled={submitting}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="mt-1.5 font-mono"
               placeholder="123456"
             />
           </div>
         ) : null}
 
+        {/* Forgot Password Link */}
         <div className="flex items-center justify-between gap-4">
           {mode === "password" ? (
             <Link href="/reset-password" className="text-sm font-medium text-sky hover:underline">
@@ -152,25 +274,29 @@ function LoginFormInner() {
           )}
         </div>
 
-        {error ? <p className="text-sm text-coral-warn">{error}</p> : null}
-
-        <Button type="submit" variant="primary" className="w-full" disabled={loading}>
-          {loading
-            ? "Please wait…"
-            : mode === "otp"
-              ? otpSent
-                ? "Verify code"
-                : "Send code"
-              : "Log in"}
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          variant="primary"
+          className="w-full"
+          disabled={submitting || !isFormValid}
+        >
+          {submitting ? (
+            <span className="flex items-center gap-2">
+              <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Please wait…
+            </span>
+          ) : mode === "otp" ? (
+            otpSent ? (
+              "Verify code"
+            ) : (
+              "Send code"
+            )
+          ) : (
+            "Log in"
+          )}
         </Button>
       </form>
-
-      {/* OAuth temporarily disabled
-      <SocialLogins />
-      <p className="mt-4 text-center text-xs text-mist">
-        Signed up with Google or GitHub? Use social login — email/password won&apos;t work for those accounts unless you set a password.
-      </p>
-      */}
 
       <p className="mt-6 text-center text-sm text-mist">
         Don&apos;t have an account?{" "}

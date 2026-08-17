@@ -21,11 +21,22 @@ export type ApiErrorBody = {
   request_id?: string;
 };
 
+export type UserSegment = "individual" | "freelancer" | "sme";
+
+export type DashboardContext = {
+  active_business: Business | null;
+  segment: UserSegment | null;
+};
+
 export type AuthTokens = { access: string; refresh: string };
 
 export type Profile = {
   id: string;
   email: string;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  segment?: UserSegment | null;
   plan: Plan;
   role?: "user" | "admin" | string;
   is_staff?: boolean;
@@ -49,6 +60,10 @@ export type PlanResponse = {
 export type AuthResponse = AuthTokens & {
   id: string;
   email: string;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
+  segment?: UserSegment | null;
   plan: Plan;
   is_2fa_enabled?: boolean;
 };

@@ -9,12 +9,12 @@ import {
   useState,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
-// OAuth temporarily disabled — re-enable with SocialLogins + OAuthHandler
 import { aiApi, authApi, businessesApi, notificationsApi, usersApi } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import type {
   AIQuota,
   Business,
+  DashboardContext,
   PlanFeature,
   PlanResponse,
   Profile,
@@ -29,6 +29,8 @@ import {
   getRefreshToken,
   setRyportTokens,
 } from "@/lib/auth/tokens";
+import { getErrorMessage } from "@/lib/errors/messages";
+import { logAuthError } from "@/lib/errors/logger";
 
 type AuthContextValue = {
   user: Profile | null;
@@ -36,6 +38,8 @@ type AuthContextValue = {
   unreadNotifications: number;
   activeBusiness: Business | null;
   aiQuota: AIQuota | null;
+  dashboardContext: DashboardContext | null;
+  bootstrapWarning: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -44,14 +48,18 @@ type AuthContextValue = {
   login: (email: string, password: string, totp?: string) => Promise<void>;
   loginWithOtp: (email: string, otp: string) => Promise<void>;
   requestOtp: (email: string) => Promise<void>;
-  register: (email: string, password: string, passwordConfirm: string) => Promise<void>;
+  registerUser: (payload: {
+    email: string;
+    password: string;
+    password_confirm: string;
+    first_name?: string;
+    last_name?: string;
+    phone_number?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   refreshAiQuota: () => Promise<void>;
-  // OAuth temporarily disabled
-  // startOAuth: (provider: "google" | "github") => Promise<void>;
-  // loadSessionAfterOAuth: (access: string) => Promise<void>;
-  // exchangeOAuthCode: (code: string, state: string, totp?: string) => Promise<void>;
+  bootstrap: (token: string) => Promise<Profile>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -70,6 +78,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [activeBusiness, setActiveBusiness] = useState<Business | null>(null);
   const [aiQuota, setAiQuota] = useState<AIQuota | null>(null);
+  const [dashboardContext, setDashboardContext] = useState<DashboardContext | null>(null);
+  const [bootstrapWarning, setBootstrapWarning] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const features = useMemo(() => featureMap(plan?.features), [plan?.features]);
@@ -92,27 +102,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUnreadNotifications(0);
     setActiveBusiness(null);
     setAiQuota(null);
+    setDashboardContext(null);
+    setBootstrapWarning(null);
   }, []);
 
   /** Post-login bootstrap — see docs/frontend-dev-handoff.md §3 */
   const bootstrap = useCallback(async (token: string) => {
-    const [profile, userPlan, unread, active, quota] = await Promise.all([
-      usersApi.me(token),
-      usersApi.plan(token),
-      notificationsApi.unreadCount(token).catch(() => ({ count: 0 })),
-      businessesApi.active(token).catch(() => null),
-      aiApi.quota(token).catch(() => null),
-    ]);
+    setBootstrapWarning(null);
+    let profile: Profile;
+    try {
+      profile = await usersApi.me(token);
+    } catch (err) {
+      logAuthError(err, "/users/me/");
+      throw err;
+    }
+
+    // Resilient parallel loading of non-critical bootstrap data via Promise.allSettled
+    const [userPlanResult, unreadResult, activeBizResult, quotaResult, dashCtxResult] =
+      await Promise.allSettled([
+        usersApi.plan(token),
+        notificationsApi.unreadCount(token),
+        businessesApi.active(token),
+        aiApi.quota(token),
+        usersApi.getDashboardContext(token),
+      ]);
+
+    const userPlan = userPlanResult.status === "fulfilled" ? userPlanResult.value : null;
+    const unreadCount = unreadResult.status === "fulfilled" ? unreadResult.value.count : 0;
+    const activeBiz = activeBizResult.status === "fulfilled" ? activeBizResult.value : null;
+    const quota = quotaResult.status === "fulfilled" ? quotaResult.value : null;
+    const dashCtx = dashCtxResult.status === "fulfilled" ? dashCtxResult.value : null;
+
     setUser(profile);
     setPlan(userPlan);
-    setUnreadNotifications(unread.count);
-    setActiveBusiness(active);
+    setUnreadNotifications(unreadCount);
+    setActiveBusiness(activeBiz || dashCtx?.active_business || null);
     setAiQuota(quota);
+    setDashboardContext(dashCtx);
+
+    if (userPlanResult.status === "rejected") {
+      logAuthError(userPlanResult.reason, "/users/me/plan/");
+      setBootstrapWarning("Some account details couldn't load.");
+    }
+
     return profile;
   }, []);
 
   const finishCustomerLogin = useCallback(
-    (profile: Profile) => {
+    (profile: Profile, dashCtx?: DashboardContext | null) => {
       if (isAdminUser(profile)) {
         router.push(staffPath("/login"));
         return;
@@ -179,40 +216,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string, totp?: string) => {
-      const data = await authApi.login({ email, password, totp_token: totp });
-      setRyportTokens(data.access, data.refresh);
-      const profile = await bootstrap(data.access);
-      finishCustomerLogin(profile);
+      try {
+        const data = await authApi.login({ email, password, totp_token: totp });
+        setRyportTokens(data.access, data.refresh);
+        const profile = await bootstrap(data.access);
+        finishCustomerLogin(profile);
+      } catch (err) {
+        logAuthError(err, "/users/auth/login/");
+        throw err;
+      }
     },
     [bootstrap, finishCustomerLogin],
   );
 
   const requestOtp = useCallback(async (email: string) => {
-    await authApi.requestOtp(email);
+    try {
+      await authApi.requestOtp(email);
+    } catch (err) {
+      logAuthError(err, "/users/auth/otp/request/");
+      throw err;
+    }
   }, []);
 
   const loginWithOtp = useCallback(
     async (email: string, otp: string) => {
-      const data = await authApi.verifyOtp(email, otp);
-      setRyportTokens(data.access, data.refresh);
-      const profile = await bootstrap(data.access);
-      finishCustomerLogin(profile);
+      try {
+        const data = await authApi.verifyOtp(email, otp);
+        setRyportTokens(data.access, data.refresh);
+        const profile = await bootstrap(data.access);
+        finishCustomerLogin(profile);
+      } catch (err) {
+        logAuthError(err, "/users/auth/otp/verify/");
+        throw err;
+      }
     },
     [bootstrap, finishCustomerLogin],
   );
 
-  const register = useCallback(
-    async (email: string, password: string, passwordConfirm: string) => {
-      const data = await authApi.register({
-        email,
-        password,
-        password_confirm: passwordConfirm,
-      });
-      setRyportTokens(data.access, data.refresh);
-      const profile = await bootstrap(data.access);
-      finishCustomerLogin(profile);
+  const registerUser = useCallback(
+    async (payload: {
+      email: string;
+      password: string;
+      password_confirm: string;
+      first_name?: string;
+      last_name?: string;
+      phone_number?: string;
+    }) => {
+      try {
+        const data = await authApi.register(payload);
+        setRyportTokens(data.access, data.refresh);
+        // Step 1 success -> redirect to Step 2 onboarding segment survey
+        router.push("/onboarding/segment");
+      } catch (err) {
+        logAuthError(err, "/users/auth/register/");
+        throw err;
+      }
     },
-    [bootstrap, finishCustomerLogin],
+    [router],
   );
 
   const logout = useCallback(async () => {
@@ -223,8 +283,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (access && refresh) {
         await authApi.logout(refresh, access);
       }
-    } catch {
-      /* still clear locally */
+    } catch (err) {
+      logAuthError(err, "/users/auth/logout/");
     }
 
     clearTokens();
@@ -232,44 +292,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearAppState();
     router.push("/login");
   }, [clearAppState, router]);
-
-  /*
-  const startOAuth = useCallback(async (provider: "google" | "github") => {
-    const { url, state } = await authApi.startOAuth(provider, OAUTH_NEXT_PATH);
-    storeOAuthSession(state, provider);
-    window.location.href = url;
-  }, []);
-
-  const loadSessionAfterOAuth = useCallback(
-    async (access: string) => {
-      clearOAuthSession();
-      const token = getAccessToken() ?? access;
-      try {
-        await authApi.syncSession(token);
-      } catch {
-        // tokens already saved from redirect URL
-      }
-      await bootstrap(token);
-      setIsLoading(false);
-    },
-    [bootstrap],
-  );
-
-  const exchangeOAuthCode = useCallback(
-    async (code: string, state: string, totp?: string) => {
-      const data = await authApi.completeOAuth({
-        code,
-        state,
-        totp_token: totp,
-      });
-      setRyportTokens(data.access, data.refresh);
-      clearOAuthSession();
-      await bootstrap(data.access);
-      setIsLoading(false);
-    },
-    [bootstrap],
-  );
-  */
 
   const refreshAiQuota = useCallback(async () => {
     const token = getAccessToken();
@@ -288,6 +310,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unreadNotifications,
       activeBusiness,
       aiQuota,
+      dashboardContext,
+      bootstrapWarning,
       isLoading,
       isAuthenticated: Boolean(user) || Boolean(getAccessToken()),
       isAdmin,
@@ -296,13 +320,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       loginWithOtp,
       requestOtp,
-      register,
+      registerUser,
       logout,
       refreshSession,
       refreshAiQuota,
-      // startOAuth,
-      // loadSessionAfterOAuth,
-      // exchangeOAuthCode,
+      bootstrap,
     }),
     [
       user,
@@ -310,6 +332,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unreadNotifications,
       activeBusiness,
       aiQuota,
+      dashboardContext,
+      bootstrapWarning,
       isLoading,
       isAdmin,
       canUse,
@@ -317,13 +341,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       loginWithOtp,
       requestOtp,
-      register,
+      registerUser,
       logout,
       refreshSession,
       refreshAiQuota,
-      // startOAuth,
-      // loadSessionAfterOAuth,
-      // exchangeOAuthCode,
+      bootstrap,
     ],
   );
 
@@ -337,35 +359,5 @@ export function useAuth() {
 }
 
 export function getAuthErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    if (error.code === "invalid_credentials") {
-      return "Invalid email or password.";
-    }
-    if (error.code === "quota_exceeded") {
-      return error.message || "You have reached your daily AI message limit.";
-    }
-    if (error.code === "feature_not_available") {
-      return error.message || "This feature is not on your current plan.";
-    }
-    /*
-    if (error.code === "oauth_state_mismatch" || error.code === "missing_oauth_state") {
-      return "OAuth session expired. Please try signing in again.";
-    }
-    */
-    if (error.details && typeof error.details === "object") {
-      const fieldMessages = Object.entries(error.details)
-        .flatMap(([field, msgs]) => {
-          if (Array.isArray(msgs)) return msgs.map((m) => `${field}: ${m}`);
-          if (typeof msgs === "string") return [`${field}: ${msgs}`];
-          return [];
-        })
-        .filter(Boolean);
-      if (fieldMessages.length > 0) {
-        return fieldMessages.join(" ");
-      }
-    }
-    return error.message;
-  }
-  if (error instanceof Error) return error.message;
-  return "Something went wrong. Please try again.";
+  return getErrorMessage(error).message;
 }

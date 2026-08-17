@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
 
   const { supabaseResponse, user } = await updateSession(request);
 
-  if (pathname.startsWith("/app")) {
+  if (pathname.startsWith("/app") || pathname.startsWith("/onboarding")) {
     const hasRyportCookie =
       request.cookies.get("ryport_auth")?.value === "1" ||
       request.cookies.has("ryport_access_token");
@@ -31,6 +31,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/app/:path*",
+    "/onboarding/:path*",
     "/auth.callback",
     "/auth.callback/:path*",
     "/auth/callback",
