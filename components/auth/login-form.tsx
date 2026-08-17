@@ -76,7 +76,7 @@ function LoginFormInner() {
 
   const handlePasswordChange = (val: string) => {
     setPassword(val);
-    if (passwordTouched) {
+    if (passwordTouched || /\s/.test(val)) {
       const result = validatePassword(val);
       setPasswordError(result.error);
     }

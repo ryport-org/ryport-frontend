@@ -56,6 +56,8 @@ export const viewport: Viewport = {
   ],
 };
 
+import { PwaProvider } from "@/components/pwa/pwa-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -69,8 +71,10 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col overflow-x-hidden">
         <AuthProvider>
           <StaffAuthProvider>
-            {/* <OAuthHandler /> */}
-            {children}
+            <PwaProvider>
+              {/* <OAuthHandler /> */}
+              {children}
+            </PwaProvider>
           </StaffAuthProvider>
         </AuthProvider>
       </body>

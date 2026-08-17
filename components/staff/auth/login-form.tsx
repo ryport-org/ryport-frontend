@@ -15,10 +15,15 @@ export function LoginForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    const password = String(fd.get("password") || "");
+    if (/\s/.test(password)) {
+      setError("Password cannot contain spaces.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      await login(String(fd.get("email")), String(fd.get("password")));
+      await login(String(fd.get("email")), password);
     } catch (err) {
       setError(getStaffAuthErrorMessage(err));
     } finally {

@@ -26,7 +26,7 @@ export function BenefitsSection({ hideHeader = false }: { hideHeader?: boolean }
               Built for Africa. Powered by AI.
             </h2>
             <p className="mt-4 text-mist" style={{ fontSize: "var(--text-subhead)", lineHeight: 1.6 }}>
-              Paystack, Flutterwave, and local bank formats — intelligence generic
+              Mono Open Banking, Paystack, and local bank formats — intelligence generic
               apps can&apos;t provide.
             </p>
           </div>

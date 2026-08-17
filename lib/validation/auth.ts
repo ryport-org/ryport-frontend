@@ -29,23 +29,24 @@ export interface PasswordValidationResult {
     minLength: boolean;
     hasLetter: boolean;
     hasNumber: boolean;
+    noSpaces: boolean;
   };
 }
 
 export function validatePassword(password: string): PasswordValidationResult {
-  const trimmed = password.trim();
+  const hasSpace = /\s/.test(password);
   const minLength = password.length >= 8;
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const hasSpecial = /[^a-zA-Z0-9]/.test(password);
 
-  const valid = minLength && hasLetter && hasNumber && trimmed.length > 0;
+  const valid = minLength && hasLetter && hasNumber && !hasSpace;
 
   let error: string | null = null;
   if (!password) {
     error = "Password is required";
-  } else if (trimmed.length === 0) {
-    error = "Password cannot consist only of spaces";
+  } else if (hasSpace) {
+    error = "Password cannot contain spaces";
   } else if (!minLength) {
     error = "Password must be at least 8 characters long";
   } else if (!hasLetter) {
@@ -61,9 +62,10 @@ export function validatePassword(password: string): PasswordValidationResult {
   if (hasLetter) strengthScore++;
   if (hasNumber) strengthScore++;
   if (hasSpecial) strengthScore++;
+  if (hasSpace) strengthScore = 0;
 
   let strength: PasswordStrength = "weak";
-  if (strengthScore >= 4) {
+  if (strengthScore >= 4 && valid) {
     strength = "strong";
   } else if (strengthScore >= 2 && valid) {
     strength = "medium";
@@ -77,6 +79,7 @@ export function validatePassword(password: string): PasswordValidationResult {
       minLength,
       hasLetter,
       hasNumber,
+      noSpaces: !hasSpace,
     },
   };
 }

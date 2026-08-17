@@ -39,7 +39,7 @@ export function DashboardPreview({ className }: DashboardPreviewProps) {
           <span className="size-2.5 rounded-full bg-sky-soft" />
           <span className="size-2.5 rounded-full bg-mist" />
         </div>
-        <span className="text-xs text-mist">app.ryport.io / dashboard</span>
+        <span className="text-xs text-mist">www.ryport.com.ng / app / dashboard</span>
       </div>
 
       <div className="space-y-6 px-5 py-6 sm:px-8 sm:py-8">
@@ -47,7 +47,7 @@ export function DashboardPreview({ className }: DashboardPreviewProps) {
 
         <div className="relative">
           <p className="text-xs font-semibold uppercase tracking-wide text-mist">
-            Revenue
+            Net Position (30d)
           </p>
           <div className="relative mt-2">
             <div
@@ -74,11 +74,11 @@ export function DashboardPreview({ className }: DashboardPreviewProps) {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <StatCard label="New users" value="2,780" change="+8%" />
-          <StatCard label="Projects" value="18" change="+2" />
+          <StatCard label="Income (recent)" value="₦450,000" change="↑" />
+          <StatCard label="Expenses (recent)" value="₦128,400" change="↓" />
           <div className="rounded-lg border border-line bg-paper px-4 py-3">
-            <p className="text-xs font-medium text-mist">Earnings</p>
-            <p className="mt-1 text-xs font-semibold text-ink">This month</p>
+            <p className="text-xs font-medium text-mist">Linked accounts</p>
+            <p className="mt-1 text-xs font-semibold text-ink">2 connected</p>
             <div className="mt-2 h-8">
               <Sparkline
                 points={[40, 45, 42, 55, 50, 62, 58, 70, 68, 75, 72, 80]}

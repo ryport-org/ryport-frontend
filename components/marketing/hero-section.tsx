@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HeroIllustration } from "@/components/marketing/hero-illustration";
 import { HeroSkyBackground } from "@/components/marketing/hero-sky-background";
@@ -7,7 +7,7 @@ import { LandingSectionNav } from "@/components/marketing/landing-section-nav";
 
 const quickStats = [
   { value: "₦0", label: "to start" },
-  { value: "1", label: "bank on free" },
+  { value: "2", label: "banks on free" },
   { value: "10", label: "AI chats/day" },
 ];
 
@@ -26,7 +26,7 @@ export function HeroSection() {
             <span className="inline-flex items-center rounded-full bg-brand p-1 text-xs font-medium text-white shadow-sm">
               <span className="px-3 py-1.5">Built for Nigeria</span>
               <span className="rounded-full bg-white px-3 py-1.5 text-ink">
-                Paystack · Flutterwave · local banks
+                Mono Open Banking · Paystack · Nigerian Banks
               </span>
             </span>
           </div>
@@ -66,6 +66,21 @@ export function HeroSection() {
               <Play className="mr-1.5 size-3.5 fill-current" aria-hidden="true" />
               See how it works
             </Button>
+          </div>
+
+          {/* Trust Strip */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-medium text-mist">
+            <span className="flex items-center gap-1.5 text-ink">
+              <ShieldCheck className="size-4 text-emerald-600 shrink-0" /> AES-256-GCM Encryption
+            </span>
+            <span className="hidden sm:inline">•</span>
+            <span>We never store bank logins</span>
+            <span className="hidden sm:inline">•</span>
+            <span>Full audit trail on all transactions</span>
+            <span className="hidden sm:inline">•</span>
+            <Link href="/security" className="font-semibold text-sky hover:underline inline-flex items-center gap-0.5">
+              Learn about security <ArrowRight className="size-3" />
+            </Link>
           </div>
 
           {/* Quick stats */}

@@ -23,6 +23,10 @@ function AcceptInviteFormInner() {
     const fd = new FormData(e.currentTarget);
     const password = String(fd.get("password"));
     const confirm = String(fd.get("confirm_password"));
+    if (/\s/.test(password)) {
+      setError("Password cannot contain spaces.");
+      return;
+    }
     if (password !== confirm) {
       setError("Passwords do not match.");
       return;

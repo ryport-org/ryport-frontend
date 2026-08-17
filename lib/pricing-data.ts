@@ -23,12 +23,12 @@ export const plans: Plan[] = [
     tagline: "Your financial journey starts here",
     idealFor: "Students · Individuals · First-time budgeters",
     description:
-      "A real-time snapshot of your financial health with AI categorisation and one bank connection.",
+      "A real-time snapshot of your financial health with AI categorisation and 2 bank account connections.",
     features: [
       "Financial dashboard",
       "Manual expense & income tracking",
       "AI transaction categorisation",
-      "1 bank account connection",
+      "2 bank account connections",
       "AI chat — 10 messages/day",
       "Monthly financial report",
       "Basic budget planning",
@@ -98,7 +98,7 @@ export const comparisonRows: ComparisonRow[] = [
   { feature: "Financial dashboard", free: true, pro: true, advanced: true },
   { feature: "Manual expense & income tracking", free: true, pro: true, advanced: true },
   { feature: "AI transaction categorisation", free: true, pro: true, advanced: true },
-  { feature: "Bank connections", free: "1 account", pro: "Unlimited", advanced: "Unlimited" },
+  { feature: "Bank connections", free: "2 accounts", pro: "Unlimited", advanced: "Unlimited" },
   { group: "AI intelligence", feature: "", free: false, pro: false, advanced: false },
   { feature: "AI chat assistant", free: "10/day", pro: "Unlimited", advanced: "Unlimited" },
   { feature: "Smart AI budget", free: false, pro: true, advanced: true },
@@ -123,25 +123,25 @@ export const comparisonRows: ComparisonRow[] = [
 
 export const upgradeScenarios = [
   {
-    name: "Amara",
-    role: "University student · Lagos",
+    name: "Amara (Student Scenario)",
+    role: "Illustrative scenario · Student budgeting",
     plan: "Free",
     story:
-      "Tracks her ₦35,000 monthly allowance. Ryport's monthly report showed 45% going to food — she started cooking at home and saved her first ₦5,000 by month three.",
+      "Example scenario: Tracking a ₦35,000 monthly allowance. AI categorisation highlights food & subscription breakdown so users can target savings goals.",
   },
   {
-    name: "Tunde",
-    role: "Freelance designer",
+    name: "Tunde (Freelancer Scenario)",
+    role: "Illustrative scenario · Solo contractor",
     plan: "Pro",
     story:
-      "Irregular income between ₦150k–₦400k/month. Cash flow prediction stabilised his planning; subscription detection found ₦24,000/month in forgotten tools.",
+      "Example scenario: Managing fluctuating monthly income. Cash flow forecasting aids liquidity planning while automated subscription detection flags recurring charges.",
   },
   {
-    name: "Chidinma",
-    role: "Founder, Lagos e-commerce",
+    name: "Chidinma (SME Founder Scenario)",
+    role: "Illustrative scenario · SME Operations",
     plan: "Advanced",
     story:
-      "₦8–12M monthly revenue. Her AI CFO flagged shipping costs up 34%, forecast 11-week runway, and her accountant now works inside Ryport with role-based access.",
+      "Example scenario: Monitoring monthly business revenue & operating expenses. Executive AI CFO analytics track runway months, burn rate, and cost anomalies with team permission controls.",
   },
 ];
 

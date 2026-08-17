@@ -4,8 +4,12 @@ import { useEffect, useState } from "react";
 import { AppShellProvider } from "@/components/dashboard/app-shell-context";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 
+import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
+import { useLastVisitedRoute } from "@/lib/hooks/use-last-visited-route";
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  useLastVisitedRoute();
 
   const closeMobileNav = () => setMobileNavOpen(false);
 
@@ -40,9 +44,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <AppSidebar />
 
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pb-16 lg:pb-0">
           {children}
         </main>
+
+        <MobileBottomNav />
       </div>
     </AppShellProvider>
   );

@@ -34,7 +34,14 @@ describe("Validation logic", () => {
     it("should reject passwords that are made entirely of whitespace", () => {
       const res = validatePassword("        ");
       expect(res.valid).toBe(false);
-      expect(res.error).toBe("Password cannot consist only of spaces");
+      expect(res.error).toBe("Password cannot contain spaces");
+    });
+
+    it("should reject passwords containing spaces", () => {
+      const res = validatePassword("Password 123");
+      expect(res.valid).toBe(false);
+      expect(res.error).toBe("Password cannot contain spaces");
+      expect(res.rules.noSpaces).toBe(false);
     });
 
     it("should reject passwords shorter than 8 characters", () => {

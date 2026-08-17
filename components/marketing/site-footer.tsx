@@ -55,7 +55,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-line pt-8 sm:flex-row sm:items-center">
-          <p className="text-sm text-mist">© 2025 Ryport Technologies Ltd</p>
+          <p className="text-sm text-mist">© {new Date().getFullYear()} Ryport Technologies Ltd</p>
           <p className="text-sm text-mist">ryport.com.ng</p>
         </div>
       </div>

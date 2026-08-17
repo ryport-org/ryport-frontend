@@ -39,7 +39,7 @@ export function AuthPromoPanel({ title, description }: AuthPromoPanelProps) {
 export function AuthFooter() {
   return (
     <footer className="mt-auto flex flex-col gap-2 border-t border-line pt-6 text-xs text-mist sm:flex-row sm:items-center sm:justify-between">
-      <p>Copyright © 2025 Ryport Technologies Ltd</p>
+      <p>Copyright © {new Date().getFullYear()} Ryport Technologies Ltd</p>
       <Link href="/privacy" className="transition-colors hover:text-sky">
         Privacy Policy
       </Link>

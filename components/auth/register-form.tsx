@@ -92,7 +92,7 @@ export function RegisterForm() {
   const handlePasswordChange = (val: string) => {
     setPassword(val);
     const res = validatePassword(val);
-    if (touched.password) setPasswordError(res.error);
+    if (touched.password || /\s/.test(val)) setPasswordError(res.error);
     if (touched.confirmPassword || confirmPassword) {
       setConfirmPasswordError(checkConfirmPassword(val, confirmPassword));
     }

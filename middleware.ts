@@ -13,12 +13,22 @@ export async function middleware(request: NextRequest) {
 
   const { supabaseResponse, user } = await updateSession(request);
 
-  if (pathname.startsWith("/app") || pathname.startsWith("/onboarding")) {
-    const hasRyportCookie =
-      request.cookies.get("ryport_auth")?.value === "1" ||
-      request.cookies.has("ryport_access_token");
+  const hasRyportCookie =
+    request.cookies.get("ryport_auth")?.value === "1" ||
+    request.cookies.has("ryport_access_token");
 
-    if (!user && !hasRyportCookie) {
+  const isAuthenticated = Boolean(user || hasRyportCookie);
+
+  if (pathname === "/") {
+    if (isAuthenticated) {
+      const dashboard = new URL("/app/dashboard", request.url);
+      return NextResponse.redirect(dashboard);
+    }
+    return supabaseResponse;
+  }
+
+  if (pathname.startsWith("/app") || pathname.startsWith("/onboarding")) {
+    if (!isAuthenticated) {
       const login = new URL("/login", request.url);
       login.searchParams.set("next", pathname);
       return NextResponse.redirect(login);
@@ -30,6 +40,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/app/:path*",
     "/onboarding/:path*",
     "/auth.callback",

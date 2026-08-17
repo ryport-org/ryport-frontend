@@ -28,14 +28,14 @@ export default function AboutPage() {
 
         <ContentHeading>Built for Nigeria</ContentHeading>
         <p>
-          Ryport natively understands Nigerian financial infrastructure — Paystack,
-          Flutterwave, and local bank formats — giving you intelligence generic apps
+          Ryport natively understands Nigerian financial infrastructure — Mono Open Banking,
+          Paystack, and local bank formats — giving you intelligence generic apps
           cannot provide.
         </p>
 
         <ContentHeading>Ryport Technologies Ltd</ContentHeading>
         <p>
-          © 2025 Ryport Technologies Ltd · ryport.com.ng
+          © {new Date().getFullYear()} Ryport Technologies Ltd · ryport.com.ng
         </p>
       </ContentSection>
       <CtaSection />
