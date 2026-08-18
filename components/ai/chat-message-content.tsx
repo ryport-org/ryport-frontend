@@ -58,9 +58,9 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
         elements.push(
           <span
             key={`curr-${matchIndex}`}
-            className="inline-flex items-center gap-1 rounded bg-rose-500/20 border border-rose-500/35 px-1.5 py-0.5 font-mono text-xs sm:text-sm font-semibold text-rose-300 shadow-sm my-0.5"
+            className="inline-flex items-center gap-1 rounded bg-rose-50 border border-rose-200 px-1.5 py-0.5 font-mono text-xs sm:text-sm font-semibold text-rose-700 my-0.5"
           >
-            <TrendingDown className="size-3.5 text-rose-400 shrink-0" />
+            <TrendingDown className="size-3.5 text-rose-600 shrink-0" />
             {matchText}
           </span>,
         );
@@ -68,7 +68,7 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
         elements.push(
           <span
             key={`curr-${matchIndex}`}
-            className="inline-block rounded bg-emerald-500/20 border border-emerald-500/35 px-1.5 py-0.5 font-mono text-xs sm:text-sm font-semibold text-emerald-300 shadow-sm my-0.5"
+            className="inline-block rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 font-mono text-xs sm:text-sm font-semibold text-emerald-700 my-0.5"
           >
             {matchText}
           </span>,
@@ -83,8 +83,8 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
           key={`pct-${matchIndex}`}
           className={`inline-block rounded px-1.5 py-0.5 font-mono text-xs sm:text-sm font-semibold border my-0.5 ${
             isHigh
-              ? "bg-amber-500/25 text-amber-300 border-amber-500/40"
-              : "bg-sky-500/20 text-sky-300 border-sky-500/35"
+              ? "bg-amber-50 text-amber-800 border-amber-200"
+              : "bg-sky-50 text-sky-800 border-sky-200"
           }`}
         >
           {matchText}
@@ -94,9 +94,9 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
       elements.push(
         <span
           key={`risk-${matchIndex}`}
-          className="inline-flex items-center gap-1 rounded bg-amber-500/20 border border-amber-500/40 px-1.5 py-0.5 text-xs sm:text-sm font-medium text-amber-300 shadow-sm my-0.5"
+          className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-xs sm:text-sm font-medium text-amber-800 my-0.5"
         >
-          <AlertTriangle className="size-3.5 text-amber-400 shrink-0" />
+          <AlertTriangle className="size-3.5 text-amber-600 shrink-0" />
           {matchText}
         </span>,
       );
@@ -104,7 +104,7 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
       elements.push(
         <span
           key={`cat-${matchIndex}`}
-          className="font-semibold text-sky-300 underline decoration-sky-400/60 decoration-2 underline-offset-2"
+          className="font-semibold text-brand underline decoration-sky/50 underline-offset-2"
         >
           {matchText}
         </span>,
@@ -129,7 +129,7 @@ function processInlineBold(text: string, isUserMessage: boolean): React.ReactNod
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
       const innerText = part.slice(2, -2);
       return (
-        <strong key={index} className="font-semibold text-zinc-100">
+        <strong key={index} className="font-semibold text-ink">
           {parseInlineTokens(innerText, isUserMessage)}
         </strong>
       );
@@ -151,7 +151,6 @@ export function ChatMessageContent({
     return <div className="whitespace-pre-wrap leading-relaxed">{content}</div>;
   }
 
-  // Parse into blocks (paragraphs, bullet lists, headers)
   const lines = content.split("\n");
   const blocks: React.ReactNode[] = [];
   let currentListItems: React.ReactNode[] = [];
@@ -183,9 +182,9 @@ export function ChatMessageContent({
       currentListItems.push(
         <li
           key={`li-${lineIdx}`}
-          className="flex items-start gap-2.5 text-sm leading-relaxed text-zinc-200"
+          className="flex items-start gap-2.5 text-sm leading-relaxed text-ink"
         >
-          <span className="mt-1 size-1.5 shrink-0 rounded-full bg-sky-400/80 shadow-sm" />
+          <span className="mt-2 size-1.5 shrink-0 rounded-full bg-sky" />
           <div className="flex-1 min-w-0">{processInlineBold(cleanLine, false)}</div>
         </li>,
       );
@@ -195,7 +194,7 @@ export function ChatMessageContent({
       blocks.push(
         <h4
           key={`head-${lineIdx}`}
-          className="mt-3 mb-1.5 font-bold text-zinc-100 text-sm sm:text-base tracking-tight"
+          className="mt-3 mb-1.5 font-bold text-ink text-sm sm:text-base tracking-tight"
         >
           {processInlineBold(headerText, false)}
         </h4>,
@@ -203,7 +202,7 @@ export function ChatMessageContent({
     } else {
       flushList();
       blocks.push(
-        <p key={`p-${lineIdx}`} className="mb-2.5 last:mb-0 text-sm leading-relaxed text-zinc-200">
+        <p key={`p-${lineIdx}`} className="mb-2.5 last:mb-0 text-sm leading-relaxed text-ink">
           {processInlineBold(trimmed, false)}
         </p>,
       );
