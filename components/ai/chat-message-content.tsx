@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, TrendingDown } from "lucide-react";
 
 const CATEGORIES = [
   "other",
@@ -16,6 +15,7 @@ const CATEGORIES = [
   "entertainment",
   "education",
   "uncategorised",
+  "uncategorized",
   "rent",
   "fuel",
   "airtime",
@@ -32,7 +32,7 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
     [
       `(?<currency>-?[₦$€£]\\s*[\\d,]+(?:\\.\\d+)?)`,
       `(?<percent>(?:≈\\s*)?\\d+(?:\\.\\d+)?\\s*%\\s*(?:used|budget|spent)?)`,
-      `(?<risk>no income recorded yet|exceeds(?: your spending)?|over budget|over limit|high risk|critical|deficit|outstanding|anomaly|unusual|spending spike|depleted|unpaid)`,
+      `(?<risk>none of them have been categorized yet|no income recorded yet|exceeds(?: your spending)?|over budget|over limit|high risk|critical|deficit|outstanding|anomaly|unusual|spending spike|depleted|unpaid)`,
       `(?<category>\\b(?:${CATEGORIES.join("|")})\\b)`,
     ].join("|"),
     "gi",
@@ -58,9 +58,8 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
         elements.push(
           <span
             key={`curr-${matchIndex}`}
-            className="inline-flex items-center gap-1 rounded bg-rose-50 border border-rose-200 px-1.5 py-0.5 font-mono text-xs sm:text-sm font-semibold text-rose-700 my-0.5"
+            className="font-semibold text-rose-700 font-mono tracking-tight bg-rose-500/10 px-1 py-0.5 rounded-xs"
           >
-            <TrendingDown className="size-3.5 text-rose-600 shrink-0" />
             {matchText}
           </span>,
         );
@@ -68,7 +67,7 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
         elements.push(
           <span
             key={`curr-${matchIndex}`}
-            className="inline-block rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 font-mono text-xs sm:text-sm font-semibold text-emerald-700 my-0.5"
+            className="font-semibold text-emerald-800 font-mono tracking-tight bg-emerald-500/10 px-1 py-0.5 rounded-xs"
           >
             {matchText}
           </span>,
@@ -81,10 +80,8 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
       elements.push(
         <span
           key={`pct-${matchIndex}`}
-          className={`inline-block rounded px-1.5 py-0.5 font-mono text-xs sm:text-sm font-semibold border my-0.5 ${
-            isHigh
-              ? "bg-amber-50 text-amber-800 border-amber-200"
-              : "bg-sky-50 text-sky-800 border-sky-200"
+          className={`font-semibold font-mono tracking-tight px-1 py-0.5 rounded-xs ${
+            isHigh ? "text-amber-900 bg-amber-500/12" : "text-sky-900 bg-sky-500/12"
           }`}
         >
           {matchText}
@@ -94,9 +91,8 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
       elements.push(
         <span
           key={`risk-${matchIndex}`}
-          className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-xs sm:text-sm font-medium text-amber-800 my-0.5"
+          className="font-medium text-amber-950 bg-amber-500/12 px-1 py-0.5 rounded-xs"
         >
-          <AlertTriangle className="size-3.5 text-amber-600 shrink-0" />
           {matchText}
         </span>,
       );
@@ -104,7 +100,7 @@ export function parseInlineTokens(text: string, isUserMessage = false): React.Re
       elements.push(
         <span
           key={`cat-${matchIndex}`}
-          className="font-semibold text-brand underline decoration-sky/50 underline-offset-2"
+          className="font-semibold text-ink underline decoration-sky/40 decoration-2 underline-offset-2"
         >
           {matchText}
         </span>,
@@ -158,7 +154,7 @@ export function ChatMessageContent({
   const flushList = () => {
     if (currentListItems.length > 0) {
       blocks.push(
-        <ul key={`list-${blocks.length}`} className="my-2.5 space-y-2 pl-1">
+        <ul key={`list-${blocks.length}`} className="my-3 space-y-2 pl-0.5">
           {currentListItems}
         </ul>,
       );
@@ -174,17 +170,21 @@ export function ChatMessageContent({
       return;
     }
 
-    const isBullet = trimmed.startsWith("- ") || trimmed.startsWith("* ");
+    const isBullet =
+      trimmed.startsWith("• ") ||
+      trimmed.startsWith("- ") ||
+      trimmed.startsWith("* ") ||
+      /^[•\-\*]\s/.test(trimmed);
     const isNumbered = /^\d+\.\s/.test(trimmed);
 
     if (isBullet || isNumbered) {
-      const cleanLine = trimmed.replace(/^([-*]|\d+\.)\s+/, "");
+      const cleanLine = trimmed.replace(/^([•\-*]|\d+\.)\s+/, "");
       currentListItems.push(
         <li
           key={`li-${lineIdx}`}
           className="flex items-start gap-2.5 text-sm leading-relaxed text-ink"
         >
-          <span className="mt-2 size-1.5 shrink-0 rounded-full bg-sky" />
+          <span className="mt-2 size-1.5 shrink-0 rounded-full bg-sky/90" />
           <div className="flex-1 min-w-0">{processInlineBold(cleanLine, false)}</div>
         </li>,
       );
@@ -194,7 +194,7 @@ export function ChatMessageContent({
       blocks.push(
         <h4
           key={`head-${lineIdx}`}
-          className="mt-3 mb-1.5 font-bold text-ink text-sm sm:text-base tracking-tight"
+          className="mt-4 mb-2 font-bold text-ink text-sm sm:text-base tracking-tight"
         >
           {processInlineBold(headerText, false)}
         </h4>,
@@ -202,7 +202,7 @@ export function ChatMessageContent({
     } else {
       flushList();
       blocks.push(
-        <p key={`p-${lineIdx}`} className="mb-2.5 last:mb-0 text-sm leading-relaxed text-ink">
+        <p key={`p-${lineIdx}`} className="mb-3 last:mb-0 text-sm leading-relaxed text-ink">
           {processInlineBold(trimmed, false)}
         </p>,
       );
