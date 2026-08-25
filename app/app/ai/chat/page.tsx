@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Menu, Paperclip, Send, Sparkles, X, ShieldAlert } from "lucide-react";
@@ -16,6 +16,7 @@ import {
   looksLikeAiMisconfiguration,
 } from "@/lib/ai/errors";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useMobileKeyboard } from "@/lib/hooks/use-mobile-keyboard";
 import { cn } from "@/lib/utils";
 import { ChatMessageContent } from "@/components/ai/chat-message-content";
 
@@ -49,6 +50,8 @@ export default function AiChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
+  const { keyboardHeight, isKeyboardOpen } = useMobileKeyboard();
 
   const loadConversations = useCallback(async () => {
     try {
@@ -64,9 +67,32 @@ export default function AiChatPage() {
     void loadConversations();
   }, [loadConversations, refreshAiQuota]);
 
+  // Auto-scroll to the bottom of the message list when messages change,
+  // loading state changes, or the keyboard opens/closes.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, isKeyboardOpen]);
+
+  // Inline style for the input bar: translate it up by the keyboard height
+  // so it sits directly above the on-screen keyboard.
+  const inputBarStyle = useMemo(
+    () =>
+      keyboardHeight > 0
+        ? ({ transform: `translateY(-${keyboardHeight}px)` } as const)
+        : undefined,
+    [keyboardHeight],
+  );
+
+  // Inline style for the chat column: when the keyboard is open, shrink by
+  // the keyboard height so the message list scroll area doesn't extend behind
+  // the keyboard + input bar.
+  const chatColumnStyle = useMemo(
+    () =>
+      keyboardHeight > 0
+        ? ({ height: `calc(100% - ${keyboardHeight}px)` } as const)
+        : undefined,
+    [keyboardHeight],
+  );
 
   const isLimitReached = Boolean(aiQuota && !aiQuota.is_unlimited && aiQuota.remaining <= 0);
 
@@ -264,8 +290,8 @@ export default function AiChatPage() {
           </>
         ) : null}
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden" style={chatColumnStyle}>
+          <div ref={messageListRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 lg:px-8">
             {loadingThread ? (
               <div className="mx-auto max-w-2xl py-12 text-center text-sm text-mist">
                 Loading conversation…
@@ -383,7 +409,10 @@ export default function AiChatPage() {
             ) : null}
           </div>
 
-          <div className="shrink-0 border-t border-line bg-white px-3 py-3 sm:px-6 sm:py-4">
+          <div
+            className="shrink-0 border-t border-line bg-white px-3 py-3 sm:px-6 sm:py-4 will-change-transform"
+            style={inputBarStyle}
+          >
             <form
               onSubmit={(e) => {
                 e.preventDefault();
