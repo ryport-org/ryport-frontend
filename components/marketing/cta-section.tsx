@@ -41,7 +41,7 @@ export function CtaSection() {
           </span>
           <span className="hidden sm:inline">•</span>
           <span className="flex items-center gap-2">
-            <ShieldCheck className="size-4 text-sky" /> Mono Open Banking AES-256
+            <ShieldCheck className="size-4 text-sky" /> Bank-Grade AES-256 Encryption
           </span>
           <span className="hidden sm:inline">•</span>
           <span>No credit card required to start</span>

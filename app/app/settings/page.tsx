@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/format";
 const settingsLinks = [
   { href: "/app/settings/profile", label: "Profile", description: "Email and plan details" },
   { href: "/app/settings/security", label: "Security", description: "Two-factor authentication" },
+  { href: "/app/settings/notifications", label: "Notifications", description: "Browser push alerts & preferences" },
   { href: "/app/settings/api-keys", label: "API keys", description: "Advanced plan integrations" },
 ];
 

@@ -15,9 +15,9 @@ export const metadata: Metadata = createMetadata({
 const integrationsList = [
   {
     icon: Building2,
-    name: "Mono Open Banking",
-    category: "Bank Sync",
-    description: "Link GTBank, Access, Zenith, Kuda, Moniepoint, and supported commercial accounts securely. Real-time balance and ledger updates.",
+    name: "Bank SMS Alert Capture",
+    category: "Instant Ingestion",
+    description: "Forward or paste debit/credit alert SMS from GTBank, Access, Zenith, UBA, First Bank, Kuda, and OPay for instant AI transaction parsing.",
     status: "Live & Active",
   },
   {

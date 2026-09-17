@@ -110,6 +110,7 @@ function TransactionsPageInner() {
       date_to: String(fd.get("date_to") || "") || undefined,
       category: String(fd.get("category") || "") || undefined,
       type: (String(fd.get("type") || "") || undefined) as TransactionType | undefined,
+      source: String(fd.get("source") || "") || undefined,
     });
   }
 
@@ -123,16 +124,25 @@ function TransactionsPageInner() {
         title="Transactions"
         description="Track every naira in and out"
         action={
-          <Button variant="secondary" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? "Cancel" : "Add manual"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              href="/app/transactions/sms-import"
+              variant="primary"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              + Import SMS
+            </Button>
+            <Button variant="secondary" onClick={() => setShowForm((v) => !v)}>
+              {showForm ? "Cancel" : "Add manual"}
+            </Button>
+          </div>
         }
       />
 
       <AppPageBody>
       <AppPageContent>
         <Card className="p-4 sm:p-5">
-          <form onSubmit={applyFilters} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <form onSubmit={applyFilters} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
             <div>
               <label className="text-xs font-medium text-mist">From</label>
               <Input
@@ -176,6 +186,19 @@ function TransactionsPageInner() {
                 <option value="">All</option>
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-mist">Source</label>
+              <select
+                name="source"
+                defaultValue={filters.source ?? ""}
+                className={`${inputClassName} mt-1`}
+              >
+                <option value="">All</option>
+                <option value="manual">Manual</option>
+                <option value="sms">SMS</option>
+                <option value="mono">Bank Sync</option>
               </select>
             </div>
             <div className="flex items-end gap-2">

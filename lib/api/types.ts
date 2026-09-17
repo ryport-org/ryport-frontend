@@ -180,6 +180,8 @@ export type BankAccount = {
   balance_kobo?: number;
 };
 
+export type TransactionSource = "manual" | "sms" | "mono";
+
 export type Transaction = {
   id: string;
   account_id: string | null;
@@ -192,6 +194,7 @@ export type Transaction = {
   transaction_date: string;
   created_at: string;
   metadata?: Record<string, unknown>;
+  source?: TransactionSource;
 };
 
 export type CursorPage<T> = {
@@ -405,4 +408,54 @@ export type TwoFactorSetup = {
   qr_code_url: string;
   provisioning_uri: string;
   secret: string;
+};
+
+export type SmsIngestStatus = "processed" | "duplicate" | "failed_parse";
+
+export type SmsIngestData = {
+  transaction_id?: string;
+  amount_kobo?: number;
+  type?: TransactionType;
+  merchant?: string;
+  category?: string;
+  source?: TransactionSource | string;
+  parser_used?: string;
+  status: SmsIngestStatus;
+  received_at?: string;
+};
+
+export type DebtType = "owed_to_me" | "i_owe";
+export type DebtStatus = "pending" | "settled";
+
+export type Debt = {
+  id: string;
+  counterparty: string;
+  amount_kobo: number;
+  type: DebtType;
+  description: string;
+  due_date?: string | null;
+  status: DebtStatus;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type PushSubscriptionPayload = {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+};
+
+export type CashFlowDaily = {
+  date: string;
+  inflow_kobo: number;
+  outflow_kobo: number;
+  balance_kobo: number;
+};
+
+export type CashFlowDashboardData = {
+  period_days: number;
+  inflows_kobo: number;
+  outflows_kobo: number;
+  net_kobo: number;
+  daily: CashFlowDaily[];
 };

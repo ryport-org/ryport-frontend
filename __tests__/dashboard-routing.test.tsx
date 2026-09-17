@@ -9,7 +9,7 @@ describe("Dashboard Data Models & Routing Requirements", () => {
       spend_by_category: [{ category: "Food", amount_kobo: 50000, percentage: 10 }],
       budget_alerts: [], // Empty state
       goal_progress: null, // Empty state
-      ai_quota: { remaining: 10, limit: 10, resets_at: "", is_unlimited: false },
+      ai_quota: { used: 0, remaining: 10, limit: 10, resets_at: "", is_unlimited: false },
       recent_transactions: [],
     };
 

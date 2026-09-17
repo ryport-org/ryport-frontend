@@ -8,9 +8,11 @@ import {
   Building2,
   CreditCard,
   FileText,
+  HandCoins,
   LayoutDashboard,
   LogOut,
   MessageSquare,
+  MessageSquareText,
   PieChart,
   Settings,
   Sparkles,
@@ -24,8 +26,15 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/app/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/app/transactions", label: "Transactions", icon: CreditCard },
-  { href: "/app/accounts", label: "Accounts", icon: Wallet },
+  {
+    href: "/app/transactions/sms-import",
+    label: "Import SMS",
+    icon: MessageSquareText,
+    nested: true,
+  },
+  { href: "/app/debts", label: "Debts", icon: HandCoins },
   { href: "/app/budgets", label: "Budgets", icon: PieChart },
+  { href: "/app/accounts", label: "Accounts", icon: Wallet },
   { href: "/app/reports", label: "Reports", icon: FileText },
   { href: "/app/ai", label: "AI Hub", icon: MessageSquare },
   { href: "/app/ai/chat", label: "AI Chat", icon: Sparkles, nested: true },
@@ -90,7 +99,10 @@ export function AppSidebar() {
         {visibleNav.map((item) => {
           const active =
             pathname === item.href ||
-            (item.href !== "/app/ai" && pathname.startsWith(`${item.href}/`));
+            (!item.nested &&
+              item.href !== "/app/ai" &&
+              item.href !== "/app/transactions" &&
+              pathname.startsWith(`${item.href}/`));
           const Icon = item.icon;
           const showBadge = item.href === "/app/notifications" && unreadNotifications > 0;
           return (

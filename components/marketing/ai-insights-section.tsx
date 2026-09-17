@@ -135,7 +135,7 @@ export function AiInsightsSection() {
             <div className="mt-8 pt-6 border-t border-line/80 flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs text-mist">
                 <CheckCircle2 className="size-4 text-emerald-600" />
-                <span>Real-time Mono & Paystack sync</span>
+                <span>Real-time Bank SMS & Paystack sync</span>
               </div>
               <Link
                 href="/ai-insights"

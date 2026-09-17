@@ -10,6 +10,7 @@ import * as businesses from "@/lib/api/businesses";
 import * as teams from "@/lib/api/teams";
 import * as integrations from "@/lib/api/integrations";
 import * as dashboard from "@/lib/api/dashboard";
+import * as debts from "@/lib/api/debts";
 import type { CursorPage, Transaction } from "@/lib/api/types";
 import { ApiError } from "@/lib/api/client";
 import { getAccessToken } from "@/lib/auth/tokens";
@@ -87,6 +88,7 @@ export const transactionsApi = {
   remove: transactions.deleteTransaction,
   categorise: transactions.categoriseTransaction,
   uploadReceipt: transactions.uploadReceipt,
+  smsIngest: transactions.smsIngest,
 };
 
 export const budgetsApi = {
@@ -134,6 +136,8 @@ export const notificationsApi = {
   readAll: notifications.markAllRead,
   get: notifications.getNotification,
   markRead: notifications.markRead,
+  subscribePush: notifications.subscribePush,
+  unsubscribePush: notifications.unsubscribePush,
 };
 
 export const businessesApi = {
@@ -164,6 +168,16 @@ export const dashboardApi = {
   overview: dashboard.getOverview,
   personal: dashboard.getPersonalDashboard,
   sme: dashboard.getSmeDashboard,
+  cashFlow: dashboard.getCashFlow,
+};
+
+export const debtsApi = {
+  list: debts.listDebts,
+  get: debts.getDebt,
+  create: debts.createDebt,
+  update: debts.updateDebt,
+  patch: debts.patchDebt,
+  remove: debts.deleteDebt,
 };
 
 export { ApiError, apiRequest, healthCheck } from "@/lib/api/client";

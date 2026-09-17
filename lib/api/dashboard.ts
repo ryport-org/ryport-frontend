@@ -3,6 +3,7 @@ import type {
   AIQuota,
   Budget,
   BudgetUsage,
+  CashFlowDashboardData,
   PersonalDashboardData,
   SmeDashboardData,
   Transaction,
@@ -34,4 +35,8 @@ export async function getSmeDashboard(token?: string | null, businessId?: string
   const path = businessId ? `/dashboard/sme/?business_id=${businessId}` : "/dashboard/sme/";
   const headers = businessId ? { "X-Business-ID": businessId } : undefined;
   return apiRequest<SmeDashboardData>(path, { token, headers });
+}
+
+export async function getCashFlow(token?: string | null) {
+  return apiRequest<CashFlowDashboardData>("/dashboard/cash-flow/", { token });
 }

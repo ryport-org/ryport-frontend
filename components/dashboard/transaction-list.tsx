@@ -9,19 +9,41 @@ type TransactionListProps = {
   emptyMessage?: string;
 };
 
+export function SourceBadge({ source }: { source?: string }) {
+  if (source === "sms") {
+    return (
+      <span className="inline-flex shrink-0 items-center rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 border border-emerald-200">
+        SMS
+      </span>
+    );
+  }
+  if (source === "mono") {
+    return (
+      <span className="inline-flex shrink-0 items-center rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700 border border-sky-200">
+        Bank Sync
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex shrink-0 items-center rounded-md bg-paper px-1.5 py-0.5 text-[10px] font-medium text-mist border border-line">
+      Manual
+    </span>
+  );
+}
+
 export function TransactionList({
   transactions,
-  emptyMessage = "No transactions yet. Link a bank account or add one manually.",
+  emptyMessage = "No transactions yet. Import from SMS or add one manually.",
 }: TransactionListProps) {
   if (transactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
         <p className="text-sm text-mist">{emptyMessage}</p>
         <Link
-          href="/app/accounts"
-          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-sky hover:underline"
+          href="/app/transactions/sms-import"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 hover:underline"
         >
-          Connect account <ArrowRight className="size-3.5" />
+          Import SMS alert <ArrowRight className="size-3.5" />
         </Link>
       </div>
     );
@@ -31,6 +53,7 @@ export function TransactionList({
     <ul className="divide-y divide-line">
       {transactions.map((tx) => {
         const isIncome = tx.type === "income";
+        const sourceVal = tx.source ?? (tx.is_manual ? "manual" : undefined);
         return (
           <li key={tx.id}>
             <Link
@@ -47,9 +70,12 @@ export function TransactionList({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2 sm:block">
-                  <p className="line-clamp-2 text-sm font-medium text-ink sm:truncate">
-                    {tx.description || tx.merchant || tx.category || "Transaction"}
-                  </p>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="line-clamp-2 text-sm font-medium text-ink sm:truncate">
+                      {tx.description || tx.merchant || tx.category || "Transaction"}
+                    </p>
+                    <SourceBadge source={sourceVal} />
+                  </div>
                   <p
                     className={cn(
                       "shrink-0 text-sm font-semibold tabular-nums sm:hidden",

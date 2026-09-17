@@ -14,6 +14,7 @@ import { transactionsApi, aiApi } from "@/lib/api";
 import type { Transaction } from "@/lib/api/types";
 import { formatDate, formatNaira } from "@/lib/format";
 import { useAuth, getAuthErrorMessage } from "@/lib/auth/auth-context";
+import { SourceBadge } from "@/components/dashboard/transaction-list";
 
 export default function TransactionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -122,6 +123,10 @@ export default function TransactionDetailPage() {
               <div className="flex justify-between gap-4">
                 <span className="text-sm text-mist">Category</span>
                 <span className="text-sm text-ink">{tx.category}</span>
+              </div>
+              <div className="flex justify-between gap-4 items-center">
+                <span className="text-sm text-mist">Source</span>
+                <SourceBadge source={tx.source ?? (tx.is_manual ? "manual" : undefined)} />
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-sm text-mist">Description</span>

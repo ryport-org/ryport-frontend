@@ -4,15 +4,15 @@ import { APP_URL } from "@/lib/config";
 export const SITE_NAME = "Ryport";
 export const SITE_TAGLINE = "Smart Financial Intelligence for Nigeria";
 export const DEFAULT_DESCRIPTION =
-  "Understand, manage, and grow your finances with AI. Ryport connects Nigerian bank accounts via Mono, tracks every transaction in kobo, sets automated budgets, and delivers real-time AI CFO insights for individuals and businesses.";
+  "Understand, manage, and grow your finances with AI. Ryport captures transactions from Nigerian bank SMS alerts with kobo-precision accounting, automated budgets, and real-time AI CFO insights for individuals and businesses.";
 export const DEFAULT_KEYWORDS = [
   "Ryport",
   "Nigerian fintech",
   "personal finance Nigeria",
   "budget app Nigeria",
   "AI CFO Nigeria",
-  "open banking Nigeria",
-  "Mono bank integration",
+  "SMS bank alert capture",
+  "bank alert parser Nigeria",
   "expense tracker Nigeria",
   "small business cash flow",
   "runway calculator Nigeria",

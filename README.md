@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/TailwindCSS-v4-38bdf8?style=flat-square&logo=tailwindcss" alt="Tailwind CSS v4" />
     <img src="https://img.shields.io/badge/Database-PostgreSQL_%2F_Supabase-336791?style=flat-square&logo=postgresql" alt="PostgreSQL" />
     <img src="https://img.shields.io/badge/AI_Engine-Anthropic_Claude-orange?style=flat-square&logo=anthropic" alt="Claude AI" />
-    <img src="https://img.shields.io/badge/Open_Banking-Mono-00D09C?style=flat-square" alt="Mono" />
+    <img src="https://img.shields.io/badge/Bank_SMS-Capture-10B981?style=flat-square" alt="SMS Capture" />
     <img src="https://img.shields.io/badge/Payments-Paystack-0BA4DB?style=flat-square" alt="Paystack" />
     <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript" alt="TypeScript" />
   </div>
@@ -21,7 +21,7 @@
 
 ## 📌 Executive Summary
 
-**Ryport** is a full-stack, enterprise-grade financial operating system designed specifically for the Nigerian financial ecosystem. Built to solve fragmented financial visibility, manual book-keeping, and rounding errors, Ryport provides automated bank synchronization via Open Banking, real-time transaction categorisation in strict Kobo integer precision, multi-entity business accounting, smart budgeting, and a dedicated conversational **AI Chief Financial Officer (CFO)** powered by Anthropic Claude.
+**Ryport** is a full-stack, enterprise-grade financial operating system designed specifically for the Nigerian financial ecosystem. Built to solve fragmented financial visibility, manual book-keeping, and rounding errors, Ryport provides automated transaction capture via SMS bank alert parsing, real-time transaction categorisation in strict Kobo integer precision, multi-entity business accounting, smart budgeting, and a dedicated conversational **AI Chief Financial Officer (CFO)** powered by Anthropic Claude.
 
 Ryport serves individuals, freelancers, high-growth agencies, and Small & Medium Enterprises (SMEs) with bank-grade security, instant financial reporting, and comprehensive administrative governance.
 
@@ -50,8 +50,8 @@ Ryport operates on a modern, decoupled client-server architecture engineered for
       │              │              │              │              │              │
       ▼              ▼              ▼              ▼              ▼              ▼
 ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐
-│ PostgreSQL│  │   Redis   │  │  Celery   │  │ Anthropic │  │   Mono    │  │ Paystack  │
-│(Supabase) │  │ (Upstash) │  │  Workers  │  │ Claude AI │  │OpenBanking│  │ Payments  │
+│ PostgreSQL│  │   Redis   │  │  Celery   │  │ Anthropic │  │    SMS    │  │ Paystack  │
+│(Supabase) │  │ (Upstash) │  │  Workers  │  │ Claude AI │  │  Capture  │  │ Payments  │
 └───────────┘  └───────────┘  └───────────┘  └───────────┘  └───────────┘  └───────────┘
       │
       ▼
@@ -64,11 +64,11 @@ Ryport operates on a modern, decoupled client-server architecture engineered for
 
 ## 🌟 Core Features & Modules
 
-### 1. 🏦 Open Banking & Account Aggregation
-- **Direct Nigerian Bank Integration**: Seamlessly connect accounts from major Nigerian commercial and microfinance banks (Access, GTBank, Zenith, Kuda, OPay, etc.) via Mono Connect.
-- **Automated Statement Synchronization**: Background workers periodically pull new transactions, balances, and account statements without user intervention.
-- **Multi-Account Aggregation**: View aggregated net worth, liquid balances, and account breakdown across multiple institutions in a single dashboard.
-- **Bank-Level Privacy**: Sensitive account numbers are securely encrypted at rest and masked in frontend payloads (`•••• 4821`).
+### 1. 📱 SMS Bank Alert Capture
+- **Intelligent Nigerian Bank SMS Ingestion**: Users forward or paste bank debit/credit alert SMS messages from all major institutions (Access, GTBank, Zenith, UBA, First Bank, Kuda, OPay).
+- **Automated Ledger Creation**: Intelligent backend parsing extracts amount, merchant, date, and assigns spending categories automatically.
+- **Duplicate Detection & Idempotency**: Built-in duplicate filtering ensures the same SMS alert is never counted twice.
+- **Instant Verification**: Review parsed transaction confirmation cards immediately with 1-click ledger navigation.
 
 ### 2. 💳 Transaction Engine & Zero-Loss Kobo Precision
 - **Exact Kobo Arithmetic**: All financial calculations, storage, and transfers are conducted strictly as integers in **Kobo** (`1 NGN = 100 Kobo`), completely eliminating JavaScript floating-point errors (`0.1 + 0.2 != 0.3`).
@@ -154,14 +154,17 @@ app/
 │
 ├── app/                          # Main Customer Application Hub
 │   ├── dashboard/                # Central Overview (Balances, Quick Stats, AI Feed)
-│   ├── accounts/                 # Connected Bank Accounts & Mono Sync Hub
+│   ├── accounts/                 # Connected Bank Accounts Hub
 │   ├── transactions/             # Kobo-precision Transaction Ledger & Filters
+│   │   └── sms-import/           # SMS alert paste & ingestion
+│   ├── debts/                    # Debts & receivables ledger
 │   ├── budgets/                  # Budget Caps, Usage Progress, Threshold Warnings
+│   ├── cash-flow/                # 90-day cash-flow chart
 │   ├── reports/                  # Financial Reports (P&L, Cash Flow, PDF/CSV Export)
 │   ├── businesses/               # Multi-Business Switcher & Entity Analytics
 │   ├── notifications/            # In-App Notification Center
 │   ├── upgrade/                  # Subscription Plan Manager & Paystack Checkout
-│   ├── settings/                 # Profile, 2FA Security, Sessions & API Keys
+│   ├── settings/                 # Profile, 2FA Security, Sessions, Notifications & API Keys
 │   └── ai/                       # AI Financial Suite
 │       ├── cfo/                  # Executive Financial Health Summary
 │       ├── chat/                 # Natural Language AI CFO Conversational Assistant
@@ -196,8 +199,8 @@ app/
 | **Backend Framework** | [Django REST Framework (DRF)](https://www.django-rest-framework.org/) | Modular Django apps (`users`, `accounts`, `transactions`, `budgets`, `reports`, `ai`, `businesses`, `teams`, `notifications`) |
 | **Database** | [PostgreSQL (Supabase)](https://supabase.com/) | ACID relational storage, field encryption, indexed kobo integer columns |
 | **Task Queue & Caching** | [Redis (Upstash)](https://upstash.com/) + [Celery](https://docs.celeryq.dev/) | Asynchronous statement syncing, email dispatch, AI background jobs |
-| **Artificial Intelligence** | [Anthropic Claude 3.5](https://www.anthropic.com/) | Financial context summarization, cash flow modeling, conversational CFO |
-| **Open Banking** | [Mono API](https://mono.co/) | Nigerian bank connections, balance sync, transaction webhooks |
+| **Artificial Intelligence** | [Anthropic Claude](https://www.anthropic.com/) | Financial context summarization, cash flow modeling, conversational CFO (version is server-configurable) |
+| **SMS Parser** | Nigerian bank alert parsing (Mono paused) | Intelligent debit & credit alert parsing for GTBank, Zenith, Access, UBA, First Bank, Kuda, OPay |
 | **Payments & Billing** | [Paystack](https://paystack.com/) | NGN card processing, automated recurring billing, checkout popups |
 | **Transactional Email** | [Resend](https://resend.com/) | 21 responsive HTML email templates |
 | **Monitoring & Telemetry** | [Sentry](https://sentry.io/) | Full-stack error tracking and performance monitoring |
@@ -234,6 +237,7 @@ All API responses follow consistent JSON wrapping:
     "amount_kobo": 4500000,
     "type": "expense",
     "category": "Logistics",
+    "source": "sms",
     "created_at": "2026-08-26T10:00:00Z"
   }
 }
@@ -292,7 +296,7 @@ NEXT_PUBLIC_API_URL=https://ryport.onrender.com
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Open Banking & Payment Keys
-NEXT_PUBLIC_MONO_PUBLIC_KEY=test_pk_...
+# NEXT_PUBLIC_MONO_PUBLIC_KEY=test_pk_...  (Mono paused on backend)
 NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_...
 
 # Sentry Monitoring (Optional)

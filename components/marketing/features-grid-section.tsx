@@ -49,10 +49,10 @@ const features = [
   },
   {
     category: "business",
-    title: "Nigerian Bank & Paystack Sync",
-    description: "Connect supported Nigerian accounts (Access, GTBank, Zenith, Kuda, Moniepoint) via Mono Open Banking.",
+    title: "Nigerian Bank SMS & Paystack Sync",
+    description: "Instant transaction capture from Nigerian bank alert SMS (Access, GTBank, Zenith, Kuda, OPay) and Paystack.",
     icon: ShieldCheck,
-    badge: "2 on Free · Unlimited on Pro",
+    badge: "Instant Ingestion",
   },
 ];
 

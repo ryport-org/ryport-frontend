@@ -61,28 +61,28 @@ export function softwareApplicationJsonLd() {
     url: absoluteUrl(),
     image: absoluteUrl("/opengraph.png"),
     description:
-      "Understand, manage, and grow your finances with AI. Connect Nigerian bank accounts via Mono, track spending in kobo, and get real-time cash flow runway calculations.",
+      "Understand, manage, and grow your finances with AI. Parse Nigerian bank SMS alerts, track spending in kobo, and get real-time cash flow runway calculations.",
     offers: [
       {
         "@type": "Offer",
         price: "0",
         priceCurrency: "NGN",
         name: "Free Tier",
-        description: "2 linked bank accounts, 10 AI CFO questions per day",
+        description: "SMS bank alert capture, 10 AI CFO questions per day",
       },
       {
         "@type": "Offer",
         price: "5000",
         priceCurrency: "NGN",
         name: "Pro Tier",
-        description: "5 linked bank accounts, unlimited AI chat, 30-day cash flow forecast",
+        description: "Unlimited SMS bank alerts, unlimited AI chat, 30-day cash flow forecast",
       },
       {
         "@type": "Offer",
         price: "15000",
         priceCurrency: "NGN",
         name: "Advanced Tier",
-        description: "Unlimited bank accounts, SME team cash flow, automated tax readiness",
+        description: "Unlimited transactions, SME team cash flow, automated tax readiness",
       },
     ],
   };
@@ -98,15 +98,15 @@ export function faqJsonLd() {
         name: "What is Ryport?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Ryport is an AI-powered financial operating system tailored for Nigerians. It connects bank accounts via Mono, categorizes transactions automatically in kobo, calculates runway for businesses, and provides conversational AI CFO insights.",
+          text: "Ryport is an AI-powered financial operating system tailored for Nigerians. It captures transactions automatically from Nigerian bank alert SMS in kobo, calculates runway for businesses, and provides conversational AI CFO insights.",
         },
       },
       {
         "@type": "Question",
-        name: "How does Ryport connect to Nigerian bank accounts?",
+        name: "How does Ryport capture Nigerian bank transactions?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Ryport integrates directly with Mono, Nigeria's leading open banking provider, supporting major commercial banks including GTBank, Zenith, Access, Kuda, FirstBank, and UBA using read-only bank-grade encryption.",
+          text: "Ryport automatically parses debit and credit SMS alerts from major Nigerian commercial banks including GTBank, Zenith, Access, Kuda, FirstBank, UBA, and OPay using bank-grade intelligent parsers.",
         },
       },
       {

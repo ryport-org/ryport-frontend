@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextResponse, NextRequest } from "next/server";
 import { middleware } from "@/middleware";
 

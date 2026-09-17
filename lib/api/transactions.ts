@@ -1,6 +1,7 @@
 import { apiRequest } from "@/lib/api/client";
 import type {
   CursorPage,
+  SmsIngestData,
   Transaction,
   TransactionCategory,
   TransactionType,
@@ -14,6 +15,7 @@ export type TransactionFilters = {
   category?: string;
   type?: TransactionType;
   account_id?: string;
+  source?: string;
 };
 
 export async function listTransactions(token: string, filters?: TransactionFilters) {
@@ -67,6 +69,21 @@ export async function uploadReceipt(token: string, id: string, file: File) {
   return apiRequest<Transaction>(`/transactions/${id}/receipt/`, {
     method: "POST",
     body: form,
+    token,
+  });
+}
+
+export async function smsIngest(
+  token: string,
+  body: {
+    raw_text: string;
+    sender?: string;
+    received_at?: string;
+  },
+) {
+  return apiRequest<SmsIngestData>("/transactions/sms-ingest/", {
+    method: "POST",
+    body,
     token,
   });
 }

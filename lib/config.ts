@@ -72,6 +72,8 @@ export const OAUTH_CALLBACK_URL = normalizeOAuthCallbackUrl(
 export const OAUTH_NEXT_PATH =
   process.env.NEXT_PUBLIC_OAUTH_NEXT_PATH ?? "/dashboard";
 
-export const MONO_PUBLIC_KEY = process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY ?? "";
+// Mono bank connections are permanently paused on backend (MONO_INTEGRATION_ENABLED = False)
+// export const MONO_PUBLIC_KEY = process.env.NEXT_PUBLIC_MONO_PUBLIC_KEY ?? "";
+export const MONO_PUBLIC_KEY = "";
 
 export const PAYSTACK_PUBLIC_KEY = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? "";

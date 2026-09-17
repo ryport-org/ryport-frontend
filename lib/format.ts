@@ -3,6 +3,13 @@ export function koboToNaira(kobo: number): number {
   return kobo / 100;
 }
 
+export const formatKobo = (kobo: number): string =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 2,
+  }).format(kobo / 100);
+
 export function formatNaira(
   kobo: number,
   options?: { compact?: boolean; showSign?: boolean },

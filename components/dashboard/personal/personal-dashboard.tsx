@@ -12,6 +12,7 @@ import {
   Target,
   FileText,
   PieChart,
+  MessageSquareText,
 } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -85,6 +86,30 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
           <MonthlySpendSummaryCard categories={data.spend_by_category ?? []} />
         )}
       </div>
+
+      {/* Quick Action: SMS Alert Ingest */}
+      <Card className="border-emerald-500/20 bg-emerald-500/5">
+        <CardBody className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+              <MessageSquareText className="size-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-ink">Import Bank Alert SMS</h3>
+              <p className="text-xs text-mist">
+                Paste debit or credit alerts from Access, GTBank, Zenith, UBA, Kuda, or OPay to log transactions instantly.
+              </p>
+            </div>
+          </div>
+          <Button
+            href="/app/transactions/sms-import"
+            variant="primary"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap text-xs font-medium"
+          >
+            + Import SMS <ArrowRight className="ml-1.5 size-3.5" />
+          </Button>
+        </CardBody>
+      </Card>
 
       {/* Conditional Cards for Pro / Advanced Tiers */}
       {isProOrAdvanced && (data.business_personal_split || data.open_invoices_summary) ? (
