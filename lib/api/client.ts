@@ -37,12 +37,21 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   apiKey?: string;
   skipAuth?: boolean;
   skipRefresh?: boolean;
+  skipCache?: boolean;
 };
 
 type ParsedEnvelope<T> = {
   data: T;
   cached?: boolean;
 };
+
+// In-memory GET cache & in-flight deduplication to make page responses instant
+const getCache = new Map<string, { data: unknown; expires: number }>();
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
+export function clearApiCache() {
+  getCache.clear();
+}
 
 function extractApiError(
   json: unknown,
@@ -145,16 +154,26 @@ async function fetchWithAuth(
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
   if (apiKey) headers.set("Authorization", `ApiKey ${apiKey}`);
 
-  return fetch(`${API_V1}${path}`, {
-    ...fetchOptions,
-    headers,
-    body:
-      body instanceof FormData
-        ? body
-        : body !== undefined
-          ? JSON.stringify(body)
-          : undefined,
-  });
+  // 12-second timeout to prevent hung network connections from freezing the UI
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const res = await fetch(`${API_V1}${path}`, {
+      ...fetchOptions,
+      headers,
+      signal: options.signal || controller.signal,
+      body:
+        body instanceof FormData
+          ? body
+          : body !== undefined
+            ? JSON.stringify(body)
+            : undefined,
+    });
+    return res;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 async function refreshAccessToken(): Promise<string | null> {
@@ -194,8 +213,43 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const res = await requestWithRefresh(path, options);
-  return parseResponse<T>(res);
+  const method = (options.method || "GET").toUpperCase();
+
+  // Invalidate cache on mutations
+  if (method !== "GET") {
+    clearApiCache();
+    const res = await requestWithRefresh(path, options);
+    return parseResponse<T>(res);
+  }
+
+  // Handle GET requests with caching and deduplication
+  const cacheKey = `${path}?${options.token || ""}`;
+  if (!options.skipCache) {
+    const cached = getCache.get(cacheKey);
+    if (cached && Date.now() < cached.expires) {
+      return cached.data as T;
+    }
+  }
+
+  // Deduplicate identical in-flight GET requests
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey) as Promise<T>;
+  }
+
+  const reqPromise = (async () => {
+    try {
+      const res = await requestWithRefresh(path, options);
+      const data = await parseResponse<T>(res);
+      // Cache successful GET responses for 15 seconds
+      getCache.set(cacheKey, { data, expires: Date.now() + 15000 });
+      return data;
+    } finally {
+      inFlightRequests.delete(cacheKey);
+    }
+  })();
+
+  inFlightRequests.set(cacheKey, reqPromise);
+  return reqPromise;
 }
 
 export async function apiRequestWithMeta<T>(

@@ -26,13 +26,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/app/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/app/transactions", label: "Transactions", icon: CreditCard },
-  {
-    href: "/app/transactions/sms-import",
-    label: "Import SMS",
-    icon: MessageSquareText,
-    nested: true,
-  },
-  { href: "/app/debts", label: "Debts", icon: HandCoins },
+  { href: "/app/debts", label: "Receivables", icon: HandCoins },
   { href: "/app/budgets", label: "Budgets", icon: PieChart },
   { href: "/app/accounts", label: "Accounts", icon: Wallet },
   { href: "/app/reports", label: "Reports", icon: FileText },
@@ -131,15 +125,14 @@ export function AppSidebar() {
       </nav>
 
       <div className="shrink-0 border-t border-line p-4">
-        {plan?.plan === "free" || plan?.plan === "pro" ? (
-          <Link
-            href="/app/upgrade"
-            onClick={closeMobileNav}
-            className="mb-3 block rounded-lg border border-line bg-paper px-3 py-2.5 text-center text-xs font-semibold text-brand transition-colors hover:bg-sky-soft"
-          >
-            Upgrade plan
-          </Link>
-        ) : null}
+        <Link
+          href="/app/upgrade"
+          onClick={closeMobileNav}
+          className="mb-3 block rounded-lg border border-line/80 bg-paper/60 px-3 py-2 text-center text-xs font-medium text-mist opacity-60 transition-opacity hover:opacity-80"
+          title="All features are unlocked. Paid subscriptions coming soon."
+        >
+          Coming soon
+        </Link>
         <p className="truncate px-1 text-sm font-medium text-ink">{user?.email}</p>
         <button
           type="button"

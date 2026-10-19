@@ -81,9 +81,33 @@ export async function smsIngest(
     received_at?: string;
   },
 ) {
-  return apiRequest<SmsIngestData>("/transactions/sms-ingest/", {
-    method: "POST",
-    body,
-    token,
-  });
+  try {
+    return await apiRequest<SmsIngestData>("/transactions/sms/ingest/", {
+      method: "POST",
+      body,
+      token,
+    });
+  } catch (err: unknown) {
+    const errorObj = err as { code?: string; status?: number; message?: string };
+    if (errorObj?.status === 503 || errorObj?.code === "feature_paused") {
+      throw new Error("SMS import is currently paused. Please use manual entry or receipt upload.");
+    }
+    // Also try legacy path if 404
+    if (errorObj?.status === 404) {
+      try {
+        return await apiRequest<SmsIngestData>("/transactions/sms-ingest/", {
+          method: "POST",
+          body,
+          token,
+        });
+      } catch (err2: unknown) {
+        const errorObj2 = err2 as { code?: string; status?: number; message?: string };
+        if (errorObj2?.status === 503 || errorObj2?.code === "feature_paused") {
+          throw new Error("SMS import is currently paused. Please use manual entry or receipt upload.");
+        }
+        throw err2;
+      }
+    }
+    throw err;
+  }
 }

@@ -125,15 +125,8 @@ function TransactionsPageInner() {
         description="Track every naira in and out"
         action={
           <div className="flex items-center gap-2">
-            <Button
-              href="/app/transactions/sms-import"
-              variant="primary"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              + Import SMS
-            </Button>
-            <Button variant="secondary" onClick={() => setShowForm((v) => !v)}>
-              {showForm ? "Cancel" : "Add manual"}
+            <Button variant="primary" onClick={() => setShowForm((v) => !v)}>
+              {showForm ? "Cancel" : "+ Record Transaction"}
             </Button>
           </div>
         }

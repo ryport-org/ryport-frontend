@@ -391,9 +391,9 @@ export default function AiChatPage() {
                 <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
                   <Link
                     href="/app/upgrade"
-                    className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-brand/20 hover:bg-brand/90 transition-all"
+                    className="inline-flex items-center gap-2 rounded-full border border-line bg-paper/60 px-6 py-2.5 text-sm font-semibold text-mist opacity-60 hover:opacity-80 transition-all"
                   >
-                    Upgrade to Pro — ₦5,000/mo
+                    Coming soon
                   </Link>
                   {aiQuota?.resets_at ? (
                     <span className="text-xs text-mist">

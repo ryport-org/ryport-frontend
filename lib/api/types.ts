@@ -51,16 +51,33 @@ export type GoalProgress = {
   target_date?: string;
 };
 
+export type PersonalDashboardProFeatures = {
+  business_balance_split?: {
+    personal_kobo: number;
+    business_kobo: number;
+  } | null;
+  cash_flow_prediction?: CashFlowPrediction | null;
+  open_invoices?: {
+    count: number;
+    next_due_date: string;
+    next_due_amount_kobo: number;
+  } | null;
+  receivables_summary?: DebtSummary | null;
+};
+
 export type PersonalDashboardData = {
   balance_summary: {
     total_balance_kobo: number;
-    linked_accounts_count: number;
+    account_count?: number;
+    linked_accounts_count?: number;
+    currency?: string;
   };
   spend_by_category: CategorySpend[];
   budget_alerts: BudgetAlert[];
   goal_progress?: GoalProgress | null;
   ai_quota: AIQuota | null;
   recent_transactions: Transaction[];
+  pro_features?: PersonalDashboardProFeatures | null;
   business_personal_split?: {
     personal_kobo: number;
     business_kobo: number;
@@ -73,6 +90,7 @@ export type PersonalDashboardData = {
     count: number;
     total_kobo: number;
   } | null;
+  receivables_summary?: DebtSummary | null;
 };
 
 export type CostAnomaly = {
@@ -85,8 +103,10 @@ export type CostAnomaly = {
 
 export type StaffCostSummary = {
   total_payroll_kobo: number;
+  total_staff_cost_kobo?: number;
   staff_count: number;
   missed_payments: number;
+  missed_payments_count?: number;
   missed_payment_flags?: string[];
 };
 
@@ -115,18 +135,31 @@ export type SmeDashboardData = {
     runway_days: number | null;
     runway_months: number | null;
     burn_rate_monthly_kobo: number;
+    burn_rate_kobo_per_month?: number;
+  };
+  runway_and_burn_rate?: {
+    burn_rate_kobo_per_month: number;
+    runway_months: number | null;
+    runway_days: number | null;
   };
   pl_snapshot: {
     revenue_kobo: number;
     expenses_kobo: number;
     net_profit_kobo: number;
+    margin_percent?: number;
     period: string;
   };
   cost_anomalies: CostAnomaly[];
   staff_summary: StaffCostSummary;
+  staff_cost_summary?: {
+    total_staff_cost_kobo: number;
+    staff_count: number;
+    missed_payments_count: number;
+  };
   tax_status: TaxStatus;
   energy_cost_trend?: EnergyCostTrend | null;
   team_summary: TeamSummary;
+  receivables_summary?: DebtSummary | null;
 };
 
 export type AuthTokens = { access: string; refresh: string };
@@ -242,13 +275,26 @@ export type NotificationType =
   | "budget_alert"
   | "bill_reminder"
   | "weekly_summary"
-  | "cash_flow_warning";
+  | "cash_flow_warning"
+  | "debt_payment_match"
+  | string;
+
+export type NotificationMetadata = {
+  debt_id?: string;
+  transaction_id?: string;
+  transaction_amount_kobo?: number;
+  debt_remaining_kobo?: number;
+  debtor_name?: string;
+  [key: string]: unknown;
+};
 
 export type Notification = {
   id: string;
   type: NotificationType;
   title: string;
-  message: string;
+  message?: string;
+  body?: string;
+  metadata?: NotificationMetadata;
   is_read: boolean;
   created_at: string;
 };
@@ -425,19 +471,110 @@ export type SmsIngestData = {
 };
 
 export type DebtType = "owed_to_me" | "i_owe";
-export type DebtStatus = "pending" | "settled";
+export type DebtStatus =
+  | "outstanding"
+  | "partially_paid"
+  | "paid"
+  | "overdue"
+  | "pending"
+  | "settled";
+export type DebtSource = "manual" | "auto_from_invoice" | string;
 
-export type Debt = {
+export interface TopDebtor {
   id: string;
-  counterparty: string;
+  debtor_name: string;
+  phone_number: string;
   amount_kobo: number;
-  type: DebtType;
-  description: string;
-  due_date?: string | null;
+  remaining_amount_kobo: number;
+  due_date: string; // "YYYY-MM-DD"
+  is_overdue: boolean;
+}
+
+export interface DebtSummary {
+  total_outstanding_kobo: number;
+  overdue_count: number;
+  overdue_amount_kobo: number;
+  due_this_week_kobo: number;
+  total_debts_count: number;
+  unpaid_debts_count: number;
+  top_debtors: TopDebtor[];
+}
+
+export interface Debt {
+  id: string;
+  debtor_name: string;
+  phone_number?: string;
+  amount_kobo: number;
+  amount_paid_kobo?: number;
+  remaining_amount_kobo?: number;
+  due_date: string; // "YYYY-MM-DD"
   status: DebtStatus;
+  source?: DebtSource;
+  business_id?: string | null;
+  linked_invoice_id?: string | null;
+  matched_transaction_id?: string | null;
+  notes?: string;
+  is_overdue?: boolean;
   created_at?: string;
   updated_at?: string;
-};
+  // Legacy compatibility fields
+  counterparty?: string;
+  type?: DebtType;
+  description?: string;
+}
+
+export interface CreateDebtPayload {
+  debtor_name: string;
+  phone_number?: string;
+  amount_kobo: number; // In Kobo: ₦50,000 = 5000000
+  due_date: string; // "YYYY-MM-DD"
+  business_id?: string;
+  notes?: string;
+  // Legacy fields
+  counterparty?: string;
+  type?: DebtType;
+  description?: string;
+  status?: DebtStatus;
+}
+
+export interface UpdateDebtPayload extends Partial<CreateDebtPayload> {}
+
+export interface MarkPaidPayload {
+  amount_kobo?: number; // Omit or null to mark entire balance paid
+  transaction_id?: string;
+}
+
+export interface ConfirmMatchPayload {
+  transaction_id: string;
+  amount_kobo?: number;
+}
+
+export interface ReminderMessageResponse {
+  debt_id: string;
+  debtor_name: string;
+  phone_number: string;
+  remaining_amount_kobo: number;
+  sms_text: string;
+  whatsapp_url: string; // e.g. "https://wa.me/2348012345678?text=Hello%20..."
+}
+
+export interface StaffPayslip {
+  gross_salary_kobo: number;
+  pension_deduction_kobo: number;
+  nhf_deduction_kobo: number;
+  paye_deduction_kobo: number;
+  total_deductions_kobo: number;
+  net_pay_kobo: number;
+}
+
+export interface StaffPayslipResponse {
+  staff_member: {
+    id: string;
+    name: string;
+    is_active: boolean;
+  };
+  payslip: StaffPayslip;
+}
 
 export type PushSubscriptionPayload = {
   endpoint: string;

@@ -71,19 +71,36 @@ function featureMap(features: PlanFeature[] | undefined) {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<Profile | null>(null);
+  const [user, setUser] = useState<Profile | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const cached = localStorage.getItem("ryport_user_cache");
+      return cached ? (JSON.parse(cached) as Profile) : null;
+    } catch {
+      return null;
+    }
+  });
   const [plan, setPlan] = useState<PlanResponse | null>(null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [activeBusiness, setActiveBusiness] = useState<Business | null>(null);
   const [aiQuota, setAiQuota] = useState<AIQuota | null>(null);
   const [dashboardContext, setDashboardContext] = useState<DashboardContext | null>(null);
   const [bootstrapWarning, setBootstrapWarning] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const hasTokens = Boolean(getAccessToken() || getRefreshToken());
+    if (!hasTokens) return false;
+    try {
+      const cached = localStorage.getItem("ryport_user_cache");
+      if (cached) return false;
+    } catch {}
+    return true;
+  });
 
   const features = useMemo(() => featureMap(plan?.features), [plan?.features]);
 
   const canUse = useCallback(
-    (feature: string) => features.get(feature)?.enabled ?? false,
+    (feature: string) => features.get(feature)?.enabled ?? true,
     [features],
   );
 
@@ -102,28 +119,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAiQuota(null);
     setDashboardContext(null);
     setBootstrapWarning(null);
+    try {
+      localStorage.removeItem("ryport_user_cache");
+    } catch {}
   }, []);
 
-  /** Post-login bootstrap — see docs/frontend-dev-handoff.md §3 */
+  /** Post-login bootstrap — runs all profile and dashboard queries concurrently in parallel */
   const bootstrap = useCallback(async (token: string) => {
     setBootstrapWarning(null);
-    let profile: Profile;
-    try {
-      profile = await usersApi.me(token);
-    } catch (err) {
-      logAuthError(err, "/users/me/");
-      throw err;
+
+    // Parallel loading of all bootstrap data via Promise.allSettled
+    const [
+      meResult,
+      userPlanResult,
+      unreadResult,
+      activeBizResult,
+      quotaResult,
+      dashCtxResult,
+    ] = await Promise.allSettled([
+      usersApi.me(token),
+      usersApi.plan(token),
+      notificationsApi.unreadCount(token),
+      businessesApi.active(token),
+      aiApi.quota(token),
+      usersApi.getDashboardContext(token),
+    ]);
+
+    if (meResult.status === "rejected") {
+      logAuthError(meResult.reason, "/users/me/");
+      throw meResult.reason;
     }
 
-    // Resilient parallel loading of non-critical bootstrap data via Promise.allSettled
-    const [userPlanResult, unreadResult, activeBizResult, quotaResult, dashCtxResult] =
-      await Promise.allSettled([
-        usersApi.plan(token),
-        notificationsApi.unreadCount(token),
-        businessesApi.active(token),
-        aiApi.quota(token),
-        usersApi.getDashboardContext(token),
-      ]);
+    const profile = meResult.value;
+    try {
+      localStorage.setItem("ryport_user_cache", JSON.stringify(profile));
+    } catch {}
 
     const userPlan = userPlanResult.status === "fulfilled" ? userPlanResult.value : null;
     const unreadCount = unreadResult.status === "fulfilled" ? unreadResult.value.count : 0;

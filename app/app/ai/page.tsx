@@ -67,8 +67,8 @@ export default function AiHubPage() {
                 <p className="text-sm text-ink">
                   <span className="font-semibold">{aiQuota.remaining}</span> AI messages left today
                 </p>
-                <Link href="/app/upgrade" className="text-sm font-semibold text-sky hover:underline">
-                  Upgrade for unlimited
+                <Link href="/app/upgrade" className="text-sm font-semibold text-mist opacity-60 hover:underline">
+                  Coming soon
                 </Link>
               </CardBody>
             </Card>
@@ -101,9 +101,9 @@ export default function AiHubPage() {
                       ) : (
                         <Link
                           href="/app/upgrade"
-                          className="inline-flex text-sm font-semibold text-brand hover:underline"
+                          className="inline-flex text-sm font-semibold text-mist opacity-60 hover:underline"
                         >
-                          Upgrade to unlock
+                          Coming soon
                         </Link>
                       )}
                     </div>

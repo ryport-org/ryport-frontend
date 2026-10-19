@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth/auth-context";
 import { getAccessToken } from "@/lib/auth/tokens";
 import { businessesApi, dashboardApi } from "@/lib/api";
+import { MoneyWaitingWidget } from "@/components/dashboard/money-waiting-widget";
 import type { Business, SmeDashboardData } from "@/lib/api/types";
 import { formatNaira } from "@/lib/format";
 
@@ -242,6 +243,12 @@ export function SmeDashboard() {
         </Button>
       </div>
 
+      {/* Money Waiting to Be Collected Widget */}
+      <MoneyWaitingWidget
+        initialSummary={data.receivables_summary}
+        businessId={active_business?.id}
+      />
+
       {/* 1. Prominent Runway & Burn Rate Section */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="border-sky/20 bg-sky-soft/30 h-full">
@@ -249,7 +256,11 @@ export function SmeDashboard() {
             <span className="text-xs font-semibold uppercase tracking-wider text-sky">Financial Runway</span>
             <div className="my-2 flex items-baseline gap-2">
               <span className="font-display text-3xl text-ink">
-                {runway?.runway_months != null ? `${runway.runway_months} months` : runway?.runway_days != null ? `${runway.runway_days} days` : "N/A"}
+                {(runway?.runway_months ?? data.runway_and_burn_rate?.runway_months) != null
+                  ? `${runway?.runway_months ?? data.runway_and_burn_rate?.runway_months} months`
+                  : (runway?.runway_days ?? data.runway_and_burn_rate?.runway_days) != null
+                    ? `${runway?.runway_days ?? data.runway_and_burn_rate?.runway_days} days`
+                    : "N/A"}
               </span>
             </div>
             <p className="mt-1 text-xs text-mist pt-1 border-t border-sky/10">
@@ -262,7 +273,12 @@ export function SmeDashboard() {
           <CardBody className="flex flex-col justify-between p-5 h-full">
             <span className="text-xs font-semibold uppercase tracking-wider text-mist">Monthly Burn Rate</span>
             <div className="my-2 font-display text-2xl text-ink">
-              {formatNaira(runway?.burn_rate_monthly_kobo ?? 0)}
+              {formatNaira(
+                runway?.burn_rate_monthly_kobo ??
+                  runway?.burn_rate_kobo_per_month ??
+                  data.runway_and_burn_rate?.burn_rate_kobo_per_month ??
+                  0,
+              )}
             </div>
             <p className="mt-1 text-xs text-mist pt-1 border-t border-line/40">Average net cash outflow per month.</p>
           </CardBody>

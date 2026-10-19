@@ -49,23 +49,23 @@ export default function AccountsPage() {
 
       <AppPageBody>
         <AppPageContent>
-          <Card className="border-emerald-500/20 bg-emerald-500/5 p-6">
+          <Card className="border-sky/20 bg-sky-soft/20 p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start sm:items-center gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
-                  <MessageSquareText className="size-5" />
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sky text-white shadow-sm">
+                  <ArrowRight className="size-5" />
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-ink">
-                    Primary Data Source: SMS Bank Alert Capture
+                    Primary Data Entry: Manual & Receipt Capture
                   </h2>
                   <p className="mt-1 text-xs text-mist">
-                    Direct open banking sync is temporarily paused. Forward or paste debit/credit alert SMS from GTBank, Access, Zenith, UBA, Kuda, and OPay for instant transaction tracking.
+                    Direct open banking sync and SMS ingestion are temporarily paused. Cash balances and reports are computed directly from recorded transactions.
                   </p>
                 </div>
               </div>
-              <Button href="/app/transactions/sms-import" variant="primary" className="bg-emerald-600 hover:bg-emerald-700 text-white whitespace-nowrap">
-                Import from SMS <ArrowRight className="ml-1.5 size-4" />
+              <Button href="/app/transactions?new=1" variant="primary" className="whitespace-nowrap">
+                Record Transaction <ArrowRight className="ml-1.5 size-4" />
               </Button>
             </div>
           </Card>
@@ -77,12 +77,13 @@ export default function AccountsPage() {
             </div>
           ) : accounts.length === 0 ? (
             <Card className="p-12 text-center">
-              <p className="text-sm text-mist">No bank accounts linked yet.</p>
+              <p className="text-sm text-mist">No external bank feeds connected.</p>
+              <p className="mt-1 text-xs text-mist">Your balances and metrics are calculated automatically from manual entries and receipt uploads.</p>
               <Link
-                href="/app/transactions/sms-import"
-                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:underline"
+                href="/app/transactions?new=1"
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-sky hover:underline"
               >
-                Import transactions via SMS <ArrowRight className="size-3.5" />
+                Record your first transaction <ArrowRight className="size-3.5" />
               </Link>
             </Card>
           ) : (

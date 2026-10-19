@@ -149,6 +149,7 @@ export const businessesApi = {
   analytics: businesses.getBusinessAnalytics,
   members: businesses.listMembers,
   inviteMember: businesses.inviteMember,
+  payslip: businesses.getStaffPayslip,
 };
 
 export const teamsApi = {
@@ -172,12 +173,16 @@ export const dashboardApi = {
 };
 
 export const debtsApi = {
+  summary: debts.getDebtSummary,
   list: debts.listDebts,
   get: debts.getDebt,
   create: debts.createDebt,
   update: debts.updateDebt,
   patch: debts.patchDebt,
   remove: debts.deleteDebt,
+  markPaid: debts.markPaid,
+  confirmMatch: debts.confirmMatch,
+  reminderMessage: debts.getReminderMessage,
 };
 
 export { ApiError, apiRequest, healthCheck } from "@/lib/api/client";

@@ -33,17 +33,17 @@ export function SourceBadge({ source }: { source?: string }) {
 
 export function TransactionList({
   transactions,
-  emptyMessage = "No transactions yet. Import from SMS or add one manually.",
+  emptyMessage = "No transactions recorded yet.",
 }: TransactionListProps) {
   if (transactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
         <p className="text-sm text-mist">{emptyMessage}</p>
         <Link
-          href="/app/transactions/sms-import"
-          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 hover:underline"
+          href="/app/transactions?new=1"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-sky hover:underline"
         >
-          Import SMS alert <ArrowRight className="size-3.5" />
+          Add transaction manually <ArrowRight className="size-3.5" />
         </Link>
       </div>
     );

@@ -9,17 +9,14 @@ export function MonoConnectButton({ disabled }: Props) {
   if (disabled) {
     return (
       <Button variant="primary" disabled>
-        Import from SMS
+        Bank Sync Paused
       </Button>
     );
   }
 
   return (
-    <Button
-      href="/app/transactions/sms-import"
-      variant="primary"
-    >
-      Import from SMS
+    <Button href="/app/transactions?new=1" variant="primary">
+      Record Transaction
     </Button>
   );
 }

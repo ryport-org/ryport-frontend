@@ -60,8 +60,13 @@ export default function SmsImportPage() {
         received_at: new Date().toISOString(),
       });
       setResult(data);
-    } catch (err) {
-      setError(getAuthErrorMessage(err));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("paused") || msg.includes("feature_paused") || msg.includes("503")) {
+        setError("SMS import is currently paused. Please use manual entry or receipt upload.");
+      } else {
+        setError(getAuthErrorMessage(err) || "SMS import is currently paused. Please use manual entry or receipt upload.");
+      }
     } finally {
       setLoading(false);
     }
@@ -83,16 +88,29 @@ export default function SmsImportPage() {
 
       <AppPageBody>
         <AppPageContent>
-          <div className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-2xl space-y-4">
+            {/* Friendly Paused Banner */}
+            <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="size-4 shrink-0 text-amber-600" />
+                <span>
+                  <strong>Notice:</strong> SMS transaction ingestion is temporarily paused on the backend. Please use manual entry or receipt upload.
+                </span>
+              </div>
+              <Button href="/app/transactions?new=1" variant="primary" className="text-xs py-1.5 px-3 self-start sm:self-auto shrink-0">
+                Record Manually
+              </Button>
+            </div>
+
             {/* Step 1: Input Form */}
             {!result ? (
               <Card className="p-6 sm:p-8">
                 <div className="flex items-center gap-3 border-b border-line pb-4">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm">
+                  <div className="flex size-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm">
                     <MessageSquareText className="size-5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-semibold text-ink">Step 1 — Paste SMS</h2>
+                    <h2 className="text-sm font-semibold text-ink">Step 1 — Paste SMS (Paused)</h2>
                     <p className="text-xs text-mist">
                       Extracts amount, merchant, date, and category automatically.
                     </p>

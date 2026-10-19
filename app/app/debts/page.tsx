@@ -2,14 +2,18 @@
 
 import { useEffect, useState, useMemo } from "react";
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
+  AlertCircle,
   Calendar,
   Check,
   CheckCircle2,
   Clock,
+  Copy,
+  DollarSign,
   HandCoins,
+  MessageCircle,
+  Phone,
   Plus,
+  Send,
   Trash2,
   X,
 } from "lucide-react";
@@ -22,35 +26,69 @@ import { Input, inputClassName } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAccessToken } from "@/lib/auth/tokens";
 import { debtsApi } from "@/lib/api";
-import type { Debt, DebtStatus, DebtType } from "@/lib/api/types";
-import { formatDate, formatKobo } from "@/lib/format";
+import type {
+  Debt,
+  DebtStatus,
+  DebtSummary,
+  ReminderMessageResponse,
+} from "@/lib/api/types";
+import { formatDate, formatNaira } from "@/lib/format";
 import { getAuthErrorMessage } from "@/lib/auth/auth-context";
+import { cn } from "@/lib/utils";
+
+type FilterTab = "all" | "outstanding" | "overdue" | "paid";
 
 export default function DebtsPage() {
   const [debts, setDebts] = useState<Debt[]>([]);
+  const [summary, setSummary] = useState<DebtSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<DebtType>("owed_to_me");
-  const [showModal, setShowModal] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const [error, setError] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  // Form state
-  const [formType, setFormType] = useState<DebtType>("owed_to_me");
-  const [counterparty, setCounterparty] = useState("");
+  // Modals
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [savingDebt, setSavingDebt] = useState(false);
+
+  // Add Debt Form State
+  const [debtorName, setDebtorName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [amountNaira, setAmountNaira] = useState("");
-  const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [status, setStatus] = useState<DebtStatus>("pending");
+  const [notes, setNotes] = useState("");
 
-  async function loadDebts() {
+  // Record Payment Dialog State
+  const [paymentDebt, setPaymentDebt] = useState<Debt | null>(null);
+  const [payFull, setPayFull] = useState(true);
+  const [partialNaira, setPartialNaira] = useState("");
+  const [recordingPayment, setRecordingPayment] = useState(false);
+
+  // Send Reminder Dialog State
+  const [reminderDebt, setReminderDebt] = useState<Debt | null>(null);
+  const [reminderData, setReminderData] = useState<ReminderMessageResponse | null>(null);
+  const [loadingReminder, setLoadingReminder] = useState(false);
+  const [copiedText, setCopiedText] = useState(false);
+
+  // Action pending states
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setSuccessToast(msg);
+    setTimeout(() => setSuccessToast(null), 4000);
+  };
+
+  async function loadData() {
     const token = getAccessToken();
     if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await debtsApi.list(token);
-      setDebts(Array.isArray(data) ? data : []);
+      const [debtsRes, summaryRes] = await Promise.all([
+        debtsApi.list(token).catch(() => [] as Debt[]),
+        debtsApi.summary(token).catch(() => null),
+      ]);
+      setDebts(Array.isArray(debtsRes) ? debtsRes : []);
+      setSummary(summaryRes);
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
@@ -59,115 +97,176 @@ export default function DebtsPage() {
   }
 
   useEffect(() => {
-    loadDebts();
+    loadData();
   }, []);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     const token = getAccessToken();
-    if (!token || !counterparty.trim() || !amountNaira) return;
+    if (!token || !debtorName.trim() || !amountNaira || !dueDate) return;
 
     const amountKobo = Math.round(parseFloat(amountNaira) * 100);
     if (isNaN(amountKobo) || amountKobo <= 0) {
-      setError("Please enter a valid amount.");
+      setError("Please enter a valid amount in Naira.");
       return;
     }
 
-    setSaving(true);
+    setSavingDebt(true);
     setError(null);
 
     try {
       await debtsApi.create(token, {
-        counterparty: counterparty.trim(),
+        debtor_name: debtorName.trim(),
+        phone_number: phoneNumber.trim() || undefined,
         amount_kobo: amountKobo,
-        type: formType,
-        description: description.trim(),
-        due_date: dueDate || null,
-        status,
+        due_date: dueDate,
+        notes: notes.trim() || undefined,
       });
 
-      setShowModal(false);
-      // Reset form
-      setCounterparty("");
+      setShowAddModal(false);
+      setDebtorName("");
+      setPhoneNumber("");
       setAmountNaira("");
-      setDescription("");
       setDueDate("");
-      setStatus("pending");
-      await loadDebts();
+      setNotes("");
+      showToast("Receivable recorded successfully.");
+      await loadData();
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
-      setSaving(false);
+      setSavingDebt(false);
     }
   }
 
-  async function handleStatusChange(debtId: string, newStatus: DebtStatus) {
+  async function handleRecordPayment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!paymentDebt) return;
     const token = getAccessToken();
     if (!token) return;
-    setUpdatingId(debtId);
 
-    // Optimistic UI update
-    setDebts((prev) =>
-      prev.map((d) => (d.id === debtId ? { ...d, status: newStatus } : d)),
-    );
+    setRecordingPayment(true);
+    setError(null);
 
     try {
-      await debtsApi.patch(token, debtId, { status: newStatus });
+      let amountKobo: number | undefined = undefined;
+      if (!payFull && partialNaira) {
+        amountKobo = Math.round(parseFloat(partialNaira) * 100);
+      }
+
+      await debtsApi.markPaid(token, paymentDebt.id, {
+        amount_kobo: amountKobo,
+      });
+
+      setPaymentDebt(null);
+      setPartialNaira("");
+      setPayFull(true);
+      showToast("Payment recorded successfully.");
+      await loadData();
     } catch (err) {
-      // Revert on error
-      await loadDebts();
       setError(getAuthErrorMessage(err));
     } finally {
-      setUpdatingId(null);
+      setRecordingPayment(false);
     }
+  }
+
+  async function openReminderModal(debt: Debt) {
+    const token = getAccessToken();
+    if (!token) return;
+    setReminderDebt(debt);
+    setLoadingReminder(true);
+    setCopiedText(false);
+    try {
+      const data = await debtsApi.reminderMessage(token, debt.id);
+      setReminderData(data);
+    } catch {
+      // Fallback preformatted reminder
+      const name = debt.debtor_name || debt.counterparty || "Valued Customer";
+      const remaining = debt.remaining_amount_kobo ?? debt.amount_kobo;
+      const amountText = formatNaira(remaining);
+      const phone = debt.phone_number?.replace(/\D/g, "") || "";
+      const text = `Hello ${name}, this is a gentle reminder that you have an outstanding balance of ${amountText} due on ${debt.due_date}. Please let us know when payment is made. Thank you!`;
+      const encoded = encodeURIComponent(text);
+      setReminderData({
+        debt_id: debt.id,
+        debtor_name: name,
+        phone_number: debt.phone_number || "",
+        remaining_amount_kobo: remaining,
+        sms_text: text,
+        whatsapp_url: phone ? `https://wa.me/${phone}?text=${encoded}` : "",
+      });
+    } finally {
+      setLoadingReminder(false);
+    }
+  }
+
+  function handleSendWhatsApp() {
+    if (!reminderData?.whatsapp_url) {
+      alert("Missing valid phone number for this debtor.");
+      return;
+    }
+    window.open(reminderData.whatsapp_url, "_blank");
+  }
+
+  function handleCopySms() {
+    if (!reminderData?.sms_text) return;
+    navigator.clipboard.writeText(reminderData.sms_text);
+    setCopiedText(true);
+    showToast("Reminder SMS copied to clipboard.");
+    setTimeout(() => setCopiedText(false), 3000);
   }
 
   async function handleDelete(debtId: string) {
     const token = getAccessToken();
     if (!token || !confirm("Delete this debt record?")) return;
 
-    setDebts((prev) => prev.filter((d) => d.id !== debtId));
-
+    setDeletingId(debtId);
     try {
       await debtsApi.remove(token, debtId);
+      setDebts((prev) => prev.filter((d) => d.id !== debtId));
+      showToast("Debt record removed.");
+      await loadData();
     } catch (err) {
-      await loadDebts();
       setError(getAuthErrorMessage(err));
+    } finally {
+      setDeletingId(null);
     }
   }
 
-  // Filter debts by tab
-  const filteredDebts = useMemo(
-    () => debts.filter((d) => d.type === activeTab),
-    [debts, activeTab],
-  );
+  // Filtered debts
+  const filteredDebts = useMemo(() => {
+    return debts.filter((d) => {
+      const isOverdue = Boolean(d.is_overdue || d.status === "overdue");
+      const isPaid = d.status === "paid" || (d.remaining_amount_kobo === 0 && d.amount_paid_kobo! > 0);
+      const isOutstanding = d.status === "outstanding" || d.status === "partially_paid" || (!isPaid && !isOverdue);
 
-  // Summary stats
-  const totalAmountKobo = useMemo(
-    () => filteredDebts.reduce((sum, d) => sum + (d.amount_kobo || 0), 0),
-    [filteredDebts],
-  );
+      if (filterTab === "all") return true;
+      if (filterTab === "overdue") return isOverdue;
+      if (filterTab === "outstanding") return isOutstanding;
+      if (filterTab === "paid") return isPaid;
+      return true;
+    });
+  }, [debts, filterTab]);
 
-  const outstandingCount = useMemo(
-    () => filteredDebts.filter((d) => d.status === "pending").length,
-    [filteredDebts],
-  );
+  const totalOutstanding = summary?.total_outstanding_kobo ??
+    debts.reduce((sum, d) => sum + (d.remaining_amount_kobo ?? d.amount_kobo ?? 0), 0);
+
+  const overdueCount = summary?.overdue_count ??
+    debts.filter((d) => d.is_overdue || d.status === "overdue").length;
+
+  const dueThisWeek = summary?.due_this_week_kobo ?? 0;
 
   return (
     <AppPage>
       <AppHeader
         title="Debts & Receivables"
-        description="Track money owed to you and money you owe to others."
+        description='Track "Who Owes Me", payment due dates, partial payments, and overdue statuses.'
         action={
           <Button
             variant="primary"
-            onClick={() => {
-              setFormType(activeTab);
-              setShowModal(true);
-            }}
+            onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5"
           >
-            <Plus className="size-4" /> Record Debt
+            <Plus className="size-4" /> Add Receivable
           </Button>
         }
       />
@@ -175,68 +274,127 @@ export default function DebtsPage() {
       <AppPageBody>
         <AppPageContent>
           {error && (
-            <div className="mb-4 rounded-xl border border-coral-warn/20 bg-coral-warn/5 p-4 text-xs text-coral-warn">
-              {error}
+            <div className="mb-4 rounded-xl border border-coral-warn/20 bg-coral-warn/5 p-4 text-xs text-coral-warn flex items-center justify-between">
+              <span>{error}</span>
+              <button onClick={() => setError(null)} className="text-mist hover:text-ink">
+                <X className="size-4" />
+              </button>
             </div>
           )}
 
-          {/* Navigation Tabs */}
-          <div className="flex border-b border-line mb-6 gap-2 sm:gap-4">
+          {successToast && (
+            <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-50 p-4 text-xs font-medium text-emerald-800 flex items-center gap-2">
+              <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+              <span>{successToast}</span>
+            </div>
+          )}
+
+          {/* Top Summary Metrics */}
+          <div className="grid gap-4 sm:grid-cols-3 mb-6">
+            <Card className="border-amber-300 bg-amber-50/80 p-4 sm:p-5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
+                MONEY WAITING TO BE COLLECTED
+              </span>
+              <p className="mt-1 font-display text-2xl sm:text-3xl font-bold text-amber-950 tabular-nums">
+                {formatNaira(totalOutstanding)}
+              </p>
+              <p className="mt-1 text-xs text-amber-800 font-medium">
+                {summary?.unpaid_debts_count ?? debts.filter(d => d.status !== "paid").length} open debtor(s)
+              </p>
+            </Card>
+
+            <Card className="p-4 sm:p-5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-mist">
+                OVERDUE RECEIVABLES
+              </span>
+              <p className="mt-1 font-display text-2xl sm:text-3xl font-bold text-rose-600 tabular-nums">
+                {overdueCount}
+              </p>
+              <p className="mt-1 text-xs text-mist">
+                {summary?.overdue_amount_kobo
+                  ? `${formatNaira(summary.overdue_amount_kobo)} past due`
+                  : "Immediate attention required"}
+              </p>
+            </Card>
+
+            <Card className="p-4 sm:p-5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-mist">
+                DUE THIS WEEK
+              </span>
+              <p className="mt-1 font-display text-2xl sm:text-3xl font-bold text-ink tabular-nums">
+                {formatNaira(dueThisWeek)}
+              </p>
+              <p className="mt-1 text-xs text-mist">Expected cash inflow in the next 7 days</p>
+            </Card>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex border-b border-line mb-6 gap-2 sm:gap-4 overflow-x-auto">
             <button
               type="button"
-              onClick={() => setActiveTab("owed_to_me")}
-              className={`flex items-center gap-2 pb-3 px-2 text-sm font-semibold border-b-2 transition-colors ${
-                activeTab === "owed_to_me"
+              onClick={() => setFilterTab("all")}
+              className={`flex items-center gap-2 pb-3 px-2 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                filterTab === "all"
+                  ? "border-sky text-sky"
+                  : "border-transparent text-mist hover:text-ink"
+              }`}
+            >
+              All Receivables
+              <span className="rounded-full bg-paper px-2 py-0.5 text-xs text-mist font-normal">
+                {debts.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterTab("outstanding")}
+              className={`flex items-center gap-2 pb-3 px-2 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                filterTab === "outstanding"
+                  ? "border-amber-600 text-amber-700"
+                  : "border-transparent text-mist hover:text-ink"
+              }`}
+            >
+              <Clock className="size-4 text-amber-600" />
+              Outstanding
+              <span className="rounded-full bg-paper px-2 py-0.5 text-xs text-mist font-normal">
+                {debts.filter(d => d.status === "outstanding" || d.status === "partially_paid").length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterTab("overdue")}
+              className={`flex items-center gap-2 pb-3 px-2 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                filterTab === "overdue"
+                  ? "border-rose-600 text-rose-700"
+                  : "border-transparent text-mist hover:text-ink"
+              }`}
+            >
+              <AlertCircle className="size-4 text-rose-600" />
+              Overdue
+              <span className="rounded-full bg-rose-50 text-rose-700 font-semibold px-2 py-0.5 text-xs">
+                {overdueCount}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFilterTab("paid")}
+              className={`flex items-center gap-2 pb-3 px-2 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                filterTab === "paid"
                   ? "border-emerald-600 text-emerald-700"
                   : "border-transparent text-mist hover:text-ink"
               }`}
             >
-              <ArrowDownLeft className="size-4 text-emerald-600" />
-              Owed to me
-              <span className="ml-1 rounded-full bg-paper px-2 py-0.5 text-xs text-mist font-normal">
-                {debts.filter((d) => d.type === "owed_to_me").length}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("i_owe")}
-              className={`flex items-center gap-2 pb-3 px-2 text-sm font-semibold border-b-2 transition-colors ${
-                activeTab === "i_owe"
-                  ? "border-brand text-brand"
-                  : "border-transparent text-mist hover:text-ink"
-              }`}
-            >
-              <ArrowUpRight className="size-4 text-brand" />
-              I owe
-              <span className="ml-1 rounded-full bg-paper px-2 py-0.5 text-xs text-mist font-normal">
-                {debts.filter((d) => d.type === "i_owe").length}
+              <Check className="size-4 text-emerald-600" />
+              Paid / Settled
+              <span className="rounded-full bg-paper px-2 py-0.5 text-xs text-mist font-normal">
+                {debts.filter(d => d.status === "paid").length}
               </span>
             </button>
           </div>
 
-          {/* Summary Row */}
-          <Card className="mb-6 p-4 sm:p-5 bg-paper/40 border-line">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-mist">
-                  {activeTab === "owed_to_me" ? "Total owed to me:" : "Total I owe:"}
-                </span>
-                <span className="font-display font-bold text-lg tabular-nums text-ink">
-                  {formatKobo(totalAmountKobo)}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-mist">
-                <span className="hidden sm:inline">|</span>
-                <span>
-                  Outstanding:{" "}
-                  <strong className="text-ink font-semibold">{outstandingCount}</strong> items
-                </span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Cards List */}
+          {/* Debts List */}
           {loading ? (
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -246,22 +404,17 @@ export default function DebtsPage() {
           ) : filteredDebts.length === 0 ? (
             <Card className="p-12 text-center">
               <HandCoins className="size-10 text-mist mx-auto mb-3" />
-              <h3 className="text-sm font-semibold text-ink">
-                {activeTab === "owed_to_me"
-                  ? "No receivables recorded"
-                  : "No payables recorded"}
-              </h3>
+              <h3 className="text-sm font-semibold text-ink">No receivables found</h3>
               <p className="mt-1 text-xs text-mist max-w-sm mx-auto">
-                {activeTab === "owed_to_me"
-                  ? "Keep track of invoices, loans, or money clients and friends owe you."
-                  : "Keep track of bills, borrowed funds, or money you owe to suppliers."}
+                {filterTab === "overdue"
+                  ? "Great news! You have no overdue debts right now."
+                  : filterTab === "paid"
+                  ? "No paid debts recorded in this view."
+                  : "Keep track of clients, invoices, loans, or customers who owe you money."}
               </p>
               <Button
-                variant="secondary"
-                onClick={() => {
-                  setFormType(activeTab);
-                  setShowModal(true);
-                }}
+                variant="primary"
+                onClick={() => setShowAddModal(true)}
                 className="mt-4"
               >
                 <Plus className="mr-1.5 size-3.5" /> Record first debt
@@ -270,70 +423,138 @@ export default function DebtsPage() {
           ) : (
             <div className="space-y-3">
               {filteredDebts.map((debt) => {
-                const isSettled = debt.status === "settled";
+                const name = debt.debtor_name || debt.counterparty || "Debtor";
+                const isOverdue = Boolean(debt.is_overdue || debt.status === "overdue");
+                const isPaid = debt.status === "paid";
+                const remaining = debt.remaining_amount_kobo ?? debt.amount_kobo;
+                const isInvoice = debt.source === "auto_from_invoice";
+
                 return (
                   <Card
                     key={debt.id}
-                    className={`transition-all ${
-                      isSettled ? "opacity-75 bg-paper/40" : "bg-white hover:border-mist"
-                    }`}
+                    className={cn(
+                      "transition-all",
+                      isPaid
+                        ? "bg-paper/40 opacity-80"
+                        : isOverdue
+                        ? "border-rose-200 bg-rose-50/20 hover:border-rose-300"
+                        : "bg-white hover:border-mist",
+                    )}
                   >
                     <CardBody className="p-4 sm:p-5">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        {/* Left: Counterparty & Description */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        {/* Left: Debtor Details */}
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <h3 className="text-base font-semibold text-ink truncate">
-                              {debt.counterparty}
+                              {name}
                             </h3>
-                            {isSettled ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 border border-emerald-200">
-                                <Check className="size-3" /> Settled
+
+                            {isInvoice && (
+                              <span className="rounded-md bg-paper border border-line px-1.5 py-0.5 text-[10px] font-medium text-mist">
+                                Invoice Sync
+                              </span>
+                            )}
+
+                            {isOverdue ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 border border-rose-200">
+                                <AlertCircle className="size-3" /> Overdue
+                              </span>
+                            ) : isPaid ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 border border-emerald-200">
+                                <Check className="size-3" /> Paid
+                              </span>
+                            ) : debt.status === "partially_paid" ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200">
+                                <Clock className="size-3" /> Partially Paid
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 border border-amber-200">
-                                <Clock className="size-3" /> Pending
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 border border-amber-200">
+                                <Clock className="size-3" /> Outstanding
                               </span>
                             )}
                           </div>
-                          {debt.description && (
-                            <p className="mt-1 text-xs text-mist line-clamp-2">
-                              {debt.description}
-                            </p>
-                          )}
-                          {debt.due_date && (
-                            <p className="mt-1.5 flex items-center gap-1 text-xs text-mist">
-                              <Calendar className="size-3.5" />
-                              Due: {formatDate(debt.due_date)}
+
+                          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-mist">
+                            {debt.phone_number && (
+                              <span className="flex items-center gap-1 text-ink/80 font-medium">
+                                <Phone className="size-3 text-mist" /> {debt.phone_number}
+                              </span>
+                            )}
+                            {debt.due_date && (
+                              <span
+                                className={cn(
+                                  "flex items-center gap-1 font-medium",
+                                  isOverdue ? "text-rose-600 font-semibold" : "text-mist",
+                                )}
+                              >
+                                <Calendar className="size-3" />
+                                Due: {formatDate(debt.due_date)}
+                              </span>
+                            )}
+                            {debt.amount_paid_kobo ? (
+                              <span className="text-emerald-700 font-medium">
+                                Paid: {formatNaira(debt.amount_paid_kobo)}
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {debt.notes && (
+                            <p className="mt-2 text-xs text-mist/90 line-clamp-2">
+                              {debt.notes}
                             </p>
                           )}
                         </div>
 
-                        {/* Right: Amount & Status Dropdown */}
-                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-line">
-                          <p className="font-display text-lg font-bold tabular-nums text-ink">
-                            {formatKobo(debt.amount_kobo)}
-                          </p>
-
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={debt.status}
-                              disabled={updatingId === debt.id}
-                              onChange={(e) =>
-                                handleStatusChange(debt.id, e.target.value as DebtStatus)
-                              }
-                              className={`${inputClassName} py-1 px-2.5 text-xs font-medium rounded-lg h-8 cursor-pointer ${
-                                isSettled
-                                  ? "text-emerald-700 bg-emerald-50 border-emerald-200"
-                                  : "text-amber-800 bg-amber-50 border-amber-200"
-                              }`}
+                        {/* Right: Amounts & Actions */}
+                        <div className="flex flex-col sm:items-end justify-between gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-line">
+                          <div className="text-left sm:text-right">
+                            <span className="text-[11px] uppercase tracking-wider text-mist">
+                              {isPaid ? "Total Paid" : "Remaining Balance"}
+                            </span>
+                            <p
+                              className={cn(
+                                "font-display text-xl font-bold tabular-nums",
+                                isOverdue ? "text-rose-600" : "text-ink",
+                              )}
                             >
-                              <option value="pending">Pending</option>
-                              <option value="settled">Settled</option>
-                            </select>
+                              {formatNaira(remaining)}
+                            </p>
+                            {!isPaid && debt.amount_paid_kobo ? (
+                              <span className="text-[11px] text-mist">
+                                of {formatNaira(debt.amount_kobo)} total
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            {!isPaid && (
+                              <>
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => {
+                                    setPaymentDebt(debt);
+                                    setPayFull(true);
+                                    setPartialNaira("");
+                                  }}
+                                  className="text-xs py-1 px-2.5 h-8 font-medium flex items-center gap-1"
+                                >
+                                  <DollarSign className="size-3.5 text-emerald-600" /> Record Payment
+                                </Button>
+
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => openReminderModal(debt)}
+                                  className="text-xs py-1 px-2.5 h-8 font-medium flex items-center gap-1"
+                                >
+                                  <Send className="size-3 text-sky" /> Send Reminder
+                                </Button>
+                              </>
+                            )}
 
                             <button
                               type="button"
+                              disabled={deletingId === debt.id}
                               onClick={() => handleDelete(debt.id)}
                               className="text-mist hover:text-coral-warn p-1.5 rounded-lg hover:bg-paper transition-colors"
                               title="Delete record"
@@ -350,15 +571,18 @@ export default function DebtsPage() {
             </div>
           )}
 
-          {/* Record Debt Modal */}
-          {showModal && (
+          {/* Add Receivable Modal */}
+          {showAddModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-xs p-4">
-              <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-line">
+              <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-line animate-in fade-in zoom-in-95 duration-150">
                 <div className="flex items-center justify-between border-b border-line pb-4">
-                  <h2 className="text-base font-semibold text-ink">Record Debt</h2>
+                  <div className="flex items-center gap-2">
+                    <HandCoins className="size-5 text-amber-600" />
+                    <h2 className="text-base font-semibold text-ink">Add Receivable ("Who Owes Me")</h2>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => setShowModal(false)}
+                    onClick={() => setShowAddModal(false)}
                     className="rounded-lg p-1 text-mist hover:bg-paper hover:text-ink"
                   >
                     <X className="size-5" />
@@ -366,119 +590,255 @@ export default function DebtsPage() {
                 </div>
 
                 <form onSubmit={handleCreate} className="mt-5 space-y-4">
-                  {/* Type Selector */}
-                  <div>
-                    <label className="block text-xs font-medium text-mist mb-1">Type</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setFormType("owed_to_me")}
-                        className={`py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
-                          formType === "owed_to_me"
-                            ? "border-emerald-500 bg-emerald-50 text-emerald-700 font-semibold"
-                            : "border-line bg-paper text-mist hover:text-ink"
-                        }`}
-                      >
-                        <ArrowDownLeft className="size-3.5" /> Owed to me (Receivable)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormType("i_owe")}
-                        className={`py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-colors ${
-                          formType === "i_owe"
-                            ? "border-brand bg-brand/10 text-brand font-semibold"
-                            : "border-line bg-paper text-mist hover:text-ink"
-                        }`}
-                      >
-                        <ArrowUpRight className="size-3.5" /> I owe (Payable)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Counterparty */}
                   <div>
                     <label className="block text-xs font-medium text-ink mb-1">
-                      Counterparty (Person or Business)
+                      Debtor Name (Person or Business) *
                     </label>
                     <Input
                       required
-                      value={counterparty}
-                      onChange={(e) => setCounterparty(e.target.value)}
-                      placeholder='e.g. "Tunde Bakare" or "Acme Corp"'
+                      value={debtorName}
+                      onChange={(e) => setDebtorName(e.target.value)}
+                      placeholder='e.g. "Kola Enterprises" or "Tunde Bakare"'
                     />
                   </div>
 
-                  {/* Amount (Naira) */}
                   <div>
                     <label className="block text-xs font-medium text-ink mb-1">
-                      Amount (₦)
+                      Phone Number <span className="text-mist font-normal">(for WhatsApp & SMS reminders)</span>
                     </label>
                     <Input
-                      required
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={amountNaira}
-                      onChange={(e) => setAmountNaira(e.target.value)}
-                      placeholder="25000.00"
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder='e.g. "08012345678" or "+2348012345678"'
                     />
                   </div>
 
-                  {/* Description */}
-                  <div>
-                    <label className="block text-xs font-medium text-ink mb-1">
-                      Description <span className="text-mist font-normal">(optional)</span>
-                    </label>
-                    <Input
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder='e.g. "Freelance design invoice #004"'
-                    />
-                  </div>
-
-                  {/* Due Date & Initial Status */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-ink mb-1">
-                        Due Date <span className="text-mist font-normal">(optional)</span>
+                        Amount (₦) *
                       </label>
                       <Input
+                        required
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={amountNaira}
+                        onChange={(e) => setAmountNaira(e.target.value)}
+                        placeholder="50000.00"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-ink mb-1">
+                        Due Date *
+                      </label>
+                      <Input
+                        required
                         type="date"
                         value={dueDate}
                         onChange={(e) => setDueDate(e.target.value)}
                       />
                     </div>
+                  </div>
 
-                    <div>
-                      <label className="block text-xs font-medium text-ink mb-1">Status</label>
-                      <select
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value as DebtStatus)}
-                        className={`${inputClassName}`}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="settled">Settled</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-xs font-medium text-ink mb-1">
+                      Notes / Description <span className="text-mist font-normal">(optional)</span>
+                    </label>
+                    <Input
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder='e.g. "Invoice #204 - Delivery of office supplies"'
+                    />
                   </div>
 
                   <div className="pt-4 border-t border-line flex justify-end gap-2">
                     <Button
                       type="button"
                       variant="ghost"
-                      onClick={() => setShowModal(false)}
+                      onClick={() => setShowAddModal(false)}
                     >
                       Cancel
                     </Button>
                     <Button
                       type="submit"
                       variant="primary"
-                      disabled={saving || !counterparty.trim() || !amountNaira}
+                      disabled={savingDebt || !debtorName.trim() || !amountNaira || !dueDate}
                     >
-                      {saving ? "Saving…" : "Record Debt"}
+                      {savingDebt ? "Saving…" : "Save Receivable"}
                     </Button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {/* Record Payment Dialog */}
+          {paymentDebt && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-xs p-4">
+              <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-line animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between border-b border-line pb-4">
+                  <div>
+                    <h2 className="text-base font-semibold text-ink">Record Payment</h2>
+                    <p className="text-xs text-mist mt-0.5">
+                      Debtor: {paymentDebt.debtor_name || paymentDebt.counterparty}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentDebt(null)}
+                    className="rounded-lg p-1 text-mist hover:bg-paper hover:text-ink"
+                  >
+                    <X className="size-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleRecordPayment} className="mt-5 space-y-4">
+                  <div className="rounded-xl bg-paper p-3 border border-line text-xs">
+                    <div className="flex justify-between py-1">
+                      <span className="text-mist">Total Debt Amount:</span>
+                      <span className="font-semibold text-ink">{formatNaira(paymentDebt.amount_kobo)}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-mist">Remaining Balance:</span>
+                      <span className="font-bold text-ink">
+                        {formatNaira(paymentDebt.remaining_amount_kobo ?? paymentDebt.amount_kobo)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={payFull}
+                        onChange={(e) => setPayFull(e.target.checked)}
+                        className="rounded border-line text-sky focus:ring-sky size-4"
+                      />
+                      <span className="text-xs font-medium text-ink">
+                        Mark full remaining balance as paid ({formatNaira(paymentDebt.remaining_amount_kobo ?? paymentDebt.amount_kobo)})
+                      </span>
+                    </label>
+
+                    {!payFull && (
+                      <div className="pt-2">
+                        <label className="block text-xs font-medium text-ink mb-1">
+                          Partial Payment Amount (₦)
+                        </label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          required
+                          value={partialNaira}
+                          onChange={(e) => setPartialNaira(e.target.value)}
+                          placeholder="e.g. 20000.00"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-4 border-t border-line flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setPaymentDebt(null)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={recordingPayment || (!payFull && !partialNaira)}
+                    >
+                      {recordingPayment ? "Recording…" : "Confirm Payment"}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Send Reminder Dialog */}
+          {reminderDebt && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-xs p-4">
+              <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-line animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between border-b border-line pb-4">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="size-5 text-emerald-600" />
+                    <h2 className="text-base font-semibold text-ink">Send Payment Reminder</h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReminderDebt(null);
+                      setReminderData(null);
+                    }}
+                    className="rounded-lg p-1 text-mist hover:bg-paper hover:text-ink"
+                  >
+                    <X className="size-5" />
+                  </button>
+                </div>
+
+                {loadingReminder ? (
+                  <div className="py-8 space-y-3">
+                    <Skeleton className="h-20 rounded-xl" />
+                    <Skeleton className="h-10 rounded-xl" />
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-4">
+                    <div className="rounded-xl bg-paper/60 p-3.5 border border-line text-xs">
+                      <p className="font-semibold text-ink">
+                        Debtor: {reminderData?.debtor_name || reminderDebt.debtor_name || reminderDebt.counterparty}
+                      </p>
+                      <p className="text-mist mt-0.5">
+                        Phone: {reminderData?.phone_number || reminderDebt.phone_number || "Not provided"}
+                      </p>
+                      <p className="text-ink font-semibold mt-1">
+                        Outstanding: {formatNaira(reminderData?.remaining_amount_kobo ?? reminderDebt.remaining_amount_kobo ?? reminderDebt.amount_kobo)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-ink mb-1.5">
+                        Pre-formatted Message Preview:
+                      </label>
+                      <div className="rounded-xl border border-line bg-white p-3 text-xs text-ink/90 font-mono leading-relaxed whitespace-pre-wrap">
+                        {reminderData?.sms_text}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-2 pt-3 border-t border-line">
+                      <Button
+                        type="button"
+                        variant="primary"
+                        onClick={handleSendWhatsApp}
+                        className="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 text-xs py-2"
+                      >
+                        <MessageCircle className="size-4" /> Send via WhatsApp
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={handleCopySms}
+                        className="w-full sm:flex-1 flex items-center justify-center gap-1.5 text-xs py-2"
+                      >
+                        {copiedText ? (
+                          <>
+                            <Check className="size-4 text-emerald-600" /> Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="size-4" /> Copy Reminder SMS
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

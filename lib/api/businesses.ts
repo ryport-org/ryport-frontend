@@ -1,5 +1,5 @@
 import { apiRequest } from "@/lib/api/client";
-import type { Business, TeamMember } from "@/lib/api/types";
+import type { Business, StaffPayslipResponse, TeamMember } from "@/lib/api/types";
 
 export async function listBusinesses(token: string) {
   return apiRequest<Business[]>("/businesses/", { token });
@@ -54,4 +54,15 @@ export async function inviteMember(
     body,
     token,
   });
+}
+
+export async function getStaffPayslip(
+  token: string,
+  businessId: string,
+  staffId: string,
+) {
+  return apiRequest<StaffPayslipResponse>(
+    `/businesses/${businessId}/staff/${staffId}/payslip/`,
+    { token },
+  );
 }

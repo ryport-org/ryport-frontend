@@ -11,7 +11,9 @@ import { Button } from "@/components/ui/button";
 import { getAccessToken } from "@/lib/auth/tokens";
 import { budgetsApi } from "@/lib/api";
 import type { Budget, BudgetUsage } from "@/lib/api/types";
-import { formatNaira } from "@/lib/format";
+import { AlertTriangle, AlertCircle, Info, Bell, CheckCircle2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { formatDate, formatNaira } from "@/lib/format";
 
 export default function BudgetDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -98,12 +100,57 @@ export default function BudgetDetailPage() {
           {alerts.length > 0 ? (
             <Card>
               <CardBody>
-                <h2 className="text-sm font-semibold text-ink">Alert history</h2>
-                <ul className="mt-3 space-y-2 text-sm text-mist">
-                  {alerts.map((a, i) => (
-                    <li key={i}>{JSON.stringify(a)}</li>
-                  ))}
-                </ul>
+                <div className="flex items-center gap-2 mb-3">
+                  <Bell className="size-4 text-sky" />
+                  <h2 className="text-sm font-semibold text-ink">Alert history</h2>
+                  <span className="text-xs text-mist">({alerts.length})</span>
+                </div>
+                <div className="space-y-2.5">
+                  {alerts.map((a, i) => {
+                    const message = typeof a.message === "string" ? a.message : (typeof a.detail === "string" ? a.detail : null);
+                    const severity = typeof a.severity === "string" ? a.severity.toLowerCase() : "info";
+                    const category = typeof a.category === "string" ? a.category : null;
+                    const dateStr = typeof a.created_at === "string" ? a.created_at : (typeof a.timestamp === "string" ? a.timestamp : null);
+
+                    const isWarning = severity === "warning" || severity === "critical";
+
+                    return (
+                      <div
+                        key={i}
+                        className={`flex items-start gap-3 rounded-lg border p-3 text-xs transition-colors ${
+                          isWarning
+                            ? "border-coral-warn/25 bg-coral-warn/5 text-ink"
+                            : "border-line/70 bg-paper/40 text-ink"
+                        }`}
+                      >
+                        {isWarning ? (
+                          <AlertTriangle className="size-4 shrink-0 text-coral-warn mt-0.5" />
+                        ) : (
+                          <Info className="size-4 shrink-0 text-sky mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-ink">
+                              {message ?? `Budget alert #${i + 1}`}
+                            </p>
+                            {severity ? (
+                              <Badge
+                                variant={isWarning ? "warn" : "sky"}
+                                className="text-[10px] uppercase font-semibold px-1.5 py-0.5"
+                              >
+                                {severity}
+                              </Badge>
+                            ) : null}
+                          </div>
+                          <div className="mt-1 flex items-center gap-3 text-[11px] text-mist flex-wrap">
+                            {category ? <span>Category: {category}</span> : null}
+                            {dateStr ? <span>{formatDate(dateStr)}</span> : null}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </CardBody>
             </Card>
           ) : null}

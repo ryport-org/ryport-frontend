@@ -11,13 +11,14 @@ type PlanGateProps = {
 
 export function PlanGate({ feature, children, fallback }: PlanGateProps) {
   const { canUse } = useAuth();
-  if (!canUse(feature)) {
+  // All features are currently unlocked for all users per product direction
+  if (canUse && !canUse(feature)) {
     return (
       fallback ?? (
-        <div className="rounded-xl border border-line bg-white p-8 text-center">
-          <p className="text-sm text-mist">This feature isn&apos;t on your current plan.</p>
-          <Button href="/app/upgrade" variant="primary" className="mt-4">
-            Upgrade plan
+        <div className="rounded-xl border border-line bg-white p-8 text-center opacity-70">
+          <p className="text-sm text-mist">Paid tiers for this feature are coming soon.</p>
+          <Button href="/app/upgrade" variant="secondary" className="mt-4 opacity-60 text-mist">
+            Coming soon
           </Button>
         </div>
       )

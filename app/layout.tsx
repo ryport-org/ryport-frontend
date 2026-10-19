@@ -50,6 +50,7 @@ export default function RootLayout({
     <html
       lang="en-NG"
       className={`${sourceSans.variable} ${instrumentSerif.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -57,7 +58,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://capsykyrncpdtjudkxeb.supabase.co" />
         <link rel="dns-prefetch" href="https://ryport.onrender.com" />
       </head>
-      <body className="flex min-h-full flex-col overflow-x-hidden">
+      <body suppressHydrationWarning className="flex min-h-full flex-col overflow-x-hidden">
         <JsonLd />
         <AuthProvider>
           <StaffAuthProvider>

@@ -69,8 +69,12 @@ export default function SettingsPage() {
                   ))}
               </ul>
             ) : null}
-            <Button href="/app/upgrade" variant="secondary" className="mt-2">
-              Upgrade plan
+            <Button
+              href="/app/upgrade"
+              variant="secondary"
+              className="mt-2 opacity-60 text-mist"
+            >
+              Coming soon
             </Button>
           </CardBody>
         </Card>

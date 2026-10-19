@@ -10,8 +10,8 @@ export default function ForbiddenPage() {
         This feature isn&apos;t included in your current plan.
       </p>
       <div className="mt-6 flex gap-3">
-        <Button href="/app/upgrade" variant="primary">Upgrade plan</Button>
-        <Button href="/app/dashboard" variant="secondary">Dashboard</Button>
+        <Button href="/app/upgrade" variant="secondary" className="opacity-60 text-mist">Coming soon</Button>
+        <Button href="/app/dashboard" variant="primary">Dashboard</Button>
       </div>
     </div>
   );

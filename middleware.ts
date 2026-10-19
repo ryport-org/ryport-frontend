@@ -11,13 +11,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const { supabaseResponse, user } = await updateSession(request);
-
+  // Fast-path: If user has a valid Ryport session cookie, immediately allow through
+  // without blocking the request on a remote Supabase network roundtrip
   const hasRyportCookie =
     request.cookies.get("ryport_auth")?.value === "1" ||
     request.cookies.has("ryport_access_token");
 
-  const isAuthenticated = Boolean(user || hasRyportCookie);
+  if (hasRyportCookie) {
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/app/dashboard", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Fallback to checking Supabase session only when Ryport cookie isn't present
+  const { supabaseResponse, user } = await updateSession(request);
+  const isAuthenticated = Boolean(user);
 
   if (pathname === "/") {
     if (isAuthenticated) {
