@@ -1,14 +1,16 @@
 import fs from "node:fs";
 import path from "node:path";
-import oxide from "@tailwindcss/oxide";
-
 // Fast in-memory candidate cache with 30s TTL to prevent synchronous disk thrashing
 let cachedCandidates = null;
 let lastScanTime = 0;
 
-if (oxide && oxide.Scanner && !oxide.Scanner.__ryport_patched) {
-  oxide.Scanner.__ryport_patched = true;
-  const origScan = oxide.Scanner.prototype.scan;
+try {
+  const oxideModule = await import("@tailwindcss/oxide");
+  const oxide = oxideModule.default || oxideModule;
+
+  if (oxide && oxide.Scanner && !oxide.Scanner.__ryport_patched) {
+    oxide.Scanner.__ryport_patched = true;
+    const origScan = oxide.Scanner.prototype.scan;
 
   oxide.Scanner.prototype.scan = function () {
     const now = Date.now();
@@ -54,6 +56,8 @@ if (oxide && oxide.Scanner && !oxide.Scanner.__ryport_patched) {
     lastScanTime = now;
     return cachedCandidates;
   };
+} catch {
+  // Graceful fallback for non-patched environments
 }
 
 const config = {
