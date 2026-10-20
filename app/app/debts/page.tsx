@@ -578,7 +578,7 @@ export default function DebtsPage() {
                 <div className="flex items-center justify-between border-b border-line pb-4">
                   <div className="flex items-center gap-2">
                     <HandCoins className="size-5 text-amber-600" />
-                    <h2 className="text-base font-semibold text-ink">Add Receivable ("Who Owes Me")</h2>
+                    <h2 className="text-base font-semibold text-ink">Add Receivable (&quot;Who Owes Me&quot;)</h2>
                   </div>
                   <button
                     type="button"

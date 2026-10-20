@@ -537,7 +537,7 @@ export interface CreateDebtPayload {
   status?: DebtStatus;
 }
 
-export interface UpdateDebtPayload extends Partial<CreateDebtPayload> {}
+export type UpdateDebtPayload = Partial<CreateDebtPayload>;
 
 export interface MarkPaidPayload {
   amount_kobo?: number; // Omit or null to mark entire balance paid

@@ -17,7 +17,10 @@ declare global {
 
 export function useMonoConnect(onSuccess: MonoConnectHandler) {
   const handlerRef = useRef(onSuccess);
-  handlerRef.current = onSuccess;
+
+  useEffect(() => {
+    handlerRef.current = onSuccess;
+  }, [onSuccess]);
 
   useEffect(() => {
     if (document.getElementById("mono-connect-script")) return;
