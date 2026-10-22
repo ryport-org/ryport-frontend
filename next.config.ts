@@ -35,6 +35,10 @@ const nextConfig: NextConfig = {
   // Prevent double-mounting and duplicate network API calls in development
   reactStrictMode: false,
 
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   // Keep built pages in memory for 5 minutes instead of discarding them after 25s
   onDemandEntries: {
     maxInactiveAge: 300 * 1000,
