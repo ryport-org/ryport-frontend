@@ -6,7 +6,7 @@ import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
+
 
 // Lazy‑load heavy dashboard sections – rendered only after the initial page shell
 const PersonalDashboard = dynamic(
@@ -23,7 +23,7 @@ const SmeDashboard = dynamic(
     loading: () => <Skeleton className="h-96 w-full rounded-xl" />, // placeholder
   },
 );
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { useAuth } from "@/lib/auth/auth-context";
 
 export default function DashboardPage() {
