@@ -5,8 +5,24 @@ import { useRouter } from "next/navigation";
 import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
-import { PersonalDashboard } from "@/components/dashboard/personal/personal-dashboard";
-import { SmeDashboard } from "@/components/dashboard/sme/sme-dashboard";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy‑load heavy dashboard sections – rendered only after the initial page shell
+const PersonalDashboard = dynamic(
+  () => import("@/components/dashboard/personal/personal-dashboard"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-96 w-full rounded-xl" />, // show a placeholder while loading
+  },
+);
+const SmeDashboard = dynamic(
+  () => import("@/components/dashboard/sme/sme-dashboard"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-96 w-full rounded-xl" />, // placeholder
+  },
+);
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth/auth-context";
 
