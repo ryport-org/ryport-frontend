@@ -13,6 +13,7 @@ type AppHeaderProps = {
   description?: string;
   unreadCount?: number;
   action?: React.ReactNode;
+  showDefaultAction?: boolean;
 };
 
 export function AppHeader({
@@ -20,6 +21,7 @@ export function AppHeader({
   description,
   unreadCount,
   action,
+  showDefaultAction,
 }: AppHeaderProps) {
   const { user, unreadNotifications } = useAuth();
   const { setMobileNavOpen } = useAppShell();
@@ -51,8 +53,7 @@ export function AppHeader({
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-            {action}
+          <div className="flex shrink-0 items-center gap-2 sm:justify-end">
             <Link
               href="/app/notifications"
               className="relative inline-flex size-10 items-center justify-center rounded-lg border border-line text-mist transition-colors hover:border-sky hover:text-sky"
@@ -65,15 +66,20 @@ export function AppHeader({
                 </span>
               ) : null}
             </Link>
-            <Button
-              href="/app/transactions?new=1"
-              variant="primary"
-              className="inline-flex gap-1.5"
-            >
-              <Plus className="size-4" />
-              <span className="hidden sm:inline">Add transaction</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
+
+            {action ? (
+              action
+            ) : showDefaultAction !== false ? (
+              <Button
+                href="/app/transactions?new=1"
+                variant="primary"
+                className="inline-flex gap-1.5"
+              >
+                <Plus className="size-4" />
+                <span className="hidden sm:inline">Add transaction</span>
+                <span className="sm:hidden">Add</span>
+              </Button>
+            ) : null}
           </div>
         </div>
       </div>

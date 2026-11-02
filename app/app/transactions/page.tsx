@@ -20,6 +20,8 @@ import type { Transaction, TransactionType } from "@/lib/api/types";
 import type { TransactionFilters } from "@/lib/api/transactions";
 import { getAuthErrorMessage } from "@/lib/auth/auth-context";
 
+import { swrCache } from "@/lib/cache/swr-cache";
+
 const CATEGORIES = [
   "Food",
   "Transport",
@@ -36,8 +38,16 @@ const PAGE_SIZE = 50;
 
 function TransactionsPageInner() {
   const searchParams = useSearchParams();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    if (typeof window === "undefined") return [];
+    const cached = swrCache.get<Transaction[]>("transactions_list");
+    return cached?.data ?? [];
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const cached = swrCache.get<Transaction[]>("transactions_list");
+    return !cached;
+  });
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [showForm, setShowForm] = useState(searchParams.get("new") === "1");
@@ -53,7 +63,7 @@ function TransactionsPageInner() {
       if (!token) return;
 
       if (append) setLoadingMore(true);
-      else setLoading(true);
+      else if (transactions.length === 0) setLoading(true);
 
       try {
         const data = await transactionsApi.list(token, {
@@ -63,12 +73,17 @@ function TransactionsPageInner() {
         const batch = normalizeTransactions(data);
         setTransactions((prev) => (append ? [...prev, ...batch] : batch));
         setNextCursor(extractCursor(data.next));
+        if (!append && !cursor) {
+          swrCache.set("transactions_list", batch, 5 * 60 * 1000);
+        }
+      } catch (err) {
+        setError(getAuthErrorMessage(err));
       } finally {
         setLoading(false);
         setLoadingMore(false);
       }
     },
-    [filters],
+    [filters, transactions.length],
   );
 
   useEffect(() => {

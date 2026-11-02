@@ -80,11 +80,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
   });
-  const [plan, setPlan] = useState<PlanResponse | null>(null);
+
+  const [bootstrapBundle] = useState(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem("ryport_bootstrap_cache");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [plan, setPlan] = useState<PlanResponse | null>(() => bootstrapBundle?.plan ?? null);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const [activeBusiness, setActiveBusiness] = useState<Business | null>(null);
-  const [aiQuota, setAiQuota] = useState<AIQuota | null>(null);
-  const [dashboardContext, setDashboardContext] = useState<DashboardContext | null>(null);
+  const [activeBusiness, setActiveBusiness] = useState<Business | null>(
+    () => bootstrapBundle?.activeBusiness ?? null,
+  );
+  const [aiQuota, setAiQuota] = useState<AIQuota | null>(() => bootstrapBundle?.quota ?? null);
+  const [dashboardContext, setDashboardContext] = useState<DashboardContext | null>(
+    () => bootstrapBundle?.dashCtx ?? null,
+  );
   const [bootstrapWarning, setBootstrapWarning] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
@@ -121,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setBootstrapWarning(null);
     try {
       localStorage.removeItem("ryport_user_cache");
+      localStorage.removeItem("ryport_bootstrap_cache");
     } catch {}
   }, []);
 
@@ -151,15 +167,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const profile = meResult.value;
-    try {
-      localStorage.setItem("ryport_user_cache", JSON.stringify(profile));
-    } catch {}
-
     const userPlan = userPlanResult.status === "fulfilled" ? userPlanResult.value : null;
     const unreadCount = unreadResult.status === "fulfilled" ? unreadResult.value.count : 0;
     const activeBiz = activeBizResult.status === "fulfilled" ? activeBizResult.value : null;
     const quota = quotaResult.status === "fulfilled" ? quotaResult.value : null;
     const dashCtx = dashCtxResult.status === "fulfilled" ? dashCtxResult.value : null;
+
+    try {
+      localStorage.setItem("ryport_user_cache", JSON.stringify(profile));
+      localStorage.setItem(
+        "ryport_bootstrap_cache",
+        JSON.stringify({
+          plan: userPlan,
+          activeBusiness: activeBiz || dashCtx?.active_business || null,
+          quota,
+          dashCtx,
+        }),
+      );
+    } catch {}
 
     setUser(profile);
     setPlan(userPlan);

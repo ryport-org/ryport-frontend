@@ -12,7 +12,7 @@ export const formatKobo = (kobo: number): string =>
 
 export function formatNaira(
   kobo: number,
-  options?: { compact?: boolean; showSign?: boolean },
+  options?: { compact?: boolean; showSign?: boolean; decimals?: boolean },
 ): string {
   const naira = koboToNaira(kobo);
   const sign = options?.showSign && naira > 0 ? "+" : "";
@@ -24,11 +24,13 @@ export function formatNaira(
     return `${sign}₦${(naira / 1_000).toFixed(0)}k`;
   }
 
+  const fractionDigits = options?.decimals === false ? 0 : 2;
+
   return `${sign}${new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(naira)}`;
 }
 

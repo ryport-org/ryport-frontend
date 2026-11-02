@@ -45,12 +45,15 @@ type ParsedEnvelope<T> = {
   cached?: boolean;
 };
 
+import { swrCache } from "@/lib/cache/swr-cache";
+
 // In-memory GET cache & in-flight deduplication to make page responses instant
 const getCache = new Map<string, { data: unknown; expires: number }>();
 const inFlightRequests = new Map<string, Promise<unknown>>();
 
 export function clearApiCache() {
   getCache.clear();
+  swrCache.clear();
 }
 
 function extractApiError(
@@ -154,9 +157,9 @@ async function fetchWithAuth(
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
   if (apiKey) headers.set("Authorization", `ApiKey ${apiKey}`);
 
-  // 12-second timeout to prevent hung network connections from freezing the UI
+  // 30-second timeout to allow Render cold starts without prematurely aborting
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 12000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
     const res = await fetch(`${API_V1}${path}`, {
@@ -176,6 +179,40 @@ async function fetchWithAuth(
   }
 }
 
+async function fetchWithAuthAndRetry(
+  path: string,
+  options: RequestOptions,
+): Promise<Response> {
+  const isGet = (options.method || "GET").toUpperCase() === "GET";
+  const maxRetries = isGet ? 2 : 0;
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetchWithAuth(path, options);
+      // Auto-retry 502/503/504 for GET while backend is booting up
+      if (
+        isGet &&
+        attempt < maxRetries &&
+        (res.status === 502 || res.status === 503 || res.status === 504)
+      ) {
+        await new Promise((r) => setTimeout(r, (attempt + 1) * 1500));
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastError = err;
+      if (isGet && attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, (attempt + 1) * 1500));
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastError;
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   const refresh = getRefreshToken();
   if (!refresh) return null;
@@ -192,7 +229,7 @@ async function requestWithRefresh(
   path: string,
   options: RequestOptions,
 ): Promise<Response> {
-  let res = await fetchWithAuth(path, options);
+  let res = await fetchWithAuthAndRetry(path, options);
 
   if (res.status === 401 && !options.skipAuth && !options.skipRefresh && getRefreshToken()) {
     try {
@@ -200,7 +237,7 @@ async function requestWithRefresh(
       if (!refreshed) {
         throw new ApiError("not_authenticated", "Session expired", 401);
       }
-      res = await fetchWithAuth(path, { ...options, token: refreshed });
+      res = await fetchWithAuthAndRetry(path, { ...options, token: refreshed });
     } catch {
       throw new ApiError("not_authenticated", "Session expired", 401);
     }

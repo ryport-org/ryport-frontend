@@ -35,13 +35,26 @@ import type {
 import { formatDate, formatNaira } from "@/lib/format";
 import { getAuthErrorMessage } from "@/lib/auth/auth-context";
 import { cn } from "@/lib/utils";
+import { swrCache } from "@/lib/cache/swr-cache";
 
 type FilterTab = "all" | "outstanding" | "overdue" | "paid";
 
 export default function DebtsPage() {
-  const [debts, setDebts] = useState<Debt[]>([]);
-  const [summary, setSummary] = useState<DebtSummary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [debts, setDebts] = useState<Debt[]>(() => {
+    if (typeof window === "undefined") return [];
+    const cached = swrCache.get<{ debts: Debt[]; summary: DebtSummary | null }>("debts_cache");
+    return cached?.data?.debts ?? [];
+  });
+  const [summary, setSummary] = useState<DebtSummary | null>(() => {
+    if (typeof window === "undefined") return null;
+    const cached = swrCache.get<{ debts: Debt[]; summary: DebtSummary | null }>("debts_cache");
+    return cached?.data?.summary ?? null;
+  });
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    const cached = swrCache.get<{ debts: Debt[]; summary: DebtSummary | null }>("debts_cache");
+    return !cached;
+  });
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const [error, setError] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -77,18 +90,22 @@ export default function DebtsPage() {
     setTimeout(() => setSuccessToast(null), 4000);
   };
 
-  async function loadData() {
+  async function loadData(silent = false) {
     const token = getAccessToken();
     if (!token) return;
-    setLoading(true);
+    if (!silent && debts.length === 0) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const [debtsRes, summaryRes] = await Promise.all([
         debtsApi.list(token).catch(() => [] as Debt[]),
         debtsApi.summary(token).catch(() => null),
       ]);
-      setDebts(Array.isArray(debtsRes) ? debtsRes : []);
+      const validDebts = Array.isArray(debtsRes) ? debtsRes : [];
+      setDebts(validDebts);
       setSummary(summaryRes);
+      swrCache.set("debts_cache", { debts: validDebts, summary: summaryRes }, 5 * 60 * 1000);
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
@@ -97,7 +114,18 @@ export default function DebtsPage() {
   }
 
   useEffect(() => {
-    loadData();
+    const cached = swrCache.get<{ debts: Debt[]; summary: DebtSummary | null }>("debts_cache");
+    if (cached) {
+      setDebts(cached.data.debts);
+      setSummary(cached.data.summary);
+      setLoading(false);
+      // Revalidate in background if stale
+      if (cached.isStale) {
+        void loadData(true);
+      }
+    } else {
+      void loadData();
+    }
   }, []);
 
   async function handleCreate(e: React.FormEvent) {
@@ -274,11 +302,28 @@ export default function DebtsPage() {
       <AppPageBody>
         <AppPageContent>
           {error && (
-            <div className="mb-4 rounded-xl border border-coral-warn/20 bg-coral-warn/5 p-4 text-xs text-coral-warn flex items-center justify-between">
-              <span>{error}</span>
-              <button onClick={() => setError(null)} className="text-mist hover:text-ink">
-                <X className="size-4" />
-              </button>
+            <div className="mb-4 rounded-xl border border-coral-warn/20 bg-coral-warn/5 p-4 text-xs text-coral-warn flex items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <AlertCircle className="size-4 shrink-0 text-coral-warn" />
+                <span className="truncate sm:whitespace-normal">{error}</span>
+              </div>
+              <div className="flex items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => void loadData()}
+                  className="font-semibold underline hover:no-underline text-coral-warn"
+                >
+                  Retry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setError(null)}
+                  className="text-mist hover:text-ink"
+                  aria-label="Dismiss error"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
             </div>
           )}
 

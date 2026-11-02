@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
   AlertTriangle,
+  AlertCircle,
   CheckCircle2,
+  RefreshCw,
+  WifiOff,
   Sparkles,
   TrendingUp,
   CreditCard,
@@ -24,56 +27,98 @@ import { dashboardApi } from "@/lib/api";
 import type { PersonalDashboardData, Plan } from "@/lib/api/types";
 import { formatNaira } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useSwrData } from "@/lib/hooks/use-swr-data";
 
 interface PersonalDashboardProps {
   planTier?: Plan | null;
 }
 
 export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
-  const [data, setData] = useState<PersonalDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = async () => {
+  const fetchDashboard = useCallback(async (): Promise<PersonalDashboardData> => {
     const token = getAccessToken();
-    if (!token) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await dashboardApi.personal(token);
-      setData(res);
-    } catch {
-      setError("Could not load your personal dashboard data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchData();
+    if (!token) throw new Error("Authentication required");
+    return dashboardApi.personal(token);
   }, []);
 
-  if (loading) {
+  const {
+    data,
+    isLoading,
+    isValidating,
+    error,
+    isCached,
+    reload,
+  } = useSwrData<PersonalDashboardData>("dashboard_personal", fetchDashboard, {
+    ttlMs: 3 * 60 * 1000, // 3 minutes freshness
+  });
+
+  // Only show full skeleton if there is NO cached data and initial request is loading
+  if (isLoading && !data) {
     return <PersonalDashboardSkeleton />;
   }
 
-  if (error || !data) {
+  // If there's an error and NO cached data to display
+  if (error && !data) {
     return (
-      <Card className="border-coral-warn/30 bg-coral-warn/5">
-        <CardBody className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-coral-warn">{error ?? "Failed to load dashboard."}</p>
-          <Button type="button" variant="secondary" onClick={() => void fetchData()}>
-            Retry
+      <Card className="border-line bg-paper/50 p-8 sm:p-12 text-center">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-coral-warn/10 text-coral-warn mb-4">
+          <WifiOff className="size-7" />
+        </div>
+        <h2 className="font-display text-xl font-bold text-ink sm:text-2xl">
+          Unable to load dashboard data
+        </h2>
+        <p className="mx-auto mt-2 max-w-md text-sm text-mist leading-relaxed">
+          The server may be waking up or experiencing high traffic. Please check your connection and tap retry.
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => void reload()}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={cn("size-4", isValidating && "animate-spin")} />
+            {isValidating ? "Connecting…" : "Retry"}
           </Button>
-        </CardBody>
+          <Button href="/app/transactions" variant="secondary">
+            View Transactions
+          </Button>
+          <Button href="/app/debts" variant="secondary">
+            Debts & Receivables
+          </Button>
+        </div>
       </Card>
     );
+  }
+
+  if (!data) {
+    return <PersonalDashboardSkeleton />;
   }
 
   const isProOrAdvanced = planTier === "pro" || planTier === "advanced";
 
   return (
     <div className="space-y-6">
+      {/* Background Revalidation or Stale Cache Warning Banner */}
+      {error && isCached ? (
+        <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="size-4 text-amber-600 shrink-0" />
+            <span>
+              Could not reach the server to refresh your latest numbers. Showing your saved dashboard details.
+            </span>
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => void reload()}
+            className="self-start sm:self-auto shrink-0 flex items-center gap-1.5"
+          >
+            <RefreshCw className={cn("size-3.5", isValidating && "animate-spin")} />
+            {isValidating ? "Syncing…" : "Retry"}
+          </Button>
+        </div>
+      ) : null}
       {/* 1. Balance Summary, AI Quota & Spending Overview (Perfectly Aligned 3-Column Top Grid) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
         <BalanceSummaryCard
