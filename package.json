@@ -31,5 +31,11 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^3.0.5"
+  },
+  "allowScripts": {
+    "@sentry/cli@2.39.1": true,
+    "esbuild@0.28.2": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
   }
 }
