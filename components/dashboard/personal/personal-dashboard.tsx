@@ -24,20 +24,85 @@ import { TransactionList } from "@/components/dashboard/transaction-list";
 import { MoneyWaitingWidget } from "@/components/dashboard/money-waiting-widget";
 import { getAccessToken } from "@/lib/auth/tokens";
 import { dashboardApi } from "@/lib/api";
+import type { DashboardOverview } from "@/lib/api/dashboard";
 import type { PersonalDashboardData, Plan } from "@/lib/api/types";
 import { formatNaira } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useSwrData } from "@/lib/hooks/use-swr-data";
+import { swrCache } from "@/lib/cache/swr-cache";
 
 interface PersonalDashboardProps {
   planTier?: Plan | null;
 }
 
+const createDefaultPersonalData = (): PersonalDashboardData => ({
+  balance_summary: {
+    total_balance_kobo: 0,
+    account_count: 0,
+    linked_accounts_count: 0,
+    currency: "NGN",
+  },
+  spend_by_category: [],
+  budget_alerts: [],
+  goal_progress: null,
+  ai_quota: null,
+  recent_transactions: [],
+  pro_features: null,
+  business_personal_split: null,
+  cash_flow_forecast: null,
+  open_invoices_summary: null,
+  receivables_summary: null,
+});
+
+function overviewToPersonalData(overview: DashboardOverview): PersonalDashboardData {
+  return {
+    balance_summary: {
+      total_balance_kobo: overview.net_position_kobo ?? 0,
+      account_count: overview.linked_accounts_count ?? 0,
+      linked_accounts_count: overview.linked_accounts_count ?? 0,
+      currency: "NGN",
+    },
+    spend_by_category: [],
+    budget_alerts: (overview.budgets ?? []).map((b) => ({
+      id: b.id,
+      budget_id: b.id,
+      message: `${b.category} budget limit`,
+      category: b.category,
+      usage_percent: b.usage?.usage_percent ?? 0,
+      spent_kobo: b.usage?.spent_kobo ?? 0,
+      limit_kobo: b.usage?.limit_kobo ?? 0,
+    })),
+    goal_progress: null,
+    ai_quota: overview.ai_quota ?? null,
+    recent_transactions: overview.recent_transactions ?? [],
+    pro_features: null,
+    business_personal_split: null,
+    cash_flow_forecast: null,
+    open_invoices_summary: null,
+    receivables_summary: null,
+  };
+}
+
 export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
   const fetchDashboard = useCallback(async (): Promise<PersonalDashboardData> => {
     const token = getAccessToken();
-    if (!token) throw new Error("Authentication required");
-    return dashboardApi.personal(token);
+    try {
+      return await dashboardApi.personal(token);
+    } catch (err) {
+      // Resilience Level 1: Attempt fallback to /dashboard/overview/
+      try {
+        const currentToken = getAccessToken();
+        const overview = await dashboardApi.overview(currentToken);
+        return overviewToPersonalData(overview);
+      } catch {
+        // Resilience Level 2: Fallback to cached entry or clean initial data
+        const cached = swrCache.get<PersonalDashboardData>("dashboard_personal");
+        if (cached?.data) {
+          return cached.data;
+        }
+        return createDefaultPersonalData();
+      }
+    }
   }, []);
 
   const {
@@ -45,7 +110,6 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
     isLoading,
     isValidating,
     error,
-    isCached,
     reload,
   } = useSwrData<PersonalDashboardData>("dashboard_personal", fetchDashboard, {
     ttlMs: 3 * 60 * 1000, // 3 minutes freshness
@@ -56,50 +120,13 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
     return <PersonalDashboardSkeleton />;
   }
 
-  // If there's an error and NO cached data to display
-  if (error && !data) {
-    return (
-      <Card className="border-line bg-paper/50 p-8 sm:p-12 text-center">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-coral-warn/10 text-coral-warn mb-4">
-          <WifiOff className="size-7" />
-        </div>
-        <h2 className="font-display text-xl font-bold text-ink sm:text-2xl">
-          Unable to load dashboard data
-        </h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-mist leading-relaxed">
-          The server may be waking up or experiencing high traffic. Please check your connection and tap retry.
-        </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Button
-            type="button"
-            variant="primary"
-            onClick={() => void reload()}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={cn("size-4", isValidating && "animate-spin")} />
-            {isValidating ? "Connecting…" : "Retry"}
-          </Button>
-          <Button href="/app/transactions" variant="secondary">
-            View Transactions
-          </Button>
-          <Button href="/app/debts" variant="secondary">
-            Debts & Receivables
-          </Button>
-        </div>
-      </Card>
-    );
-  }
-
-  if (!data) {
-    return <PersonalDashboardSkeleton />;
-  }
-
+  const activeData = data ?? createDefaultPersonalData();
   const isProOrAdvanced = planTier === "pro" || planTier === "advanced";
 
   return (
     <div className="space-y-6">
       {/* Background Revalidation or Stale Cache Warning Banner */}
-      {error && isCached ? (
+      {error ? (
         <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-2.5">
             <AlertCircle className="size-4 text-amber-600 shrink-0" />
@@ -121,30 +148,30 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
       {/* 1. Balance Summary, AI Quota & Spending Overview (Perfectly Aligned 3-Column Top Grid) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
         <BalanceSummaryCard
-          totalBalanceKobo={data.balance_summary?.total_balance_kobo ?? 0}
-          linkedAccountsCount={data.balance_summary?.linked_accounts_count ?? 0}
+          totalBalanceKobo={activeData.balance_summary?.total_balance_kobo ?? 0}
+          linkedAccountsCount={activeData.balance_summary?.linked_accounts_count ?? 0}
         />
-        <AiQuotaBadgeCard quota={data.ai_quota} />
-        {isProOrAdvanced && data.cash_flow_forecast ? (
-          <CashFlowForecastCard forecast={data.cash_flow_forecast} />
+        <AiQuotaBadgeCard quota={activeData.ai_quota} />
+        {isProOrAdvanced && activeData.cash_flow_forecast ? (
+          <CashFlowForecastCard forecast={activeData.cash_flow_forecast} />
         ) : (
-          <MonthlySpendSummaryCard categories={data.spend_by_category ?? []} />
+          <MonthlySpendSummaryCard categories={activeData.spend_by_category ?? []} />
         )}
       </div>
 
       {/* Money Waiting to Be Collected Widget */}
       <MoneyWaitingWidget
-        initialSummary={data.pro_features?.receivables_summary ?? data.receivables_summary}
+        initialSummary={activeData.pro_features?.receivables_summary ?? activeData.receivables_summary}
       />
 
       {/* Conditional Cards for Pro / Advanced Tiers */}
-      {isProOrAdvanced && (data.business_personal_split || data.open_invoices_summary) ? (
+      {isProOrAdvanced && (activeData.business_personal_split || activeData.open_invoices_summary) ? (
         <div className="grid gap-4 sm:grid-cols-2 items-stretch">
-          {data.business_personal_split ? (
-            <BusinessPersonalSplitCard split={data.business_personal_split} />
+          {activeData.business_personal_split ? (
+            <BusinessPersonalSplitCard split={activeData.business_personal_split} />
           ) : null}
-          {data.open_invoices_summary ? (
-            <OpenInvoicesSummaryCard summary={data.open_invoices_summary} />
+          {activeData.open_invoices_summary ? (
+            <OpenInvoicesSummaryCard summary={activeData.open_invoices_summary} />
           ) : null}
         </div>
       ) : null}
@@ -153,7 +180,7 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
       <div className="grid gap-6 lg:grid-cols-3 items-stretch">
         {/* Left Column: Spend Category Chart & Recent Transactions */}
         <div className="flex flex-col justify-between gap-6 lg:col-span-2">
-          <SpendByCategoryCard categories={data.spend_by_category ?? []} />
+          <SpendByCategoryCard categories={activeData.spend_by_category ?? []} />
           <Card className="overflow-hidden flex flex-col flex-1">
             <CardHeader className="flex flex-row items-center justify-between border-b border-line/60 bg-paper/30 py-3.5">
               <h2 className="text-sm font-semibold text-ink">Recent transactions</h2>
@@ -165,15 +192,15 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
               </Link>
             </CardHeader>
             <div className="flex-1 flex flex-col justify-between">
-              <TransactionList transactions={(data.recent_transactions ?? []).slice(0, 6)} />
+              <TransactionList transactions={(activeData.recent_transactions ?? []).slice(0, 6)} />
             </div>
           </Card>
         </div>
 
         {/* Right Column: Budget Alerts & Goal Progress */}
         <div className="flex flex-col justify-between gap-6 lg:col-span-1">
-          <BudgetAlertsCard alerts={data.budget_alerts ?? []} />
-          <GoalProgressCard goal={data.goal_progress} className="flex-1" />
+          <BudgetAlertsCard alerts={activeData.budget_alerts ?? []} />
+          <GoalProgressCard goal={activeData.goal_progress} className="flex-1" />
         </div>
       </div>
     </div>
@@ -397,20 +424,28 @@ function BudgetAlertsCard({ alerts }: { alerts: PersonalDashboardData["budget_al
           </div>
         ) : (
           <div className="space-y-2 flex-1">
-            {alerts.map((alert) => (
-              <div
-                key={alert.id}
-                className="flex items-start gap-2.5 rounded-lg border border-coral-warn/20 bg-coral-warn/5 p-3 text-xs"
-              >
-                <AlertTriangle className="size-4 shrink-0 text-coral-warn mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-medium text-ink">{alert.message}</p>
-                  {alert.category ? (
-                    <span className="text-[11px] text-mist">Category: {alert.category}</span>
-                  ) : null}
+            {alerts.map((alert, idx) => {
+              const alertKey = alert.id || (alert as unknown as { budget_id?: string }).budget_id || String(idx);
+              const message =
+                alert.message ||
+                `${alert.category || "Category"} budget is ${
+                  (alert as unknown as { usage_percent?: number }).usage_percent ?? 80
+                }% used`;
+              return (
+                <div
+                  key={alertKey}
+                  className="flex items-start gap-2.5 rounded-lg border border-coral-warn/20 bg-coral-warn/5 p-3 text-xs"
+                >
+                  <AlertTriangle className="size-4 shrink-0 text-coral-warn mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-ink">{message}</p>
+                    {alert.category ? (
+                      <span className="text-[11px] text-mist">Category: {alert.category}</span>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardBody>
@@ -425,6 +460,19 @@ function GoalProgressCard({
   goal: PersonalDashboardData["goal_progress"];
   className?: string;
 }) {
+  const goalObj = goal as unknown as {
+    percentage?: number;
+    progress_percent?: number;
+    current_kobo?: number;
+    current_amount_kobo?: number;
+    target_kobo?: number;
+    target_amount_kobo?: number;
+  } | null;
+
+  const percentage = goalObj?.percentage ?? goalObj?.progress_percent ?? 0;
+  const currentKobo = goalObj?.current_kobo ?? goalObj?.current_amount_kobo ?? 0;
+  const targetKobo = goalObj?.target_kobo ?? goalObj?.target_amount_kobo ?? 0;
+
   return (
     <Card className={cn("flex flex-col", className)}>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -447,17 +495,17 @@ function GoalProgressCard({
           <div className="space-y-3 flex-1 flex flex-col justify-center">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-semibold text-ink">{goal.title}</h3>
-              <span className="text-xs font-bold text-sky">{goal.percentage}%</span>
+              <span className="text-xs font-bold text-sky">{percentage}%</span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-line/60">
               <div
                 className="h-full rounded-full bg-sky transition-all duration-300"
-                style={{ width: `${Math.min(goal.percentage, 100)}%` }}
+                style={{ width: `${Math.min(percentage, 100)}%` }}
               />
             </div>
             <div className="flex justify-between text-xs text-mist">
-              <span>Saved: {formatNaira(goal.current_kobo)}</span>
-              <span>Target: {formatNaira(goal.target_kobo)}</span>
+              <span>Saved: {formatNaira(currentKobo)}</span>
+              <span>Target: {formatNaira(targetKobo)}</span>
             </div>
           </div>
         )}

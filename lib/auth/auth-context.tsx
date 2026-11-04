@@ -219,7 +219,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setIsLoading(true);
+    const hasCachedProfile =
+      typeof window !== "undefined" && Boolean(localStorage.getItem("ryport_user_cache"));
+    if (!hasCachedProfile) {
+      setIsLoading(true);
+    }
     try {
       const access = getAccessToken();
       const refresh = getRefreshToken();

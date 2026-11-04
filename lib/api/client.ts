@@ -231,15 +231,38 @@ async function requestWithRefresh(
 ): Promise<Response> {
   let res = await fetchWithAuthAndRetry(path, options);
 
-  if (res.status === 401 && !options.skipAuth && !options.skipRefresh && getRefreshToken()) {
-    try {
-      const refreshed = await refreshAccessToken();
-      if (!refreshed) {
+  const isAuthStatus =
+    (res.status === 401 || res.status === 403) &&
+    !options.skipAuth &&
+    !options.skipRefresh &&
+    Boolean(getRefreshToken());
+
+  if (isAuthStatus) {
+    let shouldRefresh = res.status === 401;
+    if (res.status === 403) {
+      try {
+        const cloned = res.clone();
+        const json = (await cloned.json()) as Record<string, unknown> | null;
+        const errObj = json?.error as { code?: string } | undefined;
+        const code = errObj?.code;
+        if (code === "authentication_failed" || code === "not_authenticated") {
+          shouldRefresh = true;
+        }
+      } catch {
+        shouldRefresh = false;
+      }
+    }
+
+    if (shouldRefresh) {
+      try {
+        const refreshed = await refreshAccessToken();
+        if (!refreshed) {
+          throw new ApiError("not_authenticated", "Session expired", 401);
+        }
+        res = await fetchWithAuthAndRetry(path, { ...options, token: refreshed });
+      } catch {
         throw new ApiError("not_authenticated", "Session expired", 401);
       }
-      res = await fetchWithAuthAndRetry(path, { ...options, token: refreshed });
-    } catch {
-      throw new ApiError("not_authenticated", "Session expired", 401);
     }
   }
 
