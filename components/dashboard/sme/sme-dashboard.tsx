@@ -519,6 +519,8 @@ export function SmeDashboard() {
   );
 }
 
+export default SmeDashboard;
+
 function SmeDashboardSkeleton() {
   return (
     <div className="space-y-6">

@@ -6,25 +6,32 @@ import { AppPage, AppPageBody } from "@/components/dashboard/app-page";
 import { AppPageContent } from "@/components/dashboard/app-page-content";
 import { AppHeader } from "@/components/dashboard/app-header";
 import dynamic from "next/dynamic";
-
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/lib/auth/auth-context";
+import type { Plan } from "@/lib/api/types";
 
 // Lazy‑load heavy dashboard sections – rendered only after the initial page shell
-const PersonalDashboard = dynamic(
-  () => import("@/components/dashboard/personal/personal-dashboard"),
+const PersonalDashboard = dynamic<{ planTier?: Plan | null }>(
+  () =>
+    import("@/components/dashboard/personal/personal-dashboard").then(
+      (mod) => mod.PersonalDashboard,
+    ),
   {
     ssr: false,
     loading: () => <Skeleton className="h-96 w-full rounded-xl" />, // show a placeholder while loading
   },
 );
+
 const SmeDashboard = dynamic(
-  () => import("@/components/dashboard/sme/sme-dashboard"),
+  () =>
+    import("@/components/dashboard/sme/sme-dashboard").then(
+      (mod) => mod.SmeDashboard,
+    ),
   {
     ssr: false,
     loading: () => <Skeleton className="h-96 w-full rounded-xl" />, // placeholder
   },
 );
-
-import { useAuth } from "@/lib/auth/auth-context";
 
 export default function DashboardPage() {
   const router = useRouter();

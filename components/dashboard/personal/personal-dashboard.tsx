@@ -110,9 +110,8 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
           <Button
             type="button"
             variant="secondary"
-            size="sm"
             onClick={() => void reload()}
-            className="self-start sm:self-auto shrink-0 flex items-center gap-1.5"
+            className="self-start sm:self-auto shrink-0 flex items-center gap-1.5 min-h-8 px-3 py-1.5 text-xs"
           >
             <RefreshCw className={cn("size-3.5", isValidating && "animate-spin")} />
             {isValidating ? "Syncing…" : "Retry"}
@@ -180,6 +179,8 @@ export function PersonalDashboard({ planTier }: PersonalDashboardProps) {
     </div>
   );
 }
+
+export default PersonalDashboard;
 
 /* --- Section Components --- */
 
